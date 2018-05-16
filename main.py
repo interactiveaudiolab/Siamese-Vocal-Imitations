@@ -1,21 +1,20 @@
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim
 import torch.utils.data.dataloader as dataloader
 
-from datasets import FileVocalImitations, DynamicVocalImitations
+from datasets import VocalImitations, get_data
 from siamese import Siamese
 
 
 def main():
     # global parameters
     n_epochs = 30  # 70 in Bongjun's version, 30 in the paper
-    model_path = "./model_{0}"
+    model_path = "./models/model_{0}"
 
     # load up the data
-    imitations = []  # TODO: get imitation data
-    original_recordings = []  # TODO: get original recordings
-    train_data = dataloader.DataLoader(FileVocalImitations(), batch_size=128, num_workers=2, shuffle=True)
+    all_imitations, all_references, all_labels = get_data()
 
     # get a siamese network, see Siamese class for architecture
     siamese = Siamese()
@@ -27,45 +26,64 @@ def main():
     optimizer = torch.optim.SGD(siamese.parameters(), lr=.01, weight_decay=.0001, momentum=.9, nesterov=True)
 
     # train the network using random selection
-    train_network(siamese, criterion, optimizer, n_epochs, train_data)
-    save_model(model_path, siamese, 'random_selection')
+    suffix = 'random_selection'
+    MRRs = train_network(siamese, all_imitations, all_references, all_labels, criterion, optimizer, n_epochs, model_path, suffix)
+
+    siamese = get_best_model(MRRs, model_path, suffix)
+    save_model(model_path, siamese, 'random_selection_final')
 
     # further train using hard-negative selection until convergence
     n_epochs = 20
     convergence = False
+    # same optimizer with a different learning rate
     optimizer = torch.optim.SGD(siamese.parameters(), lr=.0001, weight_decay=.0001, momentum=.9, nesterov=True)
     while not convergence:
         left = []
         right = []
-        labels = []
-        for imitation in imitations:
-            highest_ranked_example, highest_ranked_label = get_highest_ranked_original_recording(imitation, original_recordings, siamese)
+        all_labels = []
+        for imitation in all_imitations:
+            highest_ranked_example, highest_ranked_label = get_highest_ranked_original_recording(imitation, all_references, siamese)
 
             assert highest_ranked_example is not None
 
             # add the top-ranked pair as an example
             left.append(imitation)
             right.append(highest_ranked_example)
-            labels.append(highest_ranked_label)
+            all_labels.append(highest_ranked_label)
 
-        dynamic_dataset = dataloader.DataLoader(DynamicVocalImitations(left, right, labels), batch_size=128)
-        train_network(siamese, criterion, optimizer, n_epochs, dynamic_dataset)
-        # TODO: find out when the network is converging and end the loop
+        suffix = 'fine_tuned'
+        MRRs = train_network(siamese, left, right, all_labels, criterion, optimizer, n_epochs, model_path, suffix)
+        siamese = get_best_model(MRRs, model_path, suffix)
+        # TODO: determine when convergence has occurred
+    save_model(model_path, siamese, 'fine_tuned_final')
 
-    save_model(model_path, siamese, 'fine_tuned')
-
-    # evaluate the network
-    test_data = dataloader.DataLoader(FileVocalImitations(is_train=False), batch_size=128, num_workers=2, shuffle=True)
-    total_correct = 0
-    total = 0
-    for i, (left, right, labels) in enumerate(test_data):
-        outputs = siamese(left, right)
-        total_correct += num_correct(outputs, labels)
-        total += labels.shape[0]
-        print("Cumulative percent correct on validation data: {0}%".format(100 * total_correct / total_correct))
+    all_imitations, all_references, all_labels = get_data(is_train=False)
+    final_mrr = mrr(all_imitations, all_references, siamese)
+    print("Final MRR: {0}".format(final_mrr))
 
 
-def train_network(model, objective_function, optimizer, n_epochs, train_data):
+def get_best_model(MRRs, base_path, path_suffix):
+    """
+    Get the best model based on mean reciprocal rank.
+
+    :param MRRs: epoch-indexed array of mean reciprocal ranks
+    :param base_path:
+    :param path_suffix:
+    :return:
+    """
+    best_model = np.argmax(MRRs)
+    model = Siamese()
+    load_model(model, best_model, base_path, path_suffix)
+    return model
+
+
+def load_model(model, best_epoch, base_path, path_suffix):
+    model.load_state_dict(torch.load(base_path.format("{0}_{1}".format(path_suffix, best_epoch))))
+
+
+def train_network(model, imitations, references, labels, objective_function, optimizer, n_epochs, model_save_path, model_save_path_suffix):
+    train_data = dataloader.DataLoader(VocalImitations(imitations, references, labels), batch_size=128, num_workers=2, shuffle=True)
+    mrr = list(range(n_epochs))
     for epoch in range(n_epochs):
         for i, (left, right, labels) in enumerate(train_data):
             labels = labels.float()
@@ -81,6 +99,13 @@ def train_network(model, objective_function, optimizer, n_epochs, train_data):
             optimizer.step()
 
             print('[%d, %5d] loss: %.3f\tpc: %.3f' % (epoch + 1, i + 1, loss.item(), percent_correct(outputs, labels)))
+        save_model(model_save_path, model, "{0}_{1}".format(model_save_path_suffix, epoch))
+        mrr[epoch] = mrr(imitations, references, model)
+    return mrr
+
+
+def evaluate_network(model, imitations, references):
+    return mrr(imitations, references, model)
 
 
 def save_model(base_path, model, path_suffix):
