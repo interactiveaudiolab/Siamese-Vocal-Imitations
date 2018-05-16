@@ -85,9 +85,5 @@ def train_network(model, imitations, references, labels, objective_function, opt
     return mrr
 
 
-def evaluate_network(model, imitations, references):
-    return mrr(imitations, references, model)
-
-
 if __name__ == "__main__":
     main()
