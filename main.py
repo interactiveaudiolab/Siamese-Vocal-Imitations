@@ -2,8 +2,9 @@ import torch
 import torch.nn as nn
 import torch.optim
 import torch.utils.data.dataloader as dataloader
+import torch.utils.data.sampler as sampler
 
-from datasets import VocalImitations, get_data
+from datasets import VocalImitations, get_data, RandomSubsetSampler
 from siamese import Siamese
 from utils import get_best_model, save_model, mrr, get_highest_ranked_original_recording, percent_correct
 
@@ -27,7 +28,12 @@ def main():
 
     # train the network using random selection
     suffix = 'random_selection'
-    MRRs = train_network(siamese, all_imitations, all_references, all_labels, criterion, optimizer, n_epochs, model_path, suffix)
+    MRRs = train_network(siamese,
+                         all_imitations, all_references, all_labels,
+                         criterion, optimizer,
+                         n_epochs,
+                         model_path, suffix,
+                         sampler=RandomSubsetSampler, sampler_args=[1])
 
     siamese = get_best_model(MRRs, model_path, suffix)
     save_model(model_path, siamese, 'random_selection_final')
@@ -52,7 +58,11 @@ def main():
             all_labels.append(highest_ranked_label)
 
         suffix = 'fine_tuned'
-        MRRs = train_network(siamese, left, right, all_labels, criterion, optimizer, n_epochs, model_path, suffix)
+        MRRs = train_network(siamese,
+                             left, right, all_labels,
+                             criterion, optimizer,
+                             n_epochs,
+                             model_path, suffix)
         siamese = get_best_model(MRRs, model_path, suffix)
         # TODO: determine when convergence has occurred
     save_model(model_path, siamese, 'fine_tuned_final')
@@ -62,8 +72,13 @@ def main():
     print("Final MRR: {0}".format(final_mrr))
 
 
-def train_network(model, imitations, references, labels, objective_function, optimizer, n_epochs, model_save_path, model_save_path_suffix):
-    train_data = dataloader.DataLoader(VocalImitations(imitations, references, labels), batch_size=128, num_workers=2, shuffle=True)
+def train_network(model, imitations, references, labels, objective_function, optimizer, n_epochs, model_save_path, model_save_path_suffix, sampler=None, sampler_args=None):
+    datasource = VocalImitations(imitations, references, labels)
+    if sampler:
+        s = sampler(datasource, *sampler_args)
+        train_data = dataloader.DataLoader(datasource, batch_size=128, num_workers=2, sampler=s)
+    else:
+        train_data = dataloader.DataLoader(datasource, batch_size=128, num_workers=2, shuffle=True)
     mrr = list(range(n_epochs))
     for epoch in range(n_epochs):
         for i, (left, right, labels) in enumerate(train_data):

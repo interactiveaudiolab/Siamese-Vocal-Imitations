@@ -1,5 +1,7 @@
 import numpy as np
+import torch
 import torch.utils.data.dataset as dataset
+from torch.utils.data.sampler import Sampler
 
 
 class VocalImitations(dataset.Dataset):
@@ -24,3 +26,16 @@ def get_data(is_train=True, max_size=None):
         labels = np.load('./data/val_pairs_labels.npy')[:max_size]
 
     return left, right, labels
+
+
+class RandomSubsetSampler(Sampler):
+    def __init__(self, data_source, subset_size):
+        super().__init__(data_source)
+        self.data_source = data_source
+        self.subset_size = subset_size
+
+    def __iter__(self):
+        return iter(torch.randperm(self.subset_size).tolist())
+
+    def __len__(self):
+        return self.subset_size
