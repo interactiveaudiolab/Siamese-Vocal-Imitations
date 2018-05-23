@@ -12,8 +12,8 @@ def calculate_spectrograms():
     """
     Calculates imitation and reference spectrograms and saves them as .npy files.
     """
-    imitation_paths = get_audio_paths("./data/audio/imitation")
-    reference_paths = get_audio_paths("./data/audio/reference")
+    imitation_paths = get_audio_paths(os.environ['SIAMESE_DATA_DIR']+"/audio/imitation")
+    reference_paths = get_audio_paths(os.environ['SIAMESE_DATA_DIR']+"/audio/reference")
 
     # build up dictionary of reference names -> reference #s
     label_n = 0

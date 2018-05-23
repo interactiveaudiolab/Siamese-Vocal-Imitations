@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 import torch
 from torch.utils.data import dataloader
@@ -75,8 +77,8 @@ def num_correct(outputs, labels):
 
 
 def load_npy(name):
-    return np.load("./data/npy/" + name)
+    return np.load(os.environ['SIAMESE_DATA_DIR'] + "/npy/" + name)
 
 
 def save_npy(array, suffix, type):
-    np.save("./data/npy/" + suffix, np.array(array).astype(type))
+    np.save(os.environ['SIAMESE_DATA_DIR'] + "/npy/" + suffix, np.array(array).astype(type))
