@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+from torch.utils.data import dataloader
 
 from siamese import Siamese
 
@@ -27,37 +28,38 @@ def save_model(base_path, model, path_suffix):
     torch.save(model.state_dict(), base_path.format(path_suffix))
 
 
-def mrr(imitations, original_recordings, siamese):
+def mrr(data, model):
+    train_data = dataloader.DataLoader(data, batch_size=1, num_workers=2)
     total_rr = 0
-    for imitation, original_recording in zip(imitations, original_recordings):
-        total_rr += rr(imitation, original_recording, original_recordings, siamese)
-    return total_rr / len(imitations)
+    for imitation, reference, label in train_data:
+        total_rr += rr(imitation, reference, train_data, model)
+    return total_rr / len(train_data)
 
 
-def rr(imitation, reference, original_recordings, siamese):
-    assert reference in original_recordings
-
+def rr(imitation, reference, data, model):
     rankings = {}
-    for original_recording in original_recordings:
-        rankings[original_recording] = siamese(imitation, original_recording)
+    for i, r, l in data:
+        rankings[r] = model(imitation, r)
 
     rankings = [(r, rankings[r]) for r in rankings.keys()]
     rankings.sort(key=lambda x: x[1])
     for i, original_recording, ranking in enumerate(rankings):
         if original_recording == reference:
             return 1 / i
+    # Should not get here
+    assert False
 
 
-def get_highest_ranked_original_recording(imitation, original_recordings, siamese):
+def get_highest_ranked_original_recording(imitation, data, siamese):
     highest_ranking = 0
     highest_ranked_example = None
     highest_ranked_label = None
     # find the highest ranked original recording
-    for original_recording in original_recordings:
-        output = siamese(imitation, original_recording)
+    for i, r, l in data:
+        output = siamese(imitation, r)
         if output > highest_ranking:
             highest_ranking = output
-            highest_ranked_example = original_recording
+            highest_ranked_example = r
             highest_ranked_label = 0  # TODO: get actual label
     return highest_ranked_example, highest_ranked_label
 
@@ -70,3 +72,11 @@ def percent_correct(outputs, labels):
 
 def num_correct(outputs, labels):
     return torch.sum(torch.round(outputs) == labels).item()
+
+
+def load_npy(name):
+    return np.load("./data/npy/" + name)
+
+
+def save_npy(array, suffix, type):
+    np.save("./data/npy/" + suffix, np.array(array).astype(type))

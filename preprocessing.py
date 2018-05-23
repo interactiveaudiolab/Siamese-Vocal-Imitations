@@ -5,8 +5,13 @@ import numpy as np
 
 from progress.bar import Bar
 
+from utils import save_npy
 
-def preprocess():
+
+def calculate_spectrograms():
+    """
+    Calculates imitation and reference spectrograms and saves them as .npy files.
+    """
     imitation_paths = get_audio_paths("./data/audio/imitation")
     reference_paths = get_audio_paths("./data/audio/reference")
 
@@ -33,10 +38,8 @@ def preprocess():
         else:
             print("Could not find imitation labeled {0} in dictionary.".format(label_name))
         imitation_bar.next()
-
-    save(imitations, "imitations.npy", "float32")
-    save(imitation_labels, "imitation_labels.npy", "uint8")
-
+    save_npy(imitations, "imitations.npy", "float32")
+    save_npy(imitation_labels, "imitation_labels.npy", "uint8")
     imitation_bar.finish()
 
     # calculate reference spectrograms and save
@@ -53,15 +56,9 @@ def preprocess():
         else:
             print("Could not find reference labeled {0} in dictionary.".format(label_name))
         reference_bar.next()
-
-    save(references, "references.npy", "float32")
-    save(reference_labels, "reference_labels.npy", "uint8")
-
+    save_npy(references, "references.npy", "float32")
+    save_npy(reference_labels, "reference_labels.npy", "uint8")
     reference_bar.finish()
-
-
-def save(array, suffix, type):
-    np.save("./data/npy/" + suffix, np.array(array).astype(type))
 
 
 def get_audio_paths(path):
@@ -124,3 +121,21 @@ def get_imitation_spectrogram(path):
     S = S[:, :482]
     S_db = librosa.power_to_db(S, ref=np.max)
     return S_db
+
+
+def normalize_spectrograms(spectrograms):
+    '''
+    data: (num_examples, num_freq_bins, num_time_frames)
+    '''
+
+    m = np.mean(spectrograms, axis=(1, 2))
+    m = m.reshape(m.shape[0], 1, 1)
+    std = np.std(spectrograms, axis=(1, 2))
+    std = std.reshape(std.shape[0], 1, 1)
+
+    m_matrix = np.repeat(np.repeat(m, spectrograms.shape[1], axis=1), spectrograms.shape[2], axis=2)
+    std_matrix = np.repeat(np.repeat(std, spectrograms.shape[1], axis=1), spectrograms.shape[2], axis=2)
+
+    normed = np.multiply(spectrograms - m_matrix, 1. / std_matrix)
+
+    return normed

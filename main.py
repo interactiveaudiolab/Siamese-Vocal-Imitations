@@ -1,21 +1,22 @@
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim
 import torch.utils.data.dataloader as dataloader
 import torch.utils.data.sampler as sampler
 
-from datasets import VocalImitations, get_data, RandomSubsetSampler
+from datasets import AllPositivesRandomNegatives
 from siamese import Siamese
 from utils import get_best_model, save_model, mrr, get_highest_ranked_original_recording, percent_correct
 
 
-def main():
+def train_on_all_data():
     # global parameters
     n_epochs = 30  # 70 in Bongjun's version, 30 in the paper
-    model_path = "./models/model_{0}"
+    model_path = "./models/train_on_all_data/model_{0}"
 
     # load up the data
-    all_imitations, all_references, all_labels = get_data()
+    training_data = AllPositivesRandomNegatives()
 
     # get a siamese network, see Siamese class for architecture
     siamese = Siamese()
@@ -29,11 +30,39 @@ def main():
     # train the network using random selection
     suffix = 'random_selection'
     MRRs = train_network(siamese,
-                         all_imitations, all_references, all_labels,
+                         training_data,
                          criterion, optimizer,
                          n_epochs,
-                         model_path, suffix,
-                         sampler=RandomSubsetSampler, sampler_args=[1])
+                         model_path, suffix)
+
+    siamese = get_best_model(MRRs, model_path, suffix)
+    save_model(model_path, siamese, 'random_selection_final')
+
+
+def train_with_finetuning():
+    # global parameters
+    n_epochs = 30  # 70 in Bongjun's version, 30 in the paper
+    model_path = "./models/model_{0}"
+
+    # load up the data
+    training_data = AllPositivesRandomNegatives()
+
+    # get a siamese network, see Siamese class for architecture
+    siamese = Siamese()
+
+    # choose our objective function
+    criterion = nn.BCELoss()
+
+    # use stochastic gradient descent, same parameters as in paper
+    optimizer = torch.optim.SGD(siamese.parameters(), lr=.01, weight_decay=.0001, momentum=.9, nesterov=True)
+
+    # train the network using random selection
+    suffix = 'random_selection'
+    MRRs = train_network(siamese,
+                         training_data,
+                         criterion, optimizer,
+                         n_epochs,
+                         model_path, suffix)
 
     siamese = get_best_model(MRRs, model_path, suffix)
     save_model(model_path, siamese, 'random_selection_final')
@@ -44,22 +73,23 @@ def main():
     # same optimizer with a different learning rate
     optimizer = torch.optim.SGD(siamese.parameters(), lr=.0001, weight_decay=.0001, momentum=.9, nesterov=True)
     while not convergence:
-        left = []
-        right = []
-        all_labels = []
-        for imitation in all_imitations:
-            highest_ranked_example, highest_ranked_label = get_highest_ranked_original_recording(imitation, all_references, siamese)
+        fine_tuning_imitations = []
+        fine_tuning_references = []
+        fine_tuning_labels = []
+        for imitation, r, l in training_data:
+            highest_reference, highest_label = get_highest_ranked_original_recording(imitation, training_data, siamese)
 
-            assert highest_ranked_example is not None
+            assert highest_reference is not None
 
             # add the top-ranked pair as an example
-            left.append(imitation)
-            right.append(highest_ranked_example)
-            all_labels.append(highest_ranked_label)
+            fine_tuning_imitations.append(imitation)
+            fine_tuning_references.append(highest_reference)
+            fine_tuning_labels.append(highest_label)
 
         suffix = 'fine_tuned'
+        fine_tuning_data = AllPositivesRandomNegatives(fine_tuning_imitations, fine_tuning_references, fine_tuning_labels)
         MRRs = train_network(siamese,
-                             left, right, all_labels,
+                             fine_tuning_data,
                              criterion, optimizer,
                              n_epochs,
                              model_path, suffix)
@@ -67,26 +97,27 @@ def main():
         # TODO: determine when convergence has occurred
     save_model(model_path, siamese, 'fine_tuned_final')
 
-    all_imitations, all_references, all_labels = get_data(is_train=False)
-    final_mrr = mrr(all_imitations, all_references, siamese)
+    testing_data = AllPositivesRandomNegatives(*get_data(is_train=False))
+    final_mrr = mrr(testing_data, siamese)
     print("Final MRR: {0}".format(final_mrr))
 
 
-def train_network(model, imitations, references, labels, objective_function, optimizer, n_epochs, model_save_path, model_save_path_suffix, sampler=None, sampler_args=None):
-    datasource = VocalImitations(imitations, references, labels)
-    if sampler:
-        s = sampler(datasource, *sampler_args)
-        train_data = dataloader.DataLoader(datasource, batch_size=128, num_workers=2, sampler=s)
-    else:
-        train_data = dataloader.DataLoader(datasource, batch_size=128, num_workers=2, shuffle=True)
-    mrr = list(range(n_epochs))
+def train_network(model, datasource, objective_function, optimizer, n_epochs, model_save_path, model_save_path_suffix):
+    mrrs = np.zeros(n_epochs)
     for epoch in range(n_epochs):
+        # if we're using all positives and random negatives, choose new negatives on each epoch
+        if isinstance(datasource, AllPositivesRandomNegatives):
+            datasource.reselect_negatives()
+
+        train_data = dataloader.DataLoader(datasource, batch_size=128, num_workers=2)
         for i, (left, right, labels) in enumerate(train_data):
             labels = labels.float()
             # clear out the gradients
             optimizer.zero_grad()
 
             # pass a batch through the network
+            left = left.unsqueeze(1)
+            right = right.unsqueeze(1)
             outputs = model(left, right)
 
             # calculate loss and optimize weights
@@ -96,9 +127,10 @@ def train_network(model, imitations, references, labels, objective_function, opt
 
             print('[%d, %5d] loss: %.3f\tpc: %.3f' % (epoch + 1, i + 1, loss.item(), percent_correct(outputs, labels)))
         save_model(model_save_path, model, "{0}_{1}".format(model_save_path_suffix, epoch))
-        mrr[epoch] = mrr(imitations, references, model)
-    return mrr
+        mrrs[epoch] = mrr(datasource, model)
+    return mrrs
 
 
 if __name__ == "__main__":
-    main()
+    # calculate_spectrograms()
+    train_on_all_data()
