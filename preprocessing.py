@@ -29,7 +29,7 @@ def preprocess():
         label_name = label_name[:label_name.find(" - ")].replace(" ", "_").replace("(", "").replace(")", "").lower()
         if label_name in label_dict:
             imitation_labels.append(label_dict[label_name])
-            # imitations.append(spectrogram)
+            imitations.append(spectrogram)
         else:
             print("Could not find imitation labeled {0} in dictionary.".format(label_name))
         imitation_bar.next()
@@ -49,7 +49,7 @@ def preprocess():
         label_name = os.path.basename(reference_path)[:-4].lower()
         if label_name in label_dict:
             reference_labels.append(label_dict[label_name])
-            # references.append(spectrogram)
+            references.append(spectrogram)
         else:
             print("Could not find reference labeled {0} in dictionary.".format(label_name))
         reference_bar.next()
