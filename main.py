@@ -6,6 +6,7 @@ import torch.utils.data.dataloader as dataloader
 import torch.utils.data.sampler as sampler
 
 from datasets import AllPositivesRandomNegatives
+from preprocessing import calculate_spectrograms
 from siamese import Siamese
 from utils import get_best_model, save_model, mrr, get_highest_ranked_original_recording, percent_correct
 
@@ -132,5 +133,5 @@ def train_network(model, datasource, objective_function, optimizer, n_epochs, mo
 
 
 if __name__ == "__main__":
-    # calculate_spectrograms()
+    calculate_spectrograms()
     train_on_all_data()
