@@ -21,6 +21,7 @@ def train_on_all_data():
 
     # get a siamese network, see Siamese class for architecture
     siamese = Siamese()
+    siamese.cuda()
 
     # choose our objective function
     criterion = nn.BCELoss()
@@ -116,6 +117,10 @@ def train_network(model, datasource, objective_function, optimizer, n_epochs, mo
             # clear out the gradients
             optimizer.zero_grad()
 
+            left = left.cuda()
+            right = right.cuda()
+            labels = labels.cuda()
+
             # pass a batch through the network
             left = left.unsqueeze(1)
             right = right.unsqueeze(1)
@@ -133,5 +138,5 @@ def train_network(model, datasource, objective_function, optimizer, n_epochs, mo
 
 
 if __name__ == "__main__":
-    calculate_spectrograms()
+    # calculate_spectrograms()
     train_on_all_data()
