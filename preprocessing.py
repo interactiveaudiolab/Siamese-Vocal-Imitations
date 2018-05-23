@@ -23,7 +23,7 @@ def preprocess():
     imitations = []
     imitation_labels = []
     for imitation_path in imitation_paths:
-        # spectrogram = get_imitation_spectrogram(imitation_path)
+        spectrogram = get_imitation_spectrogram(imitation_path)
 
         label_name = os.path.basename(imitation_path)
         label_name = label_name[:label_name.find(" - ")].replace(" ", "_").replace("(", "").replace(")", "").lower()
@@ -44,7 +44,7 @@ def preprocess():
     references = []
     reference_labels = []
     for reference_path in reference_paths:
-        # spectrogram = get_reference_spectrogram(reference_path)
+        spectrogram = get_reference_spectrogram(reference_path)
 
         label_name = os.path.basename(reference_path)[:-4].lower()
         if label_name in label_dict:
