@@ -2,6 +2,7 @@ import os
 
 import numpy as np
 import torch
+from progress.bar import Bar
 from torch.utils.data import dataloader
 
 from siamese import Siamese
@@ -30,40 +31,75 @@ def save_model(base_path, model, path_suffix):
     torch.save(model.state_dict(), base_path.format(path_suffix))
 
 
-def mrr(data, model):
-    train_data = dataloader.DataLoader(data, batch_size=1, num_workers=2)
-    total_rr = 0
+def mean_reciprocal_ranks(data, references, model, use_cuda):
+    rrs = reciprocal_ranks(data, model, references, use_cuda)
+    return rrs.mean()
+
+
+def reciprocal_ranks(data, model, references, use_cuda):
+    train_data = dataloader.DataLoader(data, batch_size=1, num_workers=1)
+    rrs = np.array([])
+    bar = Bar("Calculating reciprocal rank", max=len(train_data))
     for imitation, reference, label in train_data:
-        total_rr += rr(imitation, reference, train_data, model)
-    return total_rr / len(train_data)
+        if label.data[0]:
+            rrs = np.append(rrs, reciprocal_rank(imitation, reference, references, model, use_cuda))
+        bar.next()
+    bar.finish()
+    return rrs
 
 
-def rr(imitation, reference, data, model):
-    rankings = {}
-    for i, r, l in data:
-        rankings[r] = model(imitation, r)
+def reciprocal_rank(imitation, reference, references, model, use_cuda):
+    references = dataloader.DataLoader(references, batch_size=1, num_workers=1)
+    # reshape tensors and push to GPU if necessary
+    imitation = imitation.unsqueeze(1)
+    reference = reference.unsqueeze(1)
+    if use_cuda:
+        imitation = imitation.cuda()
+        reference = reference.cuda()
 
-    rankings = [(r, rankings[r]) for r in rankings.keys()]
-    rankings.sort(key=lambda x: x[1])
-    for i, original_recording, ranking in enumerate(rankings):
-        if original_recording == reference:
-            return 1 / i
-    # Should not get here
-    assert False
+    match_output = None
+    rankings = []
+    for r in references:
+        # reshape tensor and push to GPU if necessary
+        r = r.unsqueeze(1)
+        if use_cuda:
+            r = r.cuda()
+
+        # perform inference
+        output = model(imitation, r)
+
+        # if this one is the matching reference, hold on to that value
+        if torch.equal(r, reference):
+            match_output = output
+        rankings.append(output.tolist()[0])  # get single value out of tensor
+
+    rankings.sort(reverse=True)
+
+    # rr = 1 / rank of matching reference
+    return 1 / (rankings.index(match_output) + 1)  # rank = index + 1
 
 
-def get_highest_ranked_original_recording(imitation, data, siamese):
+def get_highest_ranked_negative_reference(imitation, reference, references, model, use_cuda):
     highest_ranking = 0
     highest_ranked_example = None
-    highest_ranked_label = None
-    # find the highest ranked original recording
-    for i, r, l in data:
-        output = siamese(imitation, r)
-        if output > highest_ranking:
+
+    # reshape tensors and push to GPU if necessary
+    imitation = imitation.unsqueeze(1)
+    reference = reference.unsqueeze(1)
+    if use_cuda:
+        imitation = imitation.cuda()
+        reference = reference.cuda()
+
+    for r in references:
+        # reshape tensor and push to GPU if necessary
+        r = r.unsqueeze(1)
+        if use_cuda:
+            r = r.cuda()
+        output = model(imitation, r)
+        if output > highest_ranking and not torch.equal(r, reference):
             highest_ranking = output
             highest_ranked_example = r
-            highest_ranked_label = 0  # TODO: get actual label
-    return highest_ranked_example, highest_ranked_label
+    return highest_ranked_example
 
 
 def percent_correct(outputs, labels):
@@ -82,3 +118,18 @@ def load_npy(name):
 
 def save_npy(array, suffix, type):
     np.save(os.environ['SIAMESE_DATA_DIR'] + "/npy/" + suffix, np.array(array).astype(type))
+
+
+def prindent(str, n_indent):
+    p_str = ''
+    for i in range(n_indent):
+        p_str += '\t'
+    p_str += str
+    print(p_str)
+
+
+def print_final_stats(rrs):
+    prindent("mean: {0}".format(rrs.mean()), 1)
+    prindent("stddev: {0}".format(rrs.std()), 1)
+    prindent("min: {0}".format(rrs.min()), 1)
+    prindent("max: {0}".format(rrs.max()), 1)
