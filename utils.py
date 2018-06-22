@@ -19,12 +19,17 @@ def get_best_model(MRRs, base_path, path_suffix):
     """
     best_model = np.argmax(MRRs)
     model = Siamese()
-    load_model(model, best_model, base_path, path_suffix)
+    load_model_from_epoch(model, best_model, base_path, path_suffix)
     return model
 
 
-def load_model(model, best_epoch, base_path, path_suffix):
-    model.load_state_dict(torch.load(base_path.format("{0}_{1}".format(path_suffix, best_epoch))))
+def load_model_from_epoch(model, best_epoch, base_path, path_suffix):
+    format_str = "{0}_{1}".format(path_suffix, best_epoch)
+    load_model(base_path, model, format_str)
+
+
+def load_model(base_path, model, path_suffix):
+    model.load_state_dict(torch.load(base_path.format(path_suffix)))
 
 
 def save_model(base_path, model, path_suffix):
