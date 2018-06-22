@@ -1,10 +1,9 @@
-import os
-
 import numpy as np
 import torch
 from progress.bar import Bar
 from torch.utils.data import dataloader
 
+from data_utils import load_model_from_epoch
 from siamese import Siamese
 
 
@@ -21,19 +20,6 @@ def get_best_model(MRRs, base_path, path_suffix):
     model = Siamese()
     load_model_from_epoch(model, best_model, base_path, path_suffix)
     return model
-
-
-def load_model_from_epoch(model, best_epoch, base_path, path_suffix):
-    format_str = "{0}_{1}".format(path_suffix, best_epoch)
-    load_model(base_path, model, format_str)
-
-
-def load_model(base_path, model, path_suffix):
-    model.load_state_dict(torch.load(base_path.format(path_suffix)))
-
-
-def save_model(base_path, model, path_suffix):
-    torch.save(model.state_dict(), base_path.format(path_suffix))
 
 
 def mean_reciprocal_ranks(data, references, model, use_cuda):
@@ -115,26 +101,3 @@ def percent_correct(outputs, labels):
 
 def num_correct(outputs, labels):
     return torch.sum(torch.round(outputs) == labels).item()
-
-
-def load_npy(name):
-    return np.load(os.environ['SIAMESE_DATA_DIR'] + "/npy/" + name)
-
-
-def save_npy(array, suffix, type):
-    np.save(os.environ['SIAMESE_DATA_DIR'] + "/npy/" + suffix, np.array(array).astype(type))
-
-
-def prindent(str, n_indent):
-    p_str = ''
-    for i in range(n_indent):
-        p_str += '\t'
-    p_str += str
-    print(p_str)
-
-
-def print_final_stats(rrs):
-    prindent("mean: {0}".format(rrs.mean()), 1)
-    prindent("stddev: {0}".format(rrs.std()), 1)
-    prindent("min: {0}".format(rrs.min()), 1)
-    prindent("max: {0}".format(rrs.max()), 1)
