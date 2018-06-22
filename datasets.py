@@ -50,8 +50,8 @@ class FineTuned(dataset.Dataset):
 
 
 class AllPositivesRandomNegatives(dataset.Dataset):
-    def __init__(self):
-        positives, negatives = self.get_all_training_pairs()
+    def __init__(self, limit):
+        positives, negatives = self.get_all_training_pairs(limit)
         self.positives = positives
         self.negatives = negatives
         self.pairs = []
@@ -77,7 +77,7 @@ class AllPositivesRandomNegatives(dataset.Dataset):
         return len(self.pairs)
 
     @staticmethod
-    def get_all_training_pairs():
+    def get_all_training_pairs(limit):
         """
         Create all possible pairs of imitation and reference.
 
@@ -90,6 +90,10 @@ class AllPositivesRandomNegatives(dataset.Dataset):
         imitations = load_npy("imitations.npy")
         imitations = normalize_spectrograms(imitations)
         imitation_labels = load_npy("imitation_labels.npy")
+
+        if limit:
+            references = references[:limit]
+            imitations = imitations[:limit]
 
         bar = Bar("Creating all training pairs...", max=len(references) * len(imitations))
         positive_pairs = []  # (imitation spectrogram, reference spectrogram)
@@ -202,7 +206,7 @@ class OneImitationAllReferences(dataset.Dataset):
 
 
 class AllPairs(dataset.Dataset):
-    def __init__(self):
+    def __init__(self, limit):
         imitations = load_npy("imitations.npy")
         imitations = normalize_spectrograms(imitations)
         imitation_labels = load_npy("imitation_labels.npy")
@@ -210,6 +214,10 @@ class AllPairs(dataset.Dataset):
         references = load_npy("references.npy")
         references = normalize_spectrograms(references)
         reference_labels = load_npy("reference_labels.npy")
+
+        if limit:
+            references = references[:limit]
+            imitations = imitations[:limit]
 
         self.imitations = imitations
         self.references = references

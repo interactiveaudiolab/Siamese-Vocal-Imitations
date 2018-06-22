@@ -1,3 +1,4 @@
+import argparse
 import sys
 import datetime
 import traceback
@@ -15,13 +16,13 @@ import datasets
 from siamese import Siamese
 
 
-def train_random_selection(use_cuda):
+def train_random_selection(use_cuda, limit=None):
     # global parameters
     n_epochs = 70  # 70 in Bongjun's version, 30 in the paper
     model_path = "./models/train_on_all_data/model_{0}"
 
-    training_data = datasets.AllPositivesRandomNegatives()
-    all_pairs = datasets.AllPairs()
+    training_data = datasets.AllPositivesRandomNegatives(limit)
+    all_pairs = datasets.AllPairs(limit)
 
     # get a siamese network, see Siamese class for architecture
     siamese = Siamese()
@@ -171,9 +172,13 @@ def train_network(model, data, all_pairs, objective, optimizer, n_epochs, model_
 
 
 if __name__ == "__main__":
-    use_cuda_arg = sys.argv[1] if len(sys.argv) > 1 else False
-    print("CUDA {0}...".format("enabled" if use_cuda_arg else "disabled"))
-
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-l', '--limit', default=None, type=int)
+    parser.add_argument('-c', '--cuda', action='store_const', const=True, default=False)
+    args = parser.parse_args()
+    print("CUDA {0}...".format("enabled" if args.cuda else "disabled"))
+    if args.limit:
+        print("Limiting to {0} imitations/references".format(args.limit))
     # calculate_spectrograms()
-    train_random_selection(use_cuda_arg)
-    # train_fine_tuning(use_cuda_arg, use_cached_baseline=False)
+    train_random_selection(args.cuda, limit=args.limit)
+    # train_fine_tuning(args.cuda, use_cached_baseline=False)
