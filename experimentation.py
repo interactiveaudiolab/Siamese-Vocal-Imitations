@@ -36,7 +36,7 @@ def mean_reciprocal_ranks(model, all_pairs, use_cuda):
         match = output_col[match_location]
         output_col[::-1].sort()
         index = np.where(output_col == match)[0][0]
-        a[i] = 1 / index
+        a[i] = 1 / (index + 1)
 
     return a.mean()
 
