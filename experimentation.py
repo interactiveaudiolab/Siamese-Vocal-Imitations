@@ -1,10 +1,8 @@
 import numpy as np
 import torch
 from progress.bar import Bar
-from torch import Tensor
 from torch.utils.data import dataloader
 
-import datasets
 from data_utils import load_model_from_epoch
 from siamese import Siamese
 
@@ -25,6 +23,10 @@ def get_best_model(MRRs, base_path, path_suffix):
 
 
 def mean_reciprocal_ranks(model, all_pairs, use_cuda):
+    return reciprocal_ranks(model, all_pairs, use_cuda).mean()
+
+
+def reciprocal_ranks(model, all_pairs, use_cuda):
     rrs = confusion_matrix(model, all_pairs, use_cuda)
     rrs = rrs.reshape([all_pairs.n_imitations, all_pairs.n_references])
 
@@ -38,7 +40,7 @@ def mean_reciprocal_ranks(model, all_pairs, use_cuda):
         index = np.where(output_col == match)[0][0]
         a[i] = 1 / (index + 1)
 
-    return a.mean()
+    return a
 
 
 def confusion_matrix(model, all_pairs, use_cuda):

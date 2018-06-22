@@ -1,22 +1,23 @@
 import argparse
-import sys
 import datetime
+import logging
 import traceback
 
 import numpy as np
 import torch
+import torch.optim
 from progress.bar import Bar
 from torch.nn import BCELoss
-import torch.optim
 from torch.utils.data.dataloader import DataLoader
 
 import data_utils
-import experimentation
 import datasets
+import experimentation
 from siamese import Siamese
 
 
 def train_random_selection(use_cuda, limit=None):
+    logger = logging.getLogger('logger')
     # global parameters
     n_epochs = 70  # 70 in Bongjun's version, 30 in the paper
     model_path = "./models/train_on_all_data/model_{0}"
@@ -38,27 +39,26 @@ def train_random_selection(use_cuda, limit=None):
     suffix = 'random_selection'
 
     try:
+        logging.info("Training using random selection...")
         MRRs = train_network(siamese,
                              training_data, all_pairs,
                              criterion, optimizer,
                              n_epochs,
                              model_path, suffix, use_cuda, calculate_mrr=True)
-        rrs = experimentation.confusion_matrix(siamese, all_pairs, use_cuda)
     except Exception as e:
         data_utils.save_model(model_path, siamese, 'crash_backup_{0}'.format(datetime.datetime.now()))
-        print("Exception occurred while training: {0}".format(str(e)))
-        print(traceback.print_exc())
+        logger.critical("Exception occurred while training: {0}".format(str(e)))
+        logger.critical(traceback.print_exc())
         exit(1)
 
-    print("Results from training on all positives and random negatives:")
-    data_utils.print_final_stats(rrs)
+    # get best model
+    siamese = experimentation.get_best_model(MRRs, model_path, suffix)
+    data_utils.save_model(model_path, siamese, 'random_selection_final')
 
+    rrs = experimentation.reciprocal_ranks(siamese, all_pairs, use_cuda)
+    logger.info("Results from best model generated during random-selection training:")
+    data_utils.log_final_stats(rrs)
     return siamese
-
-    # siamese = get_best_model(MRRs, model_path, suffix)
-    # for mrr_result in MRRs:
-    #     print("mrr_result: {0}".format(mrr_result))
-    # save_model(model_path, siamese, 'random_selection_final')
 
 
 def train_fine_tuning(use_cuda, use_cached_baseline=False):
@@ -119,7 +119,7 @@ def train_fine_tuning(use_cuda, use_cached_baseline=False):
         exit(1)
 
     print("Results from training after fine-tuning:")
-    data_utils.print_final_stats(rrs)
+    data_utils.log_final_stats(rrs)
 
     print("Final MRR: {0}".format(final_mrr))
 
@@ -129,6 +129,7 @@ def convergence(best_mrrs, convergence_threshold):
 
 
 def train_network(model, data, all_pairs, objective, optimizer, n_epochs, model_save_path, model_save_path_suffix, use_cuda, calculate_mrr=True):
+    logger = logging.getLogger('logger')
     mrrs = np.zeros(n_epochs)
     for epoch in range(n_epochs):
         # if we're using all positives and random negatives, choose new negatives on each epoch
@@ -166,19 +167,39 @@ def train_network(model, data, all_pairs, objective, optimizer, n_epochs, model_
         data_utils.save_model(model_save_path, model, "{0}_{1}".format(model_save_path_suffix, epoch))
         if calculate_mrr:
             mrr_result = experimentation.mean_reciprocal_ranks(model, all_pairs, use_cuda)
-            print("MRR at epoch {0} = {1}".format(epoch, mrr_result))
+            logger.info("MRR at epoch {0} = {1}".format(epoch, mrr_result))
             mrrs[epoch] = mrr_result
     return mrrs
 
 
-if __name__ == "__main__":
+def main():
+    # set up logger
+    logger = logging.getLogger('logger')
+    logger.setLevel(logging.DEBUG)
+    # handlers and formatter
+    console_handler = logging.StreamHandler()
+    file_handler = logging.FileHandler('siamese.log')
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s \t %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+    console_handler.setFormatter(formatter)
+    file_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
+    logger.addHandler(file_handler)
+
+    # parse arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument('-l', '--limit', default=None, type=int)
-    parser.add_argument('-c', '--cuda', action='store_const', const=True, default=False)
+    parser.add_argument('-l', '--limit', default=None, type=int, help='Optional limit on the size of the dataset, useful for debugging')
+    parser.add_argument('-c', '--cuda', action='store_const', const=True, default=False, help='Whether to enable calculation on the GPU through CUDA or not')
     args = parser.parse_args()
-    print("CUDA {0}...".format("enabled" if args.cuda else "disabled"))
+
+    logger.info('Beginning experiment...')
+    logger.info("CUDA {0}...".format("enabled" if args.cuda else "disabled"))
     if args.limit:
-        print("Limiting to {0} imitations/references".format(args.limit))
+        logger.info("Limiting to {0} imitations/references".format(args.limit))
+
     # calculate_spectrograms()
-    train_random_selection(args.cuda, limit=args.limit)
     # train_fine_tuning(args.cuda, use_cached_baseline=False)
+    train_random_selection(args.cuda, limit=args.limit)
+
+
+if __name__ == "__main__":
+    main()
