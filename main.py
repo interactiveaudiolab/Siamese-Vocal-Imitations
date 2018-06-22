@@ -9,9 +9,10 @@ from torch.nn import BCELoss
 import torch.optim
 from torch.utils.data.dataloader import DataLoader
 
+import data_utils
+import experimentation
 import datasets
 from siamese import Siamese
-import utils
 
 
 def train_random_selection(use_cuda):
@@ -20,7 +21,7 @@ def train_random_selection(use_cuda):
     model_path = "./models/train_on_all_data/model_{0}"
 
     training_data = datasets.AllPositivesRandomNegatives()
-    references = datasets.AllReferences()
+    positive_pairs = datasets.AllPositivePairs()
 
     # get a siamese network, see Siamese class for architecture
     siamese = Siamese()
@@ -37,19 +38,19 @@ def train_random_selection(use_cuda):
 
     try:
         MRRs = train_network(siamese,
-                             training_data, references,
+                             training_data, positive_pairs,
                              criterion, optimizer,
                              n_epochs,
-                             model_path, suffix, use_cuda, calculate_mrr=False)
-        rrs = utils.reciprocal_ranks(training_data, siamese, references, use_cuda)
+                             model_path, suffix, use_cuda, calculate_mrr=True)
+        rrs = experimentation.reciprocal_ranks(siamese, positive_pairs, use_cuda)
     except Exception as e:
-        utils.save_model(model_path, siamese, 'crash_backup_{0}'.format(datetime.datetime.now()))
+        data_utils.save_model(model_path, siamese, 'crash_backup_{0}'.format(datetime.datetime.now()))
         print("Exception occurred while training: {0}".format(str(e)))
         print(traceback.print_exc())
         exit(1)
 
     print("Results from training on all positives and random negatives:")
-    utils.print_final_stats(rrs)
+    data_utils.print_final_stats(rrs)
 
     return siamese
 
@@ -65,7 +66,7 @@ def train_fine_tuning(use_cuda, use_cached_baseline=False):
         siamese = Siamese()
         if use_cuda:
             siamese = siamese.cuda()
-        utils.load_model('./models/train_on_all_data/model_{0}', siamese, 'random_selection_final')
+        data_utils.load_model('./models/train_on_all_data/model_{0}', siamese, 'random_selection_final')
     else:
         siamese = train_random_selection(use_cuda)
 
@@ -93,7 +94,7 @@ def train_fine_tuning(use_cuda, use_cached_baseline=False):
 
             bar = Bar("Running hard-negative selection...", max=len(positive_pairs))
             for imitation, reference in positive_pairs:
-                highest_reference = utils.get_highest_ranked_negative_reference(imitation, reference, references, siamese, use_cuda)
+                highest_reference = experimentation.get_highest_ranked_negative_reference(imitation, reference, references, siamese, use_cuda)
                 fine_tuning_data.add_negative(imitation, highest_reference)
                 bar.next()
             bar.finish()
@@ -104,20 +105,20 @@ def train_fine_tuning(use_cuda, use_cached_baseline=False):
                                        criterion, optimizer,
                                        n_epochs,
                                        model_path, suffix, use_cuda)
-            siamese = utils.get_best_model(epoch_mrrs, model_path, suffix)
+            siamese = experimentation.get_best_model(epoch_mrrs, model_path, suffix)
             best_mrrs.append(np.max(epoch_mrrs))
-            rrs = utils.reciprocal_ranks(fine_tuning_data, siamese, references, use_cuda)
+            rrs = experimentation.reciprocal_ranks(fine_tuning_data, siamese, references, use_cuda)
 
-        utils.save_model(model_path, siamese, 'fine_tuned_final')
-        final_mrr = utils.mean_reciprocal_ranks(fine_tuning_data, references, siamese, use_cuda)
+        data_utils.save_model(model_path, siamese, 'fine_tuned_final')
+        final_mrr = experimentation.mean_reciprocal_ranks(fine_tuning_data, references, siamese, use_cuda)
     except Exception as e:
-        utils.save_model(model_path, siamese, 'crash_backup_{0}'.format(datetime.datetime.now()))
+        data_utils.save_model(model_path, siamese, 'crash_backup_{0}'.format(datetime.datetime.now()))
         print("Exception occurred while training: {0}".format(str(e)))
         print(traceback.print_exc())
         exit(1)
 
     print("Results from training after fine-tuning:")
-    utils.print_final_stats(rrs)
+    data_utils.print_final_stats(rrs)
 
     print("Final MRR: {0}".format(final_mrr))
 
@@ -126,14 +127,14 @@ def convergence(best_mrrs, convergence_threshold):
     return not (len(best_mrrs) <= 2) and np.abs(best_mrrs[len(best_mrrs) - 1] - best_mrrs[len(best_mrrs) - 2]) < convergence_threshold
 
 
-def train_network(model, data, references, objective, optimizer, n_epochs, model_save_path, model_save_path_suffix, use_cuda, calculate_mrr=True):
+def train_network(model, data, positive_pairs, objective, optimizer, n_epochs, model_save_path, model_save_path_suffix, use_cuda, calculate_mrr=True):
     mrrs = np.zeros(n_epochs)
     for epoch in range(n_epochs):
         # if we're using all positives and random negatives, choose new negatives on each epoch
         if isinstance(data, datasets.AllPositivesRandomNegatives):
             data.reselect_negatives()
 
-        train_data = DataLoader(data, batch_size=16, num_workers=1)
+        train_data = DataLoader(data, batch_size=32, num_workers=1)
         bar = Bar("Training epoch {0}".format(epoch), max=len(train_data))
         for i, (left, right, labels) in enumerate(train_data):
             # clear out the gradients
@@ -161,9 +162,9 @@ def train_network(model, data, references, objective, optimizer, n_epochs, model
             bar.next()
         bar.finish()
 
-        utils.save_model(model_save_path, model, "{0}_{1}".format(model_save_path_suffix, epoch))
+        data_utils.save_model(model_save_path, model, "{0}_{1}".format(model_save_path_suffix, epoch))
         if calculate_mrr:
-            mrr_result = utils.mean_reciprocal_ranks(data, references, model, use_cuda)
+            mrr_result = experimentation.mean_reciprocal_ranks(model, positive_pairs, use_cuda)
             print("MRR at epoch {0} = {1}".format(epoch, mrr_result))
             mrrs[epoch] = mrr_result
     return mrrs
@@ -174,5 +175,5 @@ if __name__ == "__main__":
     print("CUDA {0}...".format("enabled" if use_cuda_arg else "disabled"))
 
     # calculate_spectrograms()
-    # train_random_selection(use_cuda_arg)
-    train_fine_tuning(use_cuda_arg, use_cached_baseline=True)
+    train_random_selection(use_cuda_arg)
+    # train_fine_tuning(use_cuda_arg, use_cached_baseline=False)

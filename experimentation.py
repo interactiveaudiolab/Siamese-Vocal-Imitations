@@ -3,6 +3,7 @@ import torch
 from progress.bar import Bar
 from torch.utils.data import dataloader
 
+import datasets
 from data_utils import load_model_from_epoch
 from siamese import Siamese
 
@@ -22,52 +23,61 @@ def get_best_model(MRRs, base_path, path_suffix):
     return model
 
 
-def mean_reciprocal_ranks(data, references, model, use_cuda):
-    rrs = reciprocal_ranks(data, model, references, use_cuda)
+def mean_reciprocal_ranks(model, positive_pairs, use_cuda):
+    rrs = reciprocal_ranks(model, positive_pairs, use_cuda)
     return rrs.mean()
 
 
-def reciprocal_ranks(data, model, references, use_cuda):
-    train_data = dataloader.DataLoader(data, batch_size=1, num_workers=1)
+def reciprocal_ranks(model, positive_pairs, use_cuda):
     rrs = np.array([])
-    bar = Bar("Calculating reciprocal rank", max=len(train_data))
-    for imitation, reference, label in train_data:
-        if label.data[0]:
-            rrs = np.append(rrs, reciprocal_rank(imitation, reference, references, model, use_cuda))
+    all_pairs = datasets.OneImitationAllReferences()
+    bar = Bar("Calculating reciprocal rank", max=len(positive_pairs))
+    positive_pairs = dataloader.DataLoader(positive_pairs, batch_size=1, num_workers=1)
+    for imitation, reference in positive_pairs:
+        all_pairs.set_imitation(imitation)
+        rr = reciprocal_rank(model, reference, all_pairs, use_cuda)
+        rrs = np.append(rrs, rr)
         bar.next()
     bar.finish()
     return rrs
 
 
-def reciprocal_rank(imitation, reference, references, model, use_cuda):
-    references = dataloader.DataLoader(references, batch_size=1, num_workers=1)
+def reciprocal_rank(model, correct_reference, all_pairs, use_cuda):
     # reshape tensors and push to GPU if necessary
-    imitation = imitation.unsqueeze(1)
-    reference = reference.unsqueeze(1)
+    correct_reference = correct_reference.unsqueeze(1)
     if use_cuda:
-        imitation = imitation.cuda()
-        reference = reference.cuda()
+        correct_reference = correct_reference.cuda()
 
     match_output = None
     rankings = []
-    for r in references:
-        # reshape tensor and push to GPU if necessary
-        r = r.unsqueeze(1)
+    all_pairs = dataloader.DataLoader(all_pairs, batch_size=32, num_workers=1)
+    for imitation, reference in all_pairs:
+        # reshape tensors and push to GPU if necessary
+        # do not unsqueeze the imitation tensor - it already has the right shape
+        reference = reference.unsqueeze(1)
         if use_cuda:
-            r = r.cuda()
+            imitation = imitation.cuda()
+            reference = reference.cuda()
 
-        # perform inference
-        output = model(imitation, r)
+        # # perform inference
+        # print(imitation.shape)
+        # print(reference.shape)
+        # exit(-1)
+        output = model(imitation, reference)
 
         # if this one is the matching reference, hold on to that value
-        if torch.equal(r, reference):
-            match_output = output
-        rankings.append(output.tolist()[0])  # get single value out of tensor
+        for i, r in enumerate(reference):
+            r = r.unsqueeze(1)
+            if torch.equal(r, correct_reference):
+                match_output = output.tolist()[i]
 
-    rankings.sort(reverse=True)
+        rankings = np.concatenate([rankings, output.tolist()])
+
+    # sort descending
+    rankings[::-1].sort()
 
     # rr = 1 / rank of matching reference
-    return 1 / (rankings.index(match_output) + 1)  # rank = index + 1
+    return 1 / (np.where(rankings == match_output)[0][0] + 1)  # rank = index + 1
 
 
 def get_highest_ranked_negative_reference(imitation, reference, references, model, use_cuda):
