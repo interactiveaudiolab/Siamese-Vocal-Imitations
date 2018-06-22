@@ -91,7 +91,7 @@ class AllPositivesRandomNegatives(dataset.Dataset):
         imitations = normalize_spectrograms(imitations)
         imitation_labels = load_npy("imitation_labels.npy")
 
-        bar = Bar("Creating training pairs", max=len(references) * len(imitations))
+        bar = Bar("Creating all training pairs...", max=len(references) * len(imitations))
         positive_pairs = []  # (imitation spectrogram, reference spectrogram)
         negative_pairs = []
         # i = 0
@@ -142,7 +142,7 @@ class AllPositivePairs(dataset.Dataset):
         self.all_positives = self.get_positive_pairs()
         self.pairs = []
         for i, r in self.all_positives:
-            self.pairs.append([i, r, True])
+            self.pairs.append([i, r])
 
     def __getitem__(self, index):
         return self.pairs[index]
@@ -160,7 +160,7 @@ class AllPositivePairs(dataset.Dataset):
         imitations = normalize_spectrograms(imitations)
         imitation_labels = load_npy("imitation_labels.npy")
 
-        bar = Bar("Creating training pairs", max=len(references) * len(imitations))
+        bar = Bar("Creating positive training pairs...", max=len(references) * len(imitations))
         pairs = []  # (imitation spectrogram, reference spectrogram)
         for reference, reference_label in zip(references, reference_labels):
             for imitation, imitation_label in zip(imitations, imitation_labels):
