@@ -199,3 +199,41 @@ class OneImitationAllReferences(dataset.Dataset):
 
     def __len__(self):
         return len(self.references)
+
+
+class AllPairs(dataset.Dataset):
+    def __init__(self):
+        imitations = load_npy("imitations.npy")
+        imitations = normalize_spectrograms(imitations)
+        imitation_labels = load_npy("imitation_labels.npy")
+
+        references = load_npy("references.npy")
+        references = normalize_spectrograms(references)
+        reference_labels = load_npy("reference_labels.npy")
+
+        self.imitations = imitations
+        self.references = references
+
+        self.n_imitations = len(imitations)
+        self.n_references = len(references)
+
+        bar = Bar("Creating all possible pairs...", max=len(references) * len(imitations))
+        self.pairs = []
+        self.labels = np.zeros([self.n_imitations, self.n_references])
+        for i, (imitation, imitation_label) in enumerate(zip(imitations, imitation_labels)):
+            for j, (reference, reference_label) in enumerate(zip(references, reference_labels)):
+                if reference_label == imitation_label:
+                    self.pairs.append([imitation, reference, True])
+                    self.labels[i, j] = 1
+                else:
+                    self.pairs.append([imitation, reference, False])
+                    self.labels[i, j] = 0
+
+                bar.next()
+        bar.finish()
+
+    def __getitem__(self, index):
+        return self.pairs[index]
+
+    def __len__(self):
+        return len(self.pairs)

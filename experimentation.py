@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 from progress.bar import Bar
+from torch import Tensor
 from torch.utils.data import dataloader
 
 import datasets
@@ -23,61 +24,43 @@ def get_best_model(MRRs, base_path, path_suffix):
     return model
 
 
-def mean_reciprocal_ranks(model, positive_pairs, use_cuda):
-    rrs = reciprocal_ranks(model, positive_pairs, use_cuda)
-    return rrs.mean()
+def mean_reciprocal_ranks(model, all_pairs, use_cuda):
+    rrs = confusion_matrix(model, all_pairs, use_cuda)
+    rrs = rrs.reshape([all_pairs.n_imitations, all_pairs.n_references])
+
+    a = np.zeros([all_pairs.n_imitations])
+    for i, imitation in enumerate(all_pairs.imitations):
+        output_col = rrs[i, :]
+        label_col = all_pairs.labels[i, :]
+        match_location = np.where(label_col == 1)[0][0]
+        match = output_col[match_location]
+        output_col[::-1].sort()
+        index = np.where(output_col == match)[0][0]
+        a[i] = 1 / index
+
+    return a.mean()
 
 
-def reciprocal_ranks(model, positive_pairs, use_cuda):
+def confusion_matrix(model, all_pairs, use_cuda):
     rrs = np.array([])
-    all_pairs = datasets.OneImitationAllReferences()
-    bar = Bar("Calculating reciprocal rank", max=len(positive_pairs))
-    positive_pairs = dataloader.DataLoader(positive_pairs, batch_size=1, num_workers=1)
-    for imitation, reference in positive_pairs:
-        all_pairs.set_imitation(imitation)
-        rr = reciprocal_rank(model, reference, all_pairs, use_cuda)
-        rrs = np.append(rrs, rr)
+    all_pairs = dataloader.DataLoader(all_pairs, batch_size=128, num_workers=1)
+
+    bar = Bar("Calculating confusion matrix", max=len(all_pairs))
+    for imitations, references, label in all_pairs:
+        # reshape tensors and push to GPU if necessary
+        imitations = imitations.unsqueeze(1)
+        references = references.unsqueeze(1)
+        if use_cuda:
+            imitations = imitations.cuda()
+            references = references.cuda()
+
+        output = model(imitations, references)
+        rrs = np.concatenate([rrs, output.detach().cpu().numpy()])
+
         bar.next()
     bar.finish()
+
     return rrs
-
-
-def reciprocal_rank(model, correct_reference, all_pairs, use_cuda):
-    # reshape tensors and push to GPU if necessary
-    correct_reference = correct_reference.unsqueeze(1)
-    if use_cuda:
-        correct_reference = correct_reference.cuda()
-
-    match_output = None
-    rankings = []
-    all_pairs = dataloader.DataLoader(all_pairs, batch_size=32, num_workers=1)
-    for imitation, reference in all_pairs:
-        # reshape tensors and push to GPU if necessary
-        # do not unsqueeze the imitation tensor - it already has the right shape
-        reference = reference.unsqueeze(1)
-        if use_cuda:
-            imitation = imitation.cuda()
-            reference = reference.cuda()
-
-        # # perform inference
-        # print(imitation.shape)
-        # print(reference.shape)
-        # exit(-1)
-        output = model(imitation, reference)
-
-        # if this one is the matching reference, hold on to that value
-        for i, r in enumerate(reference):
-            r = r.unsqueeze(1)
-            if torch.equal(r, correct_reference):
-                match_output = output.tolist()[i]
-
-        rankings = np.concatenate([rankings, output.tolist()])
-
-    # sort descending
-    rankings[::-1].sort()
-
-    # rr = 1 / rank of matching reference
-    return 1 / (np.where(rankings == match_output)[0][0] + 1)  # rank = index + 1
 
 
 def get_highest_ranked_negative_reference(imitation, reference, references, model, use_cuda):

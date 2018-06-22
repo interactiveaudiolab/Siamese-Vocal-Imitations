@@ -21,7 +21,7 @@ def train_random_selection(use_cuda):
     model_path = "./models/train_on_all_data/model_{0}"
 
     training_data = datasets.AllPositivesRandomNegatives()
-    positive_pairs = datasets.AllPositivePairs()
+    all_pairs = datasets.AllPairs()
 
     # get a siamese network, see Siamese class for architecture
     siamese = Siamese()
@@ -38,11 +38,11 @@ def train_random_selection(use_cuda):
 
     try:
         MRRs = train_network(siamese,
-                             training_data, positive_pairs,
+                             training_data, all_pairs,
                              criterion, optimizer,
                              n_epochs,
                              model_path, suffix, use_cuda, calculate_mrr=True)
-        rrs = experimentation.reciprocal_ranks(siamese, positive_pairs, use_cuda)
+        rrs = experimentation.confusion_matrix(siamese, all_pairs, use_cuda)
     except Exception as e:
         data_utils.save_model(model_path, siamese, 'crash_backup_{0}'.format(datetime.datetime.now()))
         print("Exception occurred while training: {0}".format(str(e)))
@@ -107,10 +107,10 @@ def train_fine_tuning(use_cuda, use_cached_baseline=False):
                                        model_path, suffix, use_cuda)
             siamese = experimentation.get_best_model(epoch_mrrs, model_path, suffix)
             best_mrrs.append(np.max(epoch_mrrs))
-            rrs = experimentation.reciprocal_ranks(fine_tuning_data, siamese, references, use_cuda)
+            rrs = experimentation.confusion_matrix(fine_tuning_data, siamese, references, use_cuda)
 
         data_utils.save_model(model_path, siamese, 'fine_tuned_final')
-        final_mrr = experimentation.mean_reciprocal_ranks(fine_tuning_data, references, siamese, use_cuda)
+        final_mrr = experimentation.mean_reciprocal_ranks(fine_tuning_data, siamese, use_cuda)
     except Exception as e:
         data_utils.save_model(model_path, siamese, 'crash_backup_{0}'.format(datetime.datetime.now()))
         print("Exception occurred while training: {0}".format(str(e)))
@@ -127,14 +127,14 @@ def convergence(best_mrrs, convergence_threshold):
     return not (len(best_mrrs) <= 2) and np.abs(best_mrrs[len(best_mrrs) - 1] - best_mrrs[len(best_mrrs) - 2]) < convergence_threshold
 
 
-def train_network(model, data, positive_pairs, objective, optimizer, n_epochs, model_save_path, model_save_path_suffix, use_cuda, calculate_mrr=True):
+def train_network(model, data, all_pairs, objective, optimizer, n_epochs, model_save_path, model_save_path_suffix, use_cuda, calculate_mrr=True):
     mrrs = np.zeros(n_epochs)
     for epoch in range(n_epochs):
         # if we're using all positives and random negatives, choose new negatives on each epoch
         if isinstance(data, datasets.AllPositivesRandomNegatives):
             data.reselect_negatives()
 
-        train_data = DataLoader(data, batch_size=32, num_workers=1)
+        train_data = DataLoader(data, batch_size=128, num_workers=1)
         bar = Bar("Training epoch {0}".format(epoch), max=len(train_data))
         for i, (left, right, labels) in enumerate(train_data):
             # clear out the gradients
@@ -164,7 +164,7 @@ def train_network(model, data, positive_pairs, objective, optimizer, n_epochs, m
 
         data_utils.save_model(model_save_path, model, "{0}_{1}".format(model_save_path_suffix, epoch))
         if calculate_mrr:
-            mrr_result = experimentation.mean_reciprocal_ranks(model, positive_pairs, use_cuda)
+            mrr_result = experimentation.mean_reciprocal_ranks(model, all_pairs, use_cuda)
             print("MRR at epoch {0} = {1}".format(epoch, mrr_result))
             mrrs[epoch] = mrr_result
     return mrrs
