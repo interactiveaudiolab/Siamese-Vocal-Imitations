@@ -95,7 +95,7 @@ def train_fine_tuning(use_cuda, use_cached_baseline=False):
 
             bar = Bar("Running hard-negative selection...", max=len(positive_pairs))
             for imitation, reference in positive_pairs:
-                highest_reference = experimentation.get_highest_ranked_negative_reference(imitation, reference, references, siamese, use_cuda)
+                highest_reference = experimentation.hard_negative_selection(imitation, reference, references, siamese, use_cuda)
                 fine_tuning_data.add_negative(imitation, highest_reference)
                 bar.next()
             bar.finish()

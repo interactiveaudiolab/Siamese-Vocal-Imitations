@@ -3,7 +3,7 @@ import torch
 from progress.bar import Bar
 from torch.utils.data import dataloader
 
-from data_utils import load_model_from_epoch
+import data_utils
 from siamese import Siamese
 
 
@@ -18,37 +18,65 @@ def get_best_model(MRRs, base_path, path_suffix):
     """
     best_model = np.argmax(MRRs)
     model = Siamese()
-    load_model_from_epoch(model, best_model, base_path, path_suffix)
+    data_utils.load_model_from_epoch(model, best_model, base_path, path_suffix)
     return model
 
 
-def mean_reciprocal_ranks(model, all_pairs, use_cuda):
-    return reciprocal_ranks(model, all_pairs, use_cuda).mean()
+def mean_reciprocal_ranks(model, pairs, use_cuda):
+    """
+    Return the mean reciprocal rank across a given set of pairs and a given model.
+
+    :param model: siamese network
+    :param pairs: dataset of desired pairs to calculate confusion matrix across
+    :param use_cuda: bool, whether to run on gpu
+    :return: float, mean of reciprocal ranks
+    """
+    return reciprocal_ranks(model, pairs, use_cuda).mean()
 
 
-def reciprocal_ranks(model, all_pairs, use_cuda):
-    rrs = confusion_matrix(model, all_pairs, use_cuda)
-    rrs = rrs.reshape([all_pairs.n_imitations, all_pairs.n_references])
+def reciprocal_ranks(model, pairs, use_cuda):
+    """
+    Return an array of the reciprocal ranks across a given set of pairs and a given model.
 
-    a = np.zeros([all_pairs.n_imitations])
-    for i, imitation in enumerate(all_pairs.imitations):
-        output_col = rrs[i, :]
-        label_col = all_pairs.labels[i, :]
-        match_location = np.where(label_col == 1)[0][0]
-        match = output_col[match_location]
-        output_col[::-1].sort()
-        index = np.where(output_col == match)[0][0]
-        a[i] = 1 / (index + 1)
+    :param model: siamese network
+    :param pairs: dataset of desired pairs to calculate confusion matrix across
+    :param use_cuda: bool, whether to run on gpu
+    :return: rrs, ndarray of reciprocal ranks
+    """
+    confusion = confusion_matrix(model, pairs, use_cuda)
 
-    return a
+    rrs = np.zeros([pairs.n_imitations])
+    for i, imitation in enumerate(pairs.imitations):
+        # get the column of the confusion matrix corresponding to this imitation
+        confusion_col = confusion[i, :]
+        # get the index of the correct reference for this imitation
+        reference_index = data_utils.np_index_of(pairs.labels[i, :], 1)
+        # get the similarity of the correct reference
+        similarity = confusion_col[reference_index]
+        # sort confusion column descending
+        confusion_col[::-1].sort()
+        # find the rank of the similarity
+        index = data_utils.np_index_of(confusion_col, similarity)
+        rank = index + 1
+        rrs[i] = 1 / rank
+
+    return rrs
 
 
-def confusion_matrix(model, all_pairs, use_cuda):
+def confusion_matrix(model, pairs_dataset, use_cuda):
+    """
+    Calculates the confusion matrix for a given model across a set of pairs (typically, all of them).
+
+    :param model: siamese network
+    :param pairs_dataset: dataset of desired pairs to calculate confusion matrix across
+    :param use_cuda: bool, whether to run on GPU
+    :return: confusion matrix
+    """
     rrs = np.array([])
-    all_pairs = dataloader.DataLoader(all_pairs, batch_size=128, num_workers=1)
+    pairs = dataloader.DataLoader(pairs_dataset, batch_size=128, num_workers=1)
 
-    bar = Bar("Calculating confusion matrix", max=len(all_pairs))
-    for imitations, references, label in all_pairs:
+    bar = Bar("Calculating confusion matrix", max=len(pairs))
+    for imitations, references, label in pairs:
         # reshape tensors and push to GPU if necessary
         imitations = imitations.unsqueeze(1)
         references = references.unsqueeze(1)
@@ -57,15 +85,19 @@ def confusion_matrix(model, all_pairs, use_cuda):
             references = references.cuda()
 
         output = model(imitations, references)
-        rrs = np.concatenate([rrs, output.detach().cpu().numpy()])
+        # Detach the gradient, move to cpu, and convert to an ndarray
+        np_output = output.detach().cpu().numpy()
+        rrs = np.concatenate([rrs, np_output])
 
         bar.next()
     bar.finish()
 
+    # Reshape vector into matrix
+    rrs = rrs.reshape([pairs_dataset.n_imitations, pairs_dataset.n_references])
     return rrs
 
 
-def get_highest_ranked_negative_reference(imitation, reference, references, model, use_cuda):
+def hard_negative_selection(imitation, reference, references, model, use_cuda):
     highest_ranking = 0
     highest_ranked_example = None
 
@@ -86,13 +118,3 @@ def get_highest_ranked_negative_reference(imitation, reference, references, mode
             highest_ranking = output
             highest_ranked_example = r
     return highest_ranked_example
-
-
-def percent_correct(outputs, labels):
-    correct = num_correct(outputs, labels)
-    total = labels.shape[0]
-    return correct / total
-
-
-def num_correct(outputs, labels):
-    return torch.sum(torch.round(outputs) == labels).item()

@@ -40,3 +40,16 @@ def log_final_stats(rrs):
     prindent("stddev: {0}".format(rrs.std()), 1)
     prindent("min: {0}".format(rrs.min()), 1)
     prindent("max: {0}".format(rrs.max()), 1)
+
+
+def np_index_of(array, item):
+    """
+    Find the first index of item in array
+    :param array: ndarray
+    :param item:
+    :return: first index of item in array
+    """
+    where = np.where(array == item)
+    if len(where) == 0:
+        raise ValueError("{0} not found in array".format(item))
+    return where[0][0]  # where is a 2d array
