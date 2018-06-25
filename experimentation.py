@@ -95,5 +95,5 @@ def hard_negative_selection(model, pairs, use_cuda):
     confusion = confusion * np.logical_not(pairs.labels)
 
     # indexes of max in each column
-    references = confusion.argmax(axis=0)
+    references = confusion.argmax(axis=1)
     return references
