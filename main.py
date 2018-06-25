@@ -13,6 +13,7 @@ from torch.utils.data.dataloader import DataLoader
 import utils
 import datasets
 import experimentation
+import preprocessing
 from siamese import Siamese
 
 
@@ -189,6 +190,9 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-l', '--limit', default=None, type=int, help='Optional limit on the size of the dataset, useful for debugging')
     parser.add_argument('-c', '--cuda', action='store_const', const=True, default=False, help='Whether to enable calculation on the GPU through CUDA or not')
+    parser.add_argument('-s', '--spectrograms', action='store_const', const=True, default=False, help='Whether to calculate spectrograms or not')
+    parser.add_argument('-b', '--cache_baseline', action='store_const', const=True, default=False,
+                        help='Whether to use a cached version of the baseline model')
     args = parser.parse_args()
 
     logger.info('Beginning experiment...')
@@ -197,9 +201,10 @@ def main():
         logger.info("Limiting to {0} imitations/references".format(args.limit))
 
     try:
-        # calculate_spectrograms()
-        # train_fine_tuning(args.cuda, use_cached_baseline=False)
-        train_random_selection(args.cuda, limit=args.limit)
+        if args.spectrograms:
+            preprocessing.calculate_spectrograms()
+        train_fine_tuning(args.cuda, use_cached_baseline=args.cache_baseline)
+        # train_random_selection(args.cuda, limit=args.limit)
     except Exception as e:
         logger.critical("Unhandled exception: {0}".format(str(e)))
         logger.critical(traceback.print_exc())
