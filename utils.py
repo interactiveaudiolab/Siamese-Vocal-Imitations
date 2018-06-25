@@ -5,17 +5,12 @@ import torch
 import logging
 
 
-def load_model_from_epoch(model, best_epoch, base_path, path_suffix):
-    format_str = "{0}_{1}".format(path_suffix, best_epoch)
-    load_model(base_path, model, format_str)
+def load_model(model, base_path):
+    model.load_state_dict(torch.load(base_path))
 
 
-def load_model(base_path, model, path_suffix):
-    model.load_state_dict(torch.load(base_path.format(path_suffix)))
-
-
-def save_model(base_path, model, path_suffix):
-    torch.save(model.state_dict(), base_path.format(path_suffix))
+def save_model(model, base_path):
+    torch.save(model.state_dict(), base_path)
 
 
 def load_npy(name):

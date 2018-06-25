@@ -8,10 +8,29 @@ from utils import load_npy
 
 class FineTuned(dataset.Dataset):
     def __init__(self):
-        self.all_positives = self.get_positive_pairs()
+        self.all_positives = []
+
+        references = load_npy("references.npy")
+        self.references = normalize_spectrograms(references)
+        reference_labels = load_npy("reference_labels.npy")
+
+        imitations = load_npy("imitations.npy")
+        self.imitations = normalize_spectrograms(imitations)
+        imitation_labels = load_npy("imitation_labels.npy")
+
+        bar = Bar("Creating training pairs", max=len(references) * len(imitations))
+        for reference, reference_label in zip(references, reference_labels):
+            for imitation, imitation_label in zip(imitations, imitation_labels):
+                if reference_label == imitation_label:
+                    self.all_positives.append([imitation, reference])
+                bar.next()
+        bar.finish()
+
         self.pairs = []
 
-        self.reset()
+    def add_negatives(self, reference_indexes):
+        for i, r in enumerate(reference_indexes):
+            self.add_negative(self.imitations[i], self.references[r])
 
     def add_negative(self, i, r):
         self.pairs.append([i, r, False])

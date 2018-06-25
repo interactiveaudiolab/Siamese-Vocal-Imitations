@@ -1,25 +1,8 @@
 import numpy as np
-import torch
 from progress.bar import Bar
 from torch.utils.data import dataloader
 
 import utils
-from siamese import Siamese
-
-
-def get_best_model(MRRs, base_path, path_suffix):
-    """
-    Get the best model based on mean reciprocal rank.
-
-    :param MRRs: epoch-indexed array of mean reciprocal ranks
-    :param base_path:
-    :param path_suffix:
-    :return:
-    """
-    best_model = np.argmax(MRRs)
-    model = Siamese()
-    utils.load_model_from_epoch(model, best_model, base_path, path_suffix)
-    return model
 
 
 def mean_reciprocal_ranks(model, pairs, use_cuda):
@@ -97,24 +80,20 @@ def confusion_matrix(model, pairs_dataset, use_cuda):
     return rrs
 
 
-def hard_negative_selection(imitation, reference, references, model, use_cuda):
-    highest_ranking = 0
-    highest_ranked_example = None
+def hard_negative_selection(model, pairs, use_cuda):
+    """
+    Perform hard negative selection to determine negative pairings for fine tuning the network
 
-    # reshape tensors and push to GPU if necessary
-    imitation = imitation.unsqueeze(1)
-    reference = reference.unsqueeze(1)
-    if use_cuda:
-        imitation = imitation.cuda()
-        reference = reference.cuda()
+    :param model: siamese network
+    :param pairs: all pairs
+    :param use_cuda: bool, whether to run on GPU
+    :return: ndarray of reference indexes, indexed by imitation number
+    """
+    confusion = confusion_matrix(model, pairs, use_cuda)
 
-    for r in references:
-        # reshape tensor and push to GPU if necessary
-        r = r.unsqueeze(1)
-        if use_cuda:
-            r = r.cuda()
-        output = model(imitation, r)
-        if output > highest_ranking and not torch.equal(r, reference):
-            highest_ranking = output
-            highest_ranked_example = r
-    return highest_ranked_example
+    # zero out all positive examples
+    confusion = confusion * np.logical_not(pairs.labels)
+
+    # indexes of max in each column
+    references = confusion.argmax(axis=0)
+    return references
