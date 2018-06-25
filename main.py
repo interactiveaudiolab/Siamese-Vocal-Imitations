@@ -41,6 +41,7 @@ def train_random_selection(use_cuda, limit=None):
         mrrs = np.zeros(n_epochs)
         models = train_network(siamese, training_data, criterion, optimizer, n_epochs, use_cuda)
         for epoch, model in enumerate(models):
+            logger.debug("Calculating MRR...")
             mrr = experimentation.mean_reciprocal_ranks(model, all_pairs, use_cuda)
             utils.save_model(model, model_path.format(epoch))
             logger.info("MRR at epoch {0} = {1}".format(epoch, mrr))
@@ -91,7 +92,7 @@ def train_fine_tuning(use_cuda, use_cached_baseline=False, limit=None):
     try:
         # fine tune until convergence
         while not convergence(best_mrrs, convergence_threshold):
-            logger
+            logger.debug("Performing hard negative selection...")
             references = experimentation.hard_negative_selection(siamese, all_pairs, use_cuda)
             fine_tuning_data.add_negatives(references)
 
@@ -99,6 +100,7 @@ def train_fine_tuning(use_cuda, use_cached_baseline=False, limit=None):
             mrrs = np.zeros(n_epochs)
             models = train_network(siamese, fine_tuning_data, criterion, optimizer, n_epochs, use_cuda)
             for epoch, model in enumerate(models):
+                logger.debug("Calculating MRR...")
                 mrr = experimentation.mean_reciprocal_ranks(model, all_pairs, use_cuda)
                 utils.save_model(model, model_path)
                 logger.info("MRR at epoch {0}, fine tuning pass {1} = {2}".format(epoch, fine_tuning_pass, mrr))
