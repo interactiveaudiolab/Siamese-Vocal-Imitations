@@ -92,6 +92,7 @@ def train_fine_tuning(use_cuda, use_cached_baseline=False, limit=None):
     try:
         # fine tune until convergence
         while not convergence(best_mrrs, convergence_threshold):
+            fine_tuning_data.reset()
             logger.debug("Performing hard negative selection...")
             references = experimentation.hard_negative_selection(siamese, all_pairs, use_cuda)
             fine_tuning_data.add_negatives(references)
