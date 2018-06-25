@@ -10,7 +10,7 @@ from progress.bar import Bar
 from torch.nn import BCELoss
 from torch.utils.data.dataloader import DataLoader
 
-import data_utils
+import utils
 import datasets
 import experimentation
 from siamese import Siamese
@@ -48,14 +48,14 @@ def train_random_selection(use_cuda, limit=None):
 
         # get best model
         siamese = experimentation.get_best_model(MRRs, model_path, suffix)
-        data_utils.save_model(model_path, siamese, 'random_selection_final')
+        utils.save_model(model_path, siamese, 'random_selection_final')
 
         rrs = experimentation.reciprocal_ranks(siamese, all_pairs, use_cuda)
         logger.info("Results from best model generated during random-selection training:")
-        data_utils.log_final_stats(rrs)
+        utils.log_final_stats(rrs)
         return siamese
     except Exception as e:
-        data_utils.save_model(model_path, siamese, 'crash_backup_{0}'.format(datetime.datetime.now()))
+        utils.save_model(model_path, siamese, 'crash_backup_{0}'.format(datetime.datetime.now()))
         logger.critical("Exception occurred while training: {0}".format(str(e)))
         logger.critical(traceback.print_exc())
         exit(1)
@@ -67,7 +67,7 @@ def train_fine_tuning(use_cuda, use_cached_baseline=False):
         siamese = Siamese()
         if use_cuda:
             siamese = siamese.cuda()
-        data_utils.load_model('./models/train_on_all_data/model_{0}', siamese, 'random_selection_final')
+        utils.load_model('./models/train_on_all_data/model_{0}', siamese, 'random_selection_final')
     else:
         siamese = train_random_selection(use_cuda)
 
@@ -110,16 +110,16 @@ def train_fine_tuning(use_cuda, use_cached_baseline=False):
             best_mrrs.append(np.max(epoch_mrrs))
             rrs = experimentation.confusion_matrix(fine_tuning_data, siamese, references, use_cuda)
 
-        data_utils.save_model(model_path, siamese, 'fine_tuned_final')
+        utils.save_model(model_path, siamese, 'fine_tuned_final')
         final_mrr = experimentation.mean_reciprocal_ranks(fine_tuning_data, siamese, use_cuda)
     except Exception as e:
-        data_utils.save_model(model_path, siamese, 'crash_backup_{0}'.format(datetime.datetime.now()))
+        utils.save_model(model_path, siamese, 'crash_backup_{0}'.format(datetime.datetime.now()))
         print("Exception occurred while training: {0}".format(str(e)))
         print(traceback.print_exc())
         exit(1)
 
     print("Results from training after fine-tuning:")
-    data_utils.log_final_stats(rrs)
+    utils.log_final_stats(rrs)
 
     print("Final MRR: {0}".format(final_mrr))
 
@@ -164,7 +164,7 @@ def train_network(model, data, all_pairs, objective, optimizer, n_epochs, model_
             bar.next()
         bar.finish()
 
-        data_utils.save_model(model_save_path, model, "{0}_{1}".format(model_save_path_suffix, epoch))
+        utils.save_model(model_save_path, model, "{0}_{1}".format(model_save_path_suffix, epoch))
         if calculate_mrr:
             mrr_result = experimentation.mean_reciprocal_ranks(model, all_pairs, use_cuda)
             logger.info("MRR at epoch {0} = {1}".format(epoch, mrr_result))

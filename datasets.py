@@ -3,7 +3,7 @@ import torch.utils.data.dataset as dataset
 from progress.bar import Bar
 
 from preprocessing import normalize_spectrograms
-from data_utils import load_npy
+from utils import load_npy
 
 
 class FineTuned(dataset.Dataset):

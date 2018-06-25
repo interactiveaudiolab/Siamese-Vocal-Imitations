@@ -3,7 +3,7 @@ import torch
 from progress.bar import Bar
 from torch.utils.data import dataloader
 
-import data_utils
+import utils
 from siamese import Siamese
 
 
@@ -18,7 +18,7 @@ def get_best_model(MRRs, base_path, path_suffix):
     """
     best_model = np.argmax(MRRs)
     model = Siamese()
-    data_utils.load_model_from_epoch(model, best_model, base_path, path_suffix)
+    utils.load_model_from_epoch(model, best_model, base_path, path_suffix)
     return model
 
 
@@ -50,13 +50,13 @@ def reciprocal_ranks(model, pairs, use_cuda):
         # get the column of the confusion matrix corresponding to this imitation
         confusion_col = confusion[i, :]
         # get the index of the correct reference for this imitation
-        reference_index = data_utils.np_index_of(pairs.labels[i, :], 1)
+        reference_index = utils.np_index_of(pairs.labels[i, :], 1)
         # get the similarity of the correct reference
         similarity = confusion_col[reference_index]
         # sort confusion column descending
         confusion_col[::-1].sort()
         # find the rank of the similarity
-        index = data_utils.np_index_of(confusion_col, similarity)
+        index = utils.np_index_of(confusion_col, similarity)
         rank = index + 1
         rrs[i] = 1 / rank
 

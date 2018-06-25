@@ -5,7 +5,7 @@ import numpy as np
 
 from progress.bar import Bar
 
-from data_utils import save_npy
+from utils import save_npy
 
 
 def calculate_spectrograms():
