@@ -41,14 +41,16 @@ def train_random_selection(use_cuda, limit=None):
 
     try:
         logging.info("Training using random selection...")
-        MRRs = train_network(siamese,
-                             training_data, all_pairs,
-                             criterion, optimizer,
-                             n_epochs,
-                             model_path, suffix, use_cuda, calculate_mrr=True)
+        mrrs = np.zeros(n_epochs)
+        models = train_network(siamese, training_data, criterion, optimizer, n_epochs, use_cuda)
+        for epoch, model in enumerate(models):
+            mrr = experimentation.mean_reciprocal_ranks(model, all_pairs, use_cuda)
+            utils.save_model(model_path, model, "{0}_{1}".format(suffix, epoch))
+            logger.info("MRR at epoch {0} = {1}".format(epoch, mrr))
+            mrrs[epoch] = mrr
 
         # get best model
-        siamese = experimentation.get_best_model(MRRs, model_path, suffix)
+        siamese = experimentation.get_best_model(mrrs, model_path, suffix)
         utils.save_model(model_path, siamese, 'random_selection_final')
 
         rrs = experimentation.reciprocal_ranks(siamese, all_pairs, use_cuda)
@@ -103,10 +105,9 @@ def train_fine_tuning(use_cuda, use_cached_baseline=False):
 
             suffix = 'fine_tuned'
             epoch_mrrs = train_network(siamese,
-                                       fine_tuning_data, references,
-                                       criterion, optimizer,
+                                       fine_tuning_data, criterion, optimizer,
                                        n_epochs,
-                                       model_path, suffix, use_cuda)
+                                       use_cuda)
             siamese = experimentation.get_best_model(epoch_mrrs, model_path, suffix)
             best_mrrs.append(np.max(epoch_mrrs))
             rrs = experimentation.confusion_matrix(fine_tuning_data, siamese, references, use_cuda)
@@ -129,15 +130,13 @@ def convergence(best_mrrs, convergence_threshold):
     return not (len(best_mrrs) <= 2) and np.abs(best_mrrs[len(best_mrrs) - 1] - best_mrrs[len(best_mrrs) - 2]) < convergence_threshold
 
 
-def train_network(model, data, all_pairs, objective, optimizer, n_epochs, model_save_path, model_save_path_suffix, use_cuda, calculate_mrr=True):
-    logger = logging.getLogger('logger')
-    mrrs = np.zeros(n_epochs)
+def train_network(model, data, objective, optimizer, n_epochs, use_cuda, batch_size=128):
     for epoch in range(n_epochs):
         # if we're using all positives and random negatives, choose new negatives on each epoch
         if isinstance(data, datasets.AllPositivesRandomNegatives):
             data.reselect_negatives()
 
-        train_data = DataLoader(data, batch_size=128, num_workers=1)
+        train_data = DataLoader(data, batch_size=batch_size, num_workers=1)
         bar = Bar("Training epoch {0}".format(epoch), max=len(train_data))
         for i, (left, right, labels) in enumerate(train_data):
             # clear out the gradients
@@ -165,12 +164,7 @@ def train_network(model, data, all_pairs, objective, optimizer, n_epochs, model_
             bar.next()
         bar.finish()
 
-        utils.save_model(model_save_path, model, "{0}_{1}".format(model_save_path_suffix, epoch))
-        if calculate_mrr:
-            mrr_result = experimentation.mean_reciprocal_ranks(model, all_pairs, use_cuda)
-            logger.info("MRR at epoch {0} = {1}".format(epoch, mrr_result))
-            mrrs[epoch] = mrr_result
-    return mrrs
+        yield model
 
 
 def main():
