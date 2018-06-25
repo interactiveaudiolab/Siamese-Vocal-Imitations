@@ -45,20 +45,20 @@ def train_random_selection(use_cuda, limit=None):
                              criterion, optimizer,
                              n_epochs,
                              model_path, suffix, use_cuda, calculate_mrr=True)
+
+        # get best model
+        siamese = experimentation.get_best_model(MRRs, model_path, suffix)
+        data_utils.save_model(model_path, siamese, 'random_selection_final')
+
+        rrs = experimentation.reciprocal_ranks(siamese, all_pairs, use_cuda)
+        logger.info("Results from best model generated during random-selection training:")
+        data_utils.log_final_stats(rrs)
+        return siamese
     except Exception as e:
         data_utils.save_model(model_path, siamese, 'crash_backup_{0}'.format(datetime.datetime.now()))
         logger.critical("Exception occurred while training: {0}".format(str(e)))
         logger.critical(traceback.print_exc())
         exit(1)
-
-    # get best model
-    siamese = experimentation.get_best_model(MRRs, model_path, suffix)
-    data_utils.save_model(model_path, siamese, 'random_selection_final')
-
-    rrs = experimentation.reciprocal_ranks(siamese, all_pairs, use_cuda)
-    logger.info("Results from best model generated during random-selection training:")
-    data_utils.log_final_stats(rrs)
-    return siamese
 
 
 def train_fine_tuning(use_cuda, use_cached_baseline=False):
@@ -196,9 +196,14 @@ def main():
     if args.limit:
         logger.info("Limiting to {0} imitations/references".format(args.limit))
 
-    # calculate_spectrograms()
-    # train_fine_tuning(args.cuda, use_cached_baseline=False)
-    train_random_selection(args.cuda, limit=args.limit)
+    try:
+        # calculate_spectrograms()
+        # train_fine_tuning(args.cuda, use_cached_baseline=False)
+        train_random_selection(args.cuda, limit=args.limit)
+    except Exception as e:
+        logger.critical("Unhandled exception: {0}".format(str(e)))
+        logger.critical(traceback.print_exc())
+        exit(1)
 
 
 if __name__ == "__main__":
