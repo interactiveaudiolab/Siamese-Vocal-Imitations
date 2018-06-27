@@ -1,5 +1,4 @@
 import argparse
-import datetime
 import logging
 import traceback
 
@@ -10,21 +9,22 @@ from progress.bar import Bar
 from torch.nn import BCELoss
 from torch.utils.data.dataloader import DataLoader
 
-import utils
 import datasets
 import experimentation
 import preprocessing
+import utils
+from datafiles import DataFiles
 from siamese import Siamese
 
 
-def train_random_selection(use_cuda, limit=None):
+def train_random_selection(use_cuda, data):
     logger = logging.getLogger('logger')
     # global parameters
     n_epochs = 70  # 70 in Bongjun's version, 30 in the paper
     model_path = "./models/random_selection/model_{0}"
 
-    training_data = datasets.AllPositivesRandomNegatives(limit)
-    all_pairs = datasets.AllPairs(limit)
+    training_data = datasets.AllPositivesRandomNegatives(data.train)
+    all_pairs = datasets.AllPairs(data.train)
 
     # get a siamese network, see Siamese class for architecture
     siamese = Siamese()
@@ -62,7 +62,7 @@ def train_random_selection(use_cuda, limit=None):
         exit(1)
 
 
-def train_fine_tuning(use_cuda, use_cached_baseline=False, limit=None):
+def train_fine_tuning(use_cuda, data, use_cached_baseline=False):
     logger = logging.getLogger('logger')
     # get the baseline network
     if use_cached_baseline:
@@ -71,13 +71,13 @@ def train_fine_tuning(use_cuda, use_cached_baseline=False, limit=None):
             siamese = siamese.cuda()
         utils.load_model(siamese, './models/random_selection/model_best')
     else:
-        siamese = train_random_selection(use_cuda, limit)
+        siamese = train_random_selection(use_cuda, data)
 
     # global parameters
     model_path = './models/fine_tuned/model_{0}_{1}'
 
-    all_pairs = datasets.AllPairs(limit)
-    fine_tuning_data = datasets.FineTuned()
+    all_pairs = datasets.AllPairs(data.train)
+    fine_tuning_data = datasets.FineTuned(data.train)
 
     criterion = BCELoss()
 
@@ -103,9 +103,9 @@ def train_fine_tuning(use_cuda, use_cached_baseline=False, limit=None):
             for epoch, model in enumerate(models):
                 logger.debug("Calculating MRR...")
                 mrr = experimentation.mean_reciprocal_ranks(model, all_pairs, use_cuda)
-                utils.save_model(model, model_path)
                 logger.info("MRR at epoch {0}, fine tuning pass {1} = {2}".format(epoch, fine_tuning_pass, mrr))
                 mrrs[epoch] = mrr
+                utils.save_model(model, model_path.format(fine_tuning_pass, epoch))
 
             utils.load_model(siamese, model_path.format(fine_tuning_pass, np.argmax(mrrs)))
             utils.save_model(siamese, model_path.format(fine_tuning_pass, 'best'))
@@ -180,23 +180,20 @@ def main():
 
     # parse arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument('-l', '--limit', default=None, type=int, help='Optional limit on the size of the dataset, useful for debugging')
     parser.add_argument('-c', '--cuda', action='store_const', const=True, default=False, help='Whether to enable calculation on the GPU through CUDA or not')
-    parser.add_argument('-s', '--spectrograms', action='store_const', const=True, default=False, help='Whether to calculate spectrograms or not')
+    parser.add_argument('-s', '--spectrograms', action='store_const', const=True, default=False, help='Whether to re-calculate spectrograms or not')
     parser.add_argument('-b', '--cache_baseline', action='store_const', const=True, default=False,
                         help='Whether to use a cached version of the baseline model')
     args = parser.parse_args()
 
     logger.info('Beginning experiment...')
     logger.info("CUDA {0}...".format("enabled" if args.cuda else "disabled"))
-    if args.limit:
-        logger.info("Limiting to {0} imitations/references".format(args.limit))
 
     try:
         if args.spectrograms:
-            preprocessing.calculate_spectrograms()
-        train_fine_tuning(args.cuda, use_cached_baseline=args.cache_baseline)
-        # train_random_selection(args.cuda, limit=args.limit)
+            preprocessing.load_data_set()
+        data_files = DataFiles()
+        train_fine_tuning(args.cuda, data_files, use_cached_baseline=args.cache_baseline)
     except Exception as e:
         logger.critical("Unhandled exception: {0}".format(str(e)))
         logger.critical(traceback.print_exc())

@@ -1,3 +1,4 @@
+import csv
 import os
 
 import librosa
@@ -8,60 +9,61 @@ from progress.bar import Bar
 from utils import save_npy
 
 
-def calculate_spectrograms():
+def load_data_set():
     """
-    Calculates imitation and reference spectrograms and saves them as .npy files.
+    Calculates normalized imitation and reference spectrograms and saves them as .npy files.
     """
-    imitation_paths = get_audio_paths(os.environ['SIAMESE_DATA_DIR']+"/audio/imitation")
-    reference_paths = get_audio_paths(os.environ['SIAMESE_DATA_DIR']+"/audio/reference")
+    data_dir = os.environ['SIAMESE_DATA_DIR']
+    imitation_paths = recursive_wav_paths(data_dir + "/vocal_imitations/included")
+    reference_paths = recursive_wav_paths(data_dir + "/sound_recordings")
+    reference_csv = os.path.join(data_dir, "sound_recordings.csv")
+    imitation_csv = os.path.join(data_dir, "vocal_imitations.csv")
 
-    # build up dictionary of reference names -> reference #s
-    label_n = 0
-    label_dict = {}
-    for reference_path in reference_paths:
-        label_name = os.path.basename(reference_path)[:-4].lower()
-        label_dict[label_name] = label_n
-        label_n += 1
+    reference_labels = {}
+    with open(reference_csv) as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            reference_labels[row['filename']] = row['sound_label']
 
-    # calculate imitation spectrograms and save
-    imitation_bar = Bar("Calculating imitation spectrograms", max=len(imitation_paths))
-    imitations = []
-    imitation_labels = []
-    for imitation_path in imitation_paths:
-        spectrogram = get_imitation_spectrogram(imitation_path)
+    imitation_labels = {}
+    with open(imitation_csv) as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            imitation_labels[row['filename']] = row['sound_label']
 
-        label_name = os.path.basename(imitation_path)
-        label_name = label_name[:label_name.find(" - ")].replace(" ", "_").replace("(", "").replace(")", "").lower()
-        if label_name in label_dict:
-            imitation_labels.append(label_dict[label_name])
-            imitations.append(spectrogram)
-        else:
-            print("Could not find imitation labeled {0} in dictionary.".format(label_name))
-        imitation_bar.next()
-    save_npy(imitations, "imitations.npy", "float32")
-    save_npy(imitation_labels, "imitation_labels.npy", "uint8")
-    imitation_bar.finish()
+    n = 0
+    label_no = {}
+    for file_name, label in reference_labels.items():
+        if label not in label_no:
+            label_no[label] = n
+            n += 1
 
-    # calculate reference spectrograms and save
-    reference_bar = Bar("Calculating reference spectrograms", max=len(reference_paths))
-    references = []
-    reference_labels = []
-    for reference_path in reference_paths:
-        spectrogram = get_reference_spectrogram(reference_path)
-
-        label_name = os.path.basename(reference_path)[:-4].lower()
-        if label_name in label_dict:
-            reference_labels.append(label_dict[label_name])
-            references.append(spectrogram)
-        else:
-            print("Could not find reference labeled {0} in dictionary.".format(label_name))
-        reference_bar.next()
-    save_npy(references, "references.npy", "float32")
-    save_npy(reference_labels, "reference_labels.npy", "uint8")
-    reference_bar.finish()
+    calculate_spectrograms(imitation_paths, imitation_labels, label_no, 'imitation', imitation_spectrogram)
+    calculate_spectrograms(reference_paths, reference_labels, label_no, 'reference', reference_spectrogram)
 
 
-def get_audio_paths(path):
+def calculate_spectrograms(paths, file_labels, label_no, file_type, spectrogram_func):
+    # calculate spectrograms and save
+    bar = Bar('Calculating {0} spectrograms...'.format(file_type), max=len(paths))
+    spectrograms = []
+    labels = []
+    for path in paths:
+        spectrogram = spectrogram_func(path)
+        spectrograms.append(spectrogram)
+
+        file_name = os.path.basename(path)
+        label = file_labels[file_name]
+        labels.append(label_no[label])
+
+        bar.next()
+
+    spectrograms = normalize_spectrograms(np.array(spectrograms))
+    save_npy(spectrograms, '{0}s.npy'.format(file_type), "float32")
+    save_npy(labels, '{0}_labels.npy'.format(file_type), "uint8")
+    bar.finish()
+
+
+def recursive_wav_paths(path):
     """
     Get the paths of all .wav files found recursively in the path.
 
@@ -79,7 +81,7 @@ def get_audio_paths(path):
     return absolute_paths
 
 
-def get_reference_spectrogram(path):
+def reference_spectrogram(path):
     """
     Calculate the spectrogram of a reference recording located at path.
 
@@ -100,7 +102,7 @@ def get_reference_spectrogram(path):
     return S_fix
 
 
-def get_imitation_spectrogram(path):
+def imitation_spectrogram(path):
     """
     Calculate the spectrogram of an imitation located at path.
 
@@ -124,9 +126,9 @@ def get_imitation_spectrogram(path):
 
 
 def normalize_spectrograms(spectrograms):
-    '''
+    """
     data: (num_examples, num_freq_bins, num_time_frames)
-    '''
+    """
 
     m = np.mean(spectrograms, axis=(1, 2))
     m = m.reshape(m.shape[0], 1, 1)

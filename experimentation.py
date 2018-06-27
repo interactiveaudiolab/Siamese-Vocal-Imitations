@@ -3,9 +3,11 @@ from progress.bar import Bar
 from torch.utils.data import dataloader
 
 import utils
+from datasets import AllPairs
+from siamese import Siamese
 
 
-def mean_reciprocal_ranks(model, pairs, use_cuda):
+def mean_reciprocal_ranks(model: Siamese, pairs: AllPairs, use_cuda):
     """
     Return the mean reciprocal rank across a given set of pairs and a given model.
 
@@ -17,7 +19,7 @@ def mean_reciprocal_ranks(model, pairs, use_cuda):
     return reciprocal_ranks(model, pairs, use_cuda).mean()
 
 
-def reciprocal_ranks(model, pairs, use_cuda):
+def reciprocal_ranks(model: Siamese, pairs: AllPairs, use_cuda):
     """
     Return an array of the reciprocal ranks across a given set of pairs and a given model.
 
@@ -46,7 +48,7 @@ def reciprocal_ranks(model, pairs, use_cuda):
     return rrs
 
 
-def confusion_matrix(model, pairs_dataset, use_cuda):
+def confusion_matrix(model: Siamese, pairs_dataset: AllPairs, use_cuda):
     """
     Calculates the confusion matrix for a given model across a set of pairs (typically, all of them).
 
@@ -80,7 +82,7 @@ def confusion_matrix(model, pairs_dataset, use_cuda):
     return rrs
 
 
-def hard_negative_selection(model, pairs, use_cuda):
+def hard_negative_selection(model: Siamese, pairs: AllPairs, use_cuda):
     """
     Perform hard negative selection to determine negative pairings for fine tuning the network
 
