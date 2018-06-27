@@ -32,7 +32,6 @@ class DataFiles:
         self.train = SegmentedDataFiles(train_ref, train_ref_labels, imitations, imitation_labels, "training")
         self.val = SegmentedDataFiles(val_ref, val_ref_labels, imitations, imitation_labels, "validation")
         self.test = SegmentedDataFiles(test_ref, test_ref_labels, imitations, imitation_labels, "testing")
-        print(1)
 
     @staticmethod
     def create_pairs(references, reference_labels, imitations, imitation_labels):
