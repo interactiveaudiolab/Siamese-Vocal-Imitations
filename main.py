@@ -16,6 +16,7 @@ import utils
 from datafiles import DataFiles
 import graphing
 from siamese import Siamese
+from utils import configure_logger, configure_parser
 
 
 def train_random_selection(use_cuda, data: DataFiles):
@@ -189,22 +190,11 @@ def train_network(model, data, objective, optimizer, n_epochs, use_cuda, batch_s
 def main():
     # set up logger
     logger = logging.getLogger('logger')
-    logger.setLevel(logging.DEBUG)
-    # handlers and formatter
-    console_handler = logging.StreamHandler()
-    file_handler = logging.FileHandler('siamese.log')
-    formatter = logging.Formatter('%(asctime)s - %(levelname)s \t %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
-    console_handler.setFormatter(formatter)
-    file_handler.setFormatter(formatter)
-    logger.addHandler(console_handler)
-    logger.addHandler(file_handler)
+    configure_logger(logger)
 
     # parse arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument('-c', '--cuda', action='store_const', const=True, default=False, help='Whether to enable calculation on the GPU through CUDA or not')
-    parser.add_argument('-s', '--spectrograms', action='store_const', const=True, default=False, help='Whether to re-calculate spectrograms or not')
-    parser.add_argument('-b', '--cache_baseline', action='store_const', const=True, default=False,
-                        help='Whether to use a cached version of the baseline model')
+    configure_parser(parser)
     args = parser.parse_args()
 
     logger.info('Beginning experiment...')
@@ -213,7 +203,7 @@ def main():
     try:
         if args.spectrograms:
             preprocessing.load_data_set()
-        data_files = DataFiles()
+        data_files = DataFiles(*args.partitions)
         train_fine_tuning(args.cuda, data_files, use_cached_baseline=args.cache_baseline)
     except Exception as e:
         logger.critical("Unhandled exception: {0}".format(str(e)))

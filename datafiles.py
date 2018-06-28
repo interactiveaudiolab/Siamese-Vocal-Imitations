@@ -5,7 +5,7 @@ import utils
 
 
 class DataFiles:
-    def __init__(self, train_ratio=.35, val_ratio=.15, test_ratio=.5):
+    def __init__(self, train_ratio, val_ratio, test_ratio):
         if train_ratio + val_ratio + test_ratio != 1:
             raise ValueError("Training, validation, and testing ratios must add to 1")
 
