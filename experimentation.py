@@ -99,3 +99,7 @@ def hard_negative_selection(model: Siamese, pairs: AllPairs, use_cuda):
     # indexes of max in each column
     references = confusion.argmax(axis=1)
     return references
+
+
+def convergence(best_mrrs, convergence_threshold):
+    return not (len(best_mrrs) <= 2) and np.abs(best_mrrs[len(best_mrrs) - 1] - best_mrrs[len(best_mrrs) - 2]) < convergence_threshold

@@ -15,13 +15,14 @@ import preprocessing
 import utils
 from datafiles import DataFiles
 import graphing
+from experimentation import convergence
 from siamese import Siamese
 from utils import configure_logger, configure_parser
 
 
 def train_random_selection(use_cuda, data: DataFiles):
     logger = logging.getLogger('logger')
-    # global parameters
+
     n_epochs = 70  # 70 in Bongjun's version, 30 in the paper
     model_path = "./models/random_selection/model_{0}"
 
@@ -44,25 +45,31 @@ def train_random_selection(use_cuda, data: DataFiles):
         logger.info("Training using random selection...")
         training_mrrs = np.zeros(n_epochs)
         validation_mrrs = np.zeros(n_epochs)
+        losses = np.zeros(n_epochs)
+        loss_var = np.zeros(n_epochs)
         models = train_network(siamese, training_data, criterion, optimizer, n_epochs, use_cuda)
-        for epoch, model in enumerate(models):
+        for epoch, (model, loss) in enumerate(models):
             utils.save_model(model, model_path.format(epoch))
 
             logger.debug("Calculating MRRs...")
             training_mrr = experimentation.mean_reciprocal_ranks(model, training_pairs, use_cuda)
             val_mrr = experimentation.mean_reciprocal_ranks(model, validation_pairs, use_cuda)
             logger.info("MRRs at epoch {0}:\n\ttrn = {1}\n\tval = {2}".format(epoch, training_mrr, val_mrr))
+            logger.info("Loss at epoch {0} = {1}".format(epoch, loss.mean()))
             training_mrrs[epoch] = training_mrr
             validation_mrrs[epoch] = val_mrr
+            losses[epoch] = loss.mean()
+            loss_var[epoch] = loss.var()
 
-        # get best model TODO: should this be by training or by validation?
+        # get and save best model TODO: should this be by training or by validation?
         utils.load_model(siamese, model_path.format(np.argmax(validation_mrrs)))
         utils.save_model(siamese, model_path.format('best'))
 
-        rrs = experimentation.reciprocal_ranks(siamese, testing_pairs, use_cuda)
         logger.info("Results from best model generated during random-selection training, evaluated on test data:")
+        rrs = experimentation.reciprocal_ranks(siamese, testing_pairs, use_cuda)
         utils.log_final_stats(rrs)
         graphing.mrr_per_epoch(training_mrrs, validation_mrrs, title="MRR vs. Epoch (Random Selection)")
+        graphing.loss_per_epoch(losses, loss_var)
         return siamese
     except Exception as e:
         utils.save_model(siamese, model_path)
@@ -82,7 +89,6 @@ def train_fine_tuning(use_cuda, data: DataFiles, use_cached_baseline=False):
     else:
         siamese = train_random_selection(use_cuda, data)
 
-    # global parameters
     model_path = './models/fine_tuned/model_{0}_{1}'
 
     training_pairs = datasets.AllPairs(data.train)
@@ -111,18 +117,17 @@ def train_fine_tuning(use_cuda, data: DataFiles, use_cached_baseline=False):
             fine_tuning_data.add_negatives(references)
 
             logger.info("Beginning fine tuning pass {0}...".format(fine_tuning_pass))
-
             training_mrrs = np.zeros(n_epochs)
             validation_mrrs = np.zeros(n_epochs)
-
             models = train_network(siamese, fine_tuning_data, criterion, optimizer, n_epochs, use_cuda)
-            for epoch, model in enumerate(models):
+            for epoch, (model, loss) in enumerate(models):
                 utils.save_model(model, model_path.format(fine_tuning_pass, epoch))
 
                 logger.debug("Calculating MRRs...")
                 training_mrr = experimentation.mean_reciprocal_ranks(model, training_pairs, use_cuda)
                 val_mrr = experimentation.mean_reciprocal_ranks(model, validation_pairs, use_cuda)
                 logger.info("MRRs at epoch {0}:\n\ttrn = {1}\n\tval = {2}".format(epoch, training_mrr, val_mrr))
+                logger.info("Loss at epoch {0} = {1}".format(epoch, loss.mean()))
                 training_mrrs[epoch] = training_mrr
                 validation_mrrs[epoch] = val_mrr
 
@@ -146,10 +151,6 @@ def train_fine_tuning(use_cuda, data: DataFiles, use_cached_baseline=False):
         exit(1)
 
 
-def convergence(best_mrrs, convergence_threshold):
-    return not (len(best_mrrs) <= 2) and np.abs(best_mrrs[len(best_mrrs) - 1] - best_mrrs[len(best_mrrs) - 2]) < convergence_threshold
-
-
 def train_network(model, data, objective, optimizer, n_epochs, use_cuda, batch_size=128):
     for epoch in range(n_epochs):
         # if we're using all positives and random negatives, choose new negatives on each epoch
@@ -158,6 +159,7 @@ def train_network(model, data, objective, optimizer, n_epochs, use_cuda, batch_s
 
         train_data = DataLoader(data, batch_size=batch_size, num_workers=1)
         bar = Bar("Training epoch {0}".format(epoch), max=len(train_data))
+        batch_losses = np.zeros(len(train_data))
         for i, (left, right, labels) in enumerate(train_data):
             # clear out the gradients
             optimizer.zero_grad()
@@ -180,11 +182,12 @@ def train_network(model, data, objective, optimizer, n_epochs, use_cuda, batch_s
             loss = objective(outputs, labels)
             loss.backward()
             optimizer.step()
+            batch_losses[i] = loss.data[0]
 
             bar.next()
         bar.finish()
 
-        yield model
+        yield model, batch_losses
 
 
 def main():
