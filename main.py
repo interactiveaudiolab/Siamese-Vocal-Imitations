@@ -117,6 +117,7 @@ def train_fine_tuning(use_cuda, data: VocalSketch, use_cached_baseline=False, mi
     optimizer = torch.optim.SGD(siamese.parameters(), lr=.0001, weight_decay=.0001, momentum=.9, nesterov=True)
     try:
         # fine tune until convergence
+        logger.info("Fine tuning model, minimum # of passes = {0}".format(minimum_passes))
         while not experimentation.convergence(best_validation_mrrs, convergence_threshold) or fine_tuning_pass < minimum_passes:
             fine_tuning_data.reset()
             logger.debug("Performing hard negative selection...")
