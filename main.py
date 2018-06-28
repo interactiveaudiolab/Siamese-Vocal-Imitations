@@ -85,7 +85,7 @@ def train_random_selection(use_cuda, data: VocalSketch):
         exit(1)
 
 
-def train_fine_tuning(use_cuda, data: VocalSketch, use_cached_baseline=False, minimum_passes=None):
+def train_fine_tuning(use_cuda, data: VocalSketch, use_cached_baseline=False, minimum_passes=0):
     logger = logging.getLogger('logger')
     # get the baseline network
     if use_cached_baseline:
@@ -117,8 +117,7 @@ def train_fine_tuning(use_cuda, data: VocalSketch, use_cached_baseline=False, mi
     optimizer = torch.optim.SGD(siamese.parameters(), lr=.0001, weight_decay=.0001, momentum=.9, nesterov=True)
     try:
         # fine tune until convergence
-        while not experimentation.convergence(best_validation_mrrs, convergence_threshold) or \
-                (minimum_passes is not None and fine_tuning_pass < minimum_passes):
+        while not experimentation.convergence(best_validation_mrrs, convergence_threshold) or fine_tuning_pass < minimum_passes:
             fine_tuning_data.reset()
             logger.debug("Performing hard negative selection...")
             references = experimentation.hard_negative_selection(siamese, training_pairs, use_cuda)
