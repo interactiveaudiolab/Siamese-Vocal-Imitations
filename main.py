@@ -126,8 +126,8 @@ def train_fine_tuning(use_cuda, data: DataFiles, use_cached_baseline=False):
                 logger.debug("Calculating MRRs...")
                 training_mrr = experimentation.mean_reciprocal_ranks(model, training_pairs, use_cuda)
                 val_mrr = experimentation.mean_reciprocal_ranks(model, validation_pairs, use_cuda)
-                logger.info("MRRs at epoch {0}:\n\ttrn = {1}\n\tval = {2}".format(epoch, training_mrr, val_mrr))
-                logger.info("Loss at epoch {0} = {1}".format(epoch, loss.mean()))
+                logger.info("MRRs at pass {0}, epoch {1}:\n\ttrn = {2}\n\tval = {3}".format(fine_tuning_pass, epoch, training_mrr, val_mrr))
+                logger.info("Loss at pass {0}, epoch {1} = {2}".format(fine_tuning_pass, epoch, loss.mean()))
                 training_mrrs[epoch] = training_mrr
                 validation_mrrs[epoch] = val_mrr
 
