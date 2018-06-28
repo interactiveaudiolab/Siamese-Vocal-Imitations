@@ -14,10 +14,7 @@ def mrr_per_epoch(train_mrrs, val_mrrs, title="MRR vs. Epoch"):
         plt.ylabel('MRR')
         plt.xlabel('epoch')
         plt.title(title)
-        if not title.endswith('.png'):
-            title = title.replace(' ', '_')
-            title = title.replace('.', '')
-            title += '.png'
+        title = title_to_filename(title)
         plt.savefig(title)
     except _tkinter.TclError:
         logger.warning("No xwindows or xwindows forwarding, not graphing. Did you remember to log into the ssh server using the -Y flag?")
@@ -32,10 +29,15 @@ def loss_per_epoch(losses, var, title="Loss vs. Epoch"):
         plt.ylabel('loss')
         plt.xlabel('epoch')
         plt.title(title)
-        if not title.endswith('.png'):
-            title = title.replace(' ', '_')
-            title = title.replace('.', '')
-            title += '.png'
+        title = title_to_filename(title)
         plt.savefig(title)
     except _tkinter.TclError:
         logger.warning("No xwindows or xwindows forwarding, not graphing. Did you remember to log into the ssh server using the -Y flag?")
+
+
+def title_to_filename(title):
+    title = title.replace(' ', '_')
+    title = title.replace('.', '')
+    if not title.endswith('.png'):
+        title += '.png'
+    return title
