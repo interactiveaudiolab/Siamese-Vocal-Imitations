@@ -14,17 +14,20 @@ import experimentation
 import preprocessing
 import utils
 from datafiles import DataFiles
+import graphing
 from siamese import Siamese
 
 
-def train_random_selection(use_cuda, data):
+def train_random_selection(use_cuda, data: DataFiles):
     logger = logging.getLogger('logger')
     # global parameters
     n_epochs = 70  # 70 in Bongjun's version, 30 in the paper
     model_path = "./models/random_selection/model_{0}"
 
     training_data = datasets.AllPositivesRandomNegatives(data.train)
-    all_pairs = datasets.AllPairs(data.train)
+    training_pairs = datasets.AllPairs(data.train)
+    validation_pairs = datasets.AllPairs(data.val)
+    testing_pairs = datasets.AllPairs(data.test)
 
     # get a siamese network, see Siamese class for architecture
     siamese = Siamese()
@@ -38,22 +41,27 @@ def train_random_selection(use_cuda, data):
 
     try:
         logger.info("Training using random selection...")
-        mrrs = np.zeros(n_epochs)
+        training_mrrs = np.zeros(n_epochs)
+        validation_mrrs = np.zeros(n_epochs)
         models = train_network(siamese, training_data, criterion, optimizer, n_epochs, use_cuda)
         for epoch, model in enumerate(models):
-            logger.debug("Calculating MRR...")
-            mrr = experimentation.mean_reciprocal_ranks(model, all_pairs, use_cuda)
             utils.save_model(model, model_path.format(epoch))
-            logger.info("MRR at epoch {0} = {1}".format(epoch, mrr))
-            mrrs[epoch] = mrr
 
-        # get best model
-        utils.load_model(siamese, model_path.format(np.argmax(mrrs)))
+            logger.debug("Calculating MRRs...")
+            training_mrr = experimentation.mean_reciprocal_ranks(model, training_pairs, use_cuda)
+            val_mrr = experimentation.mean_reciprocal_ranks(model, validation_pairs, use_cuda)
+            logger.info("MRRs at epoch {0}:\n\ttrn = {1}\n\tval = {2}".format(epoch, training_mrr, val_mrr))
+            training_mrrs[epoch] = training_mrr
+            validation_mrrs[epoch] = val_mrr
+
+        # get best model TODO: should this be by training or by validation?
+        utils.load_model(siamese, model_path.format(np.argmax(validation_mrrs)))
         utils.save_model(siamese, model_path.format('best'))
 
-        rrs = experimentation.reciprocal_ranks(siamese, all_pairs, use_cuda)
-        logger.info("Results from best model generated during random-selection training:")
+        rrs = experimentation.reciprocal_ranks(siamese, testing_pairs, use_cuda)
+        logger.info("Results from best model generated during random-selection training, evaluated on test data:")
         utils.log_final_stats(rrs)
+        graphing.mrr_per_epoch(training_mrrs, validation_mrrs, title="MRR vs. Epoch (Random Selection)")
         return siamese
     except Exception as e:
         utils.save_model(siamese, model_path)
@@ -62,7 +70,7 @@ def train_random_selection(use_cuda, data):
         exit(1)
 
 
-def train_fine_tuning(use_cuda, data, use_cached_baseline=False):
+def train_fine_tuning(use_cuda, data: DataFiles, use_cached_baseline=False):
     logger = logging.getLogger('logger')
     # get the baseline network
     if use_cached_baseline:
@@ -76,14 +84,18 @@ def train_fine_tuning(use_cuda, data, use_cached_baseline=False):
     # global parameters
     model_path = './models/fine_tuned/model_{0}_{1}'
 
-    all_pairs = datasets.AllPairs(data.train)
+    training_pairs = datasets.AllPairs(data.train)
+    validation_pairs = datasets.AllPairs(data.val)
     fine_tuning_data = datasets.FineTuned(data.train)
+    testing_pairs = datasets.AllPairs(data.test)
 
     criterion = BCELoss()
 
     # further train using hard-negative selection until convergence
     n_epochs = 20
-    best_mrrs = []
+    best_validation_mrrs = []
+    best_training_mrrs = []
+
     convergence_threshold = .01  # TODO: figure out a real number for this
     fine_tuning_pass = 0
 
@@ -91,32 +103,41 @@ def train_fine_tuning(use_cuda, data, use_cached_baseline=False):
     optimizer = torch.optim.SGD(siamese.parameters(), lr=.0001, weight_decay=.0001, momentum=.9, nesterov=True)
     try:
         # fine tune until convergence
-        while not convergence(best_mrrs, convergence_threshold):
+        while not convergence(best_validation_mrrs, convergence_threshold):
             fine_tuning_data.reset()
             logger.debug("Performing hard negative selection...")
-            references = experimentation.hard_negative_selection(siamese, all_pairs, use_cuda)
+            references = experimentation.hard_negative_selection(siamese, training_pairs, use_cuda)
             fine_tuning_data.add_negatives(references)
 
             logger.info("Beginning fine tuning pass {0}...".format(fine_tuning_pass))
-            mrrs = np.zeros(n_epochs)
+
+            training_mrrs = np.zeros(n_epochs)
+            validation_mrrs = np.zeros(n_epochs)
+
             models = train_network(siamese, fine_tuning_data, criterion, optimizer, n_epochs, use_cuda)
             for epoch, model in enumerate(models):
-                logger.debug("Calculating MRR...")
-                mrr = experimentation.mean_reciprocal_ranks(model, all_pairs, use_cuda)
-                logger.info("MRR at epoch {0}, fine tuning pass {1} = {2}".format(epoch, fine_tuning_pass, mrr))
-                mrrs[epoch] = mrr
                 utils.save_model(model, model_path.format(fine_tuning_pass, epoch))
 
-            utils.load_model(siamese, model_path.format(fine_tuning_pass, np.argmax(mrrs)))
+                logger.debug("Calculating MRRs...")
+                training_mrr = experimentation.mean_reciprocal_ranks(model, training_pairs, use_cuda)
+                val_mrr = experimentation.mean_reciprocal_ranks(model, validation_pairs, use_cuda)
+                logger.info("MRRs at epoch {0}:\n\ttrn = {1}\n\tval = {2}".format(epoch, training_mrr, val_mrr))
+                training_mrrs[epoch] = training_mrr
+                validation_mrrs[epoch] = val_mrr
+
+            utils.load_model(siamese, model_path.format(fine_tuning_pass, np.argmax(validation_mrrs)))
             utils.save_model(siamese, model_path.format(fine_tuning_pass, 'best'))
-            best_mrrs.append(np.max(mrrs))
+            best_validation_mrrs.append(np.max(validation_mrrs))
+            best_training_mrrs.append(np.max(training_mrrs))
             fine_tuning_pass += 1
 
-        utils.load_model(siamese, model_path.format(np.argmax(best_mrrs), 'best'))
+        utils.load_model(siamese, model_path.format(np.argmax(best_validation_mrrs), 'best'))
         utils.save_model(siamese, model_path.format('best', 'best'))
-        rrs = experimentation.reciprocal_ranks(siamese, all_pairs, use_cuda)
-        print("Results from training after fine-tuning:")
+
+        rrs = experimentation.reciprocal_ranks(siamese, testing_pairs, use_cuda)
+        logger.info("Results from best model generated after tine-tuning, evaluated on test data:")
         utils.log_final_stats(rrs)
+        graphing.mrr_per_epoch(best_training_mrrs, best_validation_mrrs, title='MRR vs. Epoch (Fine Tuning)')
     except Exception as e:
         utils.save_model(siamese, model_path)
         print("Exception occurred while training: {0}".format(str(e)))
