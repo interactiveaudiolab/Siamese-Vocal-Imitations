@@ -108,7 +108,7 @@ def train_fine_tuning(use_cuda, data: DataFiles, use_cached_baseline=False):
     criterion = BCELoss()
 
     # further train using hard-negative selection until convergence
-    n_epochs = 1
+    n_epochs = 20
     best_validation_mrrs = []
     best_training_mrrs = []
 
