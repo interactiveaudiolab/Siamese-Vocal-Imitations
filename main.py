@@ -61,6 +61,9 @@ def train_random_selection(use_cuda, data: DataFiles):
             losses[epoch] = loss.mean()
             loss_var[epoch] = loss.var()
 
+            graphing.mrr_per_epoch(training_mrrs, validation_mrrs, title="MRR vs. Epoch (Random Selection)")
+            graphing.loss_per_epoch(losses, loss_var)
+
         # get and save best model TODO: should this be by training or by validation?
         utils.load_model(siamese, model_path.format(np.argmax(validation_mrrs)))
         utils.save_model(siamese, model_path.format('best'))
@@ -68,7 +71,6 @@ def train_random_selection(use_cuda, data: DataFiles):
         logger.info("Results from best model generated during random-selection training, evaluated on test data:")
         rrs = experimentation.reciprocal_ranks(siamese, testing_pairs, use_cuda)
         utils.log_final_stats(rrs)
-        graphing.mrr_per_epoch(training_mrrs, validation_mrrs, title="MRR vs. Epoch (Random Selection)")
         graphing.loss_per_epoch(losses, loss_var)
         return siamese
     except Exception as e:
@@ -135,6 +137,9 @@ def train_fine_tuning(use_cuda, data: DataFiles, use_cached_baseline=False):
             utils.save_model(siamese, model_path.format(fine_tuning_pass, 'best'))
             best_validation_mrrs.append(np.max(validation_mrrs))
             best_training_mrrs.append(np.max(training_mrrs))
+
+            graphing.mrr_per_epoch(best_training_mrrs, best_validation_mrrs, title='MRR vs. Epoch (Fine Tuning)')
+
             fine_tuning_pass += 1
 
         utils.load_model(siamese, model_path.format(np.argmax(best_validation_mrrs), 'best'))
@@ -143,7 +148,6 @@ def train_fine_tuning(use_cuda, data: DataFiles, use_cached_baseline=False):
         rrs = experimentation.reciprocal_ranks(siamese, testing_pairs, use_cuda)
         logger.info("Results from best model generated after tine-tuning, evaluated on test data:")
         utils.log_final_stats(rrs)
-        graphing.mrr_per_epoch(best_training_mrrs, best_validation_mrrs, title='MRR vs. Epoch (Fine Tuning)')
     except Exception as e:
         utils.save_model(siamese, model_path)
         print("Exception occurred while training: {0}".format(str(e)))
