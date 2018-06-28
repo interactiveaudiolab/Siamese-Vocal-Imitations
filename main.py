@@ -9,7 +9,7 @@ from progress.bar import Bar
 from torch.nn import BCELoss
 from torch.utils.data.dataloader import DataLoader
 
-import datasets
+import vocal_sketch
 import experimentation
 import preprocessing
 import utils
@@ -26,10 +26,10 @@ def train_random_selection(use_cuda, data: DataFiles):
     n_epochs = 70  # 70 in Bongjun's version, 30 in the paper
     model_path = "./models/random_selection/model_{0}"
 
-    training_data = datasets.AllPositivesRandomNegatives(data.train)
-    training_pairs = datasets.AllPairs(data.train)
-    validation_pairs = datasets.AllPairs(data.val)
-    testing_pairs = datasets.AllPairs(data.test)
+    training_data = vocal_sketch.AllPositivesRandomNegatives(data.train)
+    training_pairs = vocal_sketch.AllPairs(data.train)
+    validation_pairs = vocal_sketch.AllPairs(data.val)
+    testing_pairs = vocal_sketch.AllPairs(data.test)
 
     # get a siamese network, see Siamese class for architecture
     siamese = Siamese()
@@ -44,7 +44,9 @@ def train_random_selection(use_cuda, data: DataFiles):
     try:
         logger.info("Training using random selection...")
         training_mrrs = np.zeros(n_epochs)
+        training_mrr_vars = np.zeros(n_epochs)
         validation_mrrs = np.zeros(n_epochs)
+        validation_mrr_vars = np.zeros(n_epochs)
         losses = np.zeros(n_epochs)
         loss_var = np.zeros(n_epochs)
         models = train_network(siamese, training_data, criterion, optimizer, n_epochs, use_cuda)
@@ -52,16 +54,21 @@ def train_random_selection(use_cuda, data: DataFiles):
             utils.save_model(model, model_path.format(epoch))
 
             logger.debug("Calculating MRRs...")
-            training_mrr = experimentation.mean_reciprocal_ranks(model, training_pairs, use_cuda)
-            val_mrr = experimentation.mean_reciprocal_ranks(model, validation_pairs, use_cuda)
+            training_mrr, training_mrr_var = experimentation.mean_reciprocal_ranks(model, training_pairs, use_cuda)
+            val_mrr, val_mrr_var = experimentation.mean_reciprocal_ranks(model, validation_pairs, use_cuda)
             logger.info("MRRs at epoch {0}:\n\ttrn = {1}\n\tval = {2}".format(epoch, training_mrr, val_mrr))
             logger.info("Loss at epoch {0} = {1}".format(epoch, loss.mean()))
+
             training_mrrs[epoch] = training_mrr
             validation_mrrs[epoch] = val_mrr
+
+            training_mrr_vars[epoch] = training_mrr_var
+            validation_mrr_vars[epoch] = val_mrr_var
+
             losses[epoch] = loss.mean()
             loss_var[epoch] = loss.var()
 
-            graphing.mrr_per_epoch(training_mrrs, validation_mrrs, title="MRR vs. Epoch (Random Selection)")
+            graphing.mrr_per_epoch(training_mrrs, validation_mrrs, training_mrr_vars, validation_mrr_vars, title="MRR vs. Epoch (Random Selection)")
             graphing.loss_per_epoch(losses, loss_var)
 
         # get and save best model TODO: should this be by training or by validation?
@@ -93,15 +100,15 @@ def train_fine_tuning(use_cuda, data: DataFiles, use_cached_baseline=False):
 
     model_path = './models/fine_tuned/model_{0}_{1}'
 
-    training_pairs = datasets.AllPairs(data.train)
-    validation_pairs = datasets.AllPairs(data.val)
-    fine_tuning_data = datasets.FineTuned(data.train)
-    testing_pairs = datasets.AllPairs(data.test)
+    training_pairs = vocal_sketch.AllPairs(data.train)
+    validation_pairs = vocal_sketch.AllPairs(data.val)
+    fine_tuning_data = vocal_sketch.FineTuned(data.train)
+    testing_pairs = vocal_sketch.AllPairs(data.test)
 
     criterion = BCELoss()
 
     # further train using hard-negative selection until convergence
-    n_epochs = 20
+    n_epochs = 1
     best_validation_mrrs = []
     best_training_mrrs = []
 
@@ -126,8 +133,8 @@ def train_fine_tuning(use_cuda, data: DataFiles, use_cached_baseline=False):
                 utils.save_model(model, model_path.format(fine_tuning_pass, epoch))
 
                 logger.debug("Calculating MRRs...")
-                training_mrr = experimentation.mean_reciprocal_ranks(model, training_pairs, use_cuda)
-                val_mrr = experimentation.mean_reciprocal_ranks(model, validation_pairs, use_cuda)
+                training_mrr, training_mrr_var = experimentation.mean_reciprocal_ranks(model, training_pairs, use_cuda)
+                val_mrr, val_mrr_var = experimentation.mean_reciprocal_ranks(model, validation_pairs, use_cuda)
                 logger.info("MRRs at pass {0}, epoch {1}:\n\ttrn = {2}\n\tval = {3}".format(fine_tuning_pass, epoch, training_mrr, val_mrr))
                 logger.info("Loss at pass {0}, epoch {1} = {2}".format(fine_tuning_pass, epoch, loss.mean()))
                 training_mrrs[epoch] = training_mrr
@@ -158,7 +165,7 @@ def train_fine_tuning(use_cuda, data: DataFiles, use_cached_baseline=False):
 def train_network(model, data, objective, optimizer, n_epochs, use_cuda, batch_size=128):
     for epoch in range(n_epochs):
         # if we're using all positives and random negatives, choose new negatives on each epoch
-        if isinstance(data, datasets.AllPositivesRandomNegatives):
+        if isinstance(data, vocal_sketch.AllPositivesRandomNegatives):
             data.reselect_negatives()
 
         train_data = DataLoader(data, batch_size=batch_size, num_workers=1)

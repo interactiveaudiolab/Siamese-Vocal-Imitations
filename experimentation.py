@@ -3,7 +3,7 @@ from progress.bar import Bar
 from torch.utils.data import dataloader
 
 import utils
-from datasets import AllPairs
+from vocal_sketch import AllPairs
 from siamese import Siamese
 
 
@@ -16,7 +16,8 @@ def mean_reciprocal_ranks(model: Siamese, pairs: AllPairs, use_cuda):
     :param use_cuda: bool, whether to run on gpu
     :return: float, mean of reciprocal ranks
     """
-    return reciprocal_ranks(model, pairs, use_cuda).mean()
+    rrs = reciprocal_ranks(model, pairs, use_cuda)
+    return rrs.mean(), rrs.var()
 
 
 def reciprocal_ranks(model: Siamese, pairs: AllPairs, use_cuda):
