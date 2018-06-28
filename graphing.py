@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 def mrr_per_epoch(train_mrrs, val_mrrs, title="MRR vs. Epoch"):
     logger = logging.getLogger('logger')
     try:
-        plt.plot(train_mrrs, color='red', label='test')
-        plt.plot(val_mrrs, color='blue', label='val')
+        plt.plot(train_mrrs, color='blue', label='train')
+        plt.plot(val_mrrs, color='orange', label='validation')
         plt.legend()
         plt.ylabel('MRR')
         plt.xlabel('epoch')
