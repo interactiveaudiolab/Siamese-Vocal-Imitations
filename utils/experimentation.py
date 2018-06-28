@@ -3,7 +3,7 @@ from progress.bar import Bar
 from torch.utils.data import dataloader
 
 from utils import utils
-from datasets.vocal_sketch import AllPairs
+from datasets.vocal_sketch_data import AllPairs
 from models.siamese import Siamese
 
 

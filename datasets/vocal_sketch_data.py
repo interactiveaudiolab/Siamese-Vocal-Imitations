@@ -1,7 +1,7 @@
 import numpy as np
 import torch.utils.data.dataset as dataset
 
-from datafiles.vocal_sketch import VocalSketchPartition
+from datafiles.vocal_sketch_files import VocalSketchPartition
 
 
 class FineTuned(dataset.Dataset):

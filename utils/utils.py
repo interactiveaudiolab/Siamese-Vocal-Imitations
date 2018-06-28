@@ -71,3 +71,5 @@ def configure_parser(parser):
                         help='Whether to use a cached version of the baseline model or not. Defaults to false.')
     parser.add_argument('-p', '--partitions', nargs=3, type=float, default=[.35, .15, .5],
                         help='Ratios by which to partition the data into training, validation, and testing sets (in that order). Defaults to [.35, .15, .5].')
+    parser.add_argument('-f', '--fine_tuning_passes', nargs=3, type=int, default=None,
+                        help='Minimum amount of fine tuning passes to perform, regardless of convergence. Defaults to none.')
