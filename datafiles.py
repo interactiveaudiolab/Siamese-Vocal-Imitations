@@ -1,3 +1,5 @@
+import logging
+
 import numpy as np
 from progress.bar import Bar
 
@@ -8,6 +10,9 @@ class DataFiles:
     def __init__(self, train_ratio, val_ratio, test_ratio):
         if train_ratio + val_ratio + test_ratio != 1:
             raise ValueError("Training, validation, and testing ratios must add to 1")
+
+        logger = logging.getLogger('logger')
+        logger.info("train, validation, test ratios = {0}, {1}, {2}".format(train_ratio, val_ratio, test_ratio))
 
         references = utils.load_npy("references.npy")
         reference_labels = utils.load_npy("reference_labels.npy")
