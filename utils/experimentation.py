@@ -2,9 +2,9 @@ import numpy as np
 from progress.bar import Bar
 from torch.utils.data import dataloader
 
-import utils
-from vocal_sketch import AllPairs
-from siamese import Siamese
+from utils import utils
+from datasets.vocal_sketch import AllPairs
+from models.siamese import Siamese
 
 
 def mean_reciprocal_ranks(model: Siamese, pairs: AllPairs, use_cuda):

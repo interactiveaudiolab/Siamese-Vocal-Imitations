@@ -24,9 +24,9 @@ def save_npy(array, suffix, ar_type=None):
     np.save(os.environ['SIAMESE_DATA_DIR'] + "/npy/" + suffix, array)
 
 
-def prindent(str, n_indent):
+def prindent(string, n_indent):
     logger = logging.getLogger('logger')
-    p_str = ''.join(['\t' for i in range(n_indent)]) + str
+    p_str = ''.join(['\t' for i in range(n_indent)]) + string
     logger.info(p_str)
 
 

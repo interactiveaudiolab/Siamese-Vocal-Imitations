@@ -3,10 +3,10 @@ import logging
 import numpy as np
 from progress.bar import Bar
 
-import utils
+from utils import utils
 
 
-class DataFiles:
+class VocalSketch:
     def __init__(self, train_ratio, val_ratio, test_ratio):
         if train_ratio + val_ratio + test_ratio != 1:
             raise ValueError("Training, validation, and testing ratios must add to 1")
@@ -34,9 +34,9 @@ class DataFiles:
         val_ref_labels = reference_labels[n_train:n_train + n_val]
         test_ref_labels = reference_labels[n_train + n_val:]
 
-        self.train = SegmentedDataFiles(train_ref, train_ref_labels, imitations, imitation_labels, "training")
-        self.val = SegmentedDataFiles(val_ref, val_ref_labels, imitations, imitation_labels, "validation")
-        self.test = SegmentedDataFiles(test_ref, test_ref_labels, imitations, imitation_labels, "testing")
+        self.train = VocalSketchPartition(train_ref, train_ref_labels, imitations, imitation_labels, "training")
+        self.val = VocalSketchPartition(val_ref, val_ref_labels, imitations, imitation_labels, "validation")
+        self.test = VocalSketchPartition(test_ref, test_ref_labels, imitations, imitation_labels, "testing")
 
     @staticmethod
     def create_pairs(references, reference_labels, imitations, imitation_labels):
@@ -56,7 +56,7 @@ class DataFiles:
         return positive_pairs, negative_pairs
 
 
-class SegmentedDataFiles:
+class VocalSketchPartition:
     def __init__(self, references, reference_labels, all_imitations, all_imitation_labels, dataset_type):
         self.references = references
         self.reference_labels = reference_labels

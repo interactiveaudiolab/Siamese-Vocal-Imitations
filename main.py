@@ -9,27 +9,22 @@ from progress.bar import Bar
 from torch.nn import BCELoss
 from torch.utils.data.dataloader import DataLoader
 
-import vocal_sketch
-import experimentation
-import preprocessing
-import utils
-from datafiles import DataFiles
-import graphing
-from experimentation import convergence
-from siamese import Siamese
-from utils import configure_logger, configure_parser
+import datasets
+import datafiles
+from utils import graphing, preprocessing, experimentation, utils
+from models.siamese import Siamese
 
 
-def train_random_selection(use_cuda, data: DataFiles):
+def train_random_selection(use_cuda, data: datafiles.vocal_sketch.VocalSketch):
     logger = logging.getLogger('logger')
 
     n_epochs = 70  # 70 in Bongjun's version, 30 in the paper
-    model_path = "./models/random_selection/model_{0}"
+    model_path = "./model_output/random_selection/model_{0}"
 
-    training_data = vocal_sketch.AllPositivesRandomNegatives(data.train)
-    training_pairs = vocal_sketch.AllPairs(data.train)
-    validation_pairs = vocal_sketch.AllPairs(data.val)
-    testing_pairs = vocal_sketch.AllPairs(data.test)
+    training_data = datasets.vocal_sketch.AllPositivesRandomNegatives(data.train)
+    training_pairs = datasets.vocal_sketch.AllPairs(data.train)
+    validation_pairs = datasets.vocal_sketch.AllPairs(data.val)
+    testing_pairs = datasets.vocal_sketch.AllPairs(data.test)
 
     # get a siamese network, see Siamese class for architecture
     siamese = Siamese()
@@ -87,23 +82,23 @@ def train_random_selection(use_cuda, data: DataFiles):
         exit(1)
 
 
-def train_fine_tuning(use_cuda, data: DataFiles, use_cached_baseline=False):
+def train_fine_tuning(use_cuda, data: datafiles.vocal_sketch.VocalSketch, use_cached_baseline=False):
     logger = logging.getLogger('logger')
     # get the baseline network
     if use_cached_baseline:
         siamese = Siamese()
         if use_cuda:
             siamese = siamese.cuda()
-        utils.load_model(siamese, './models/random_selection/model_best')
+        utils.load_model(siamese, './model_output/random_selection/model_best')
     else:
         siamese = train_random_selection(use_cuda, data)
 
-    model_path = './models/fine_tuned/model_{0}_{1}'
+    model_path = './model_output/fine_tuned/model_{0}_{1}'
 
-    training_pairs = vocal_sketch.AllPairs(data.train)
-    validation_pairs = vocal_sketch.AllPairs(data.val)
-    fine_tuning_data = vocal_sketch.FineTuned(data.train)
-    testing_pairs = vocal_sketch.AllPairs(data.test)
+    training_pairs = datasets.vocal_sketch.AllPairs(data.train)
+    validation_pairs = datasets.vocal_sketch.AllPairs(data.val)
+    fine_tuning_data = datasets.vocal_sketch.FineTuned(data.train)
+    testing_pairs = datasets.vocal_sketch.AllPairs(data.test)
 
     criterion = BCELoss()
 
@@ -119,7 +114,7 @@ def train_fine_tuning(use_cuda, data: DataFiles, use_cached_baseline=False):
     optimizer = torch.optim.SGD(siamese.parameters(), lr=.0001, weight_decay=.0001, momentum=.9, nesterov=True)
     try:
         # fine tune until convergence
-        while not convergence(best_validation_mrrs, convergence_threshold):
+        while not experimentation.convergence(best_validation_mrrs, convergence_threshold):
             fine_tuning_data.reset()
             logger.debug("Performing hard negative selection...")
             references = experimentation.hard_negative_selection(siamese, training_pairs, use_cuda)
@@ -165,7 +160,7 @@ def train_fine_tuning(use_cuda, data: DataFiles, use_cached_baseline=False):
 def train_network(model, data, objective, optimizer, n_epochs, use_cuda, batch_size=128):
     for epoch in range(n_epochs):
         # if we're using all positives and random negatives, choose new negatives on each epoch
-        if isinstance(data, vocal_sketch.AllPositivesRandomNegatives):
+        if isinstance(data, datasets.vocal_sketch.AllPositivesRandomNegatives):
             data.reselect_negatives()
 
         train_data = DataLoader(data, batch_size=batch_size, num_workers=1)
@@ -204,11 +199,11 @@ def train_network(model, data, objective, optimizer, n_epochs, use_cuda, batch_s
 def main():
     # set up logger
     logger = logging.getLogger('logger')
-    configure_logger(logger)
+    utils.configure_logger(logger)
 
     # parse arguments
     parser = argparse.ArgumentParser()
-    configure_parser(parser)
+    utils.configure_parser(parser)
     args = parser.parse_args()
 
     logger.info('Beginning experiment...')
@@ -217,8 +212,8 @@ def main():
     try:
         if args.spectrograms:
             preprocessing.load_data_set()
-        data_files = DataFiles(*args.partitions)
-        train_fine_tuning(args.cuda, data_files, use_cached_baseline=args.cache_baseline)
+        vocal_sketch = datafiles.vocal_sketch.VocalSketch(*args.partitions)
+        train_fine_tuning(args.cuda, vocal_sketch, use_cached_baseline=args.cache_baseline)
     except Exception as e:
         logger.critical("Unhandled exception: {0}".format(str(e)))
         logger.critical(traceback.print_exc())

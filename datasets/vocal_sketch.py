@@ -1,14 +1,14 @@
 import numpy as np
 import torch.utils.data.dataset as dataset
 
-from datafiles import SegmentedDataFiles
+from datafiles.vocal_sketch import VocalSketchPartition
 
 
 class FineTuned(dataset.Dataset):
-    def __init__(self, data_files: SegmentedDataFiles):
-        self.all_positives = data_files.positive_pairs
-        self.references = data_files.references
-        self.imitations = data_files.imitations
+    def __init__(self, data: VocalSketchPartition):
+        self.all_positives = data.positive_pairs
+        self.references = data.references
+        self.imitations = data.imitations
         self.pairs = []
 
     def add_negatives(self, reference_indexes):
@@ -31,9 +31,9 @@ class FineTuned(dataset.Dataset):
 
 
 class AllPositivesRandomNegatives(dataset.Dataset):
-    def __init__(self, data_files: SegmentedDataFiles):
-        self.positives = data_files.positive_pairs
-        self.negatives = data_files.negative_pairs
+    def __init__(self, data: VocalSketchPartition):
+        self.positives = data.positive_pairs
+        self.negatives = data.negative_pairs
         self.pairs = []
         self.reselect_negatives()
 
@@ -58,15 +58,15 @@ class AllPositivesRandomNegatives(dataset.Dataset):
 
 
 class AllPairs(dataset.Dataset):
-    def __init__(self, data_files: SegmentedDataFiles):
-        self.imitations = data_files.imitations
-        self.references = data_files.references
+    def __init__(self, data: VocalSketchPartition):
+        self.imitations = data.imitations
+        self.references = data.references
 
         self.n_imitations = len(self.imitations)
         self.n_references = len(self.references)
-        self.labels = data_files.labels
+        self.labels = data.labels
 
-        self.pairs = data_files.positive_pairs + data_files.negative_pairs
+        self.pairs = data.positive_pairs + data.negative_pairs
 
     def __getitem__(self, index):
         return self.pairs[index]

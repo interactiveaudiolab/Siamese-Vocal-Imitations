@@ -6,7 +6,7 @@ import numpy as np
 
 from progress.bar import Bar
 
-from utils import save_npy
+from utils.utils import save_npy
 
 
 def load_data_set():
