@@ -10,7 +10,7 @@ from torch.nn import BCELoss
 from torch.utils.data.dataloader import DataLoader
 
 # noinspection PyUnresolvedReferences
-import matplotlib_backend_hack  # MUST GO FIRST
+from utils import matplotlib_backend_hack
 from datafiles.vocal_sketch_files import VocalSketch
 from datasets.vocal_sketch_data import AllPositivesRandomNegatives, AllPairs, FineTuned
 import utils.experimentation as experimentation
