@@ -200,7 +200,7 @@ def train_network(model, data, objective, optimizer, n_epochs, use_cuda, batch_s
             loss = objective(outputs, labels)
             loss.backward()
             optimizer.step()
-            batch_losses[i] = loss.data[0]
+            batch_losses[i] = loss.item()
 
             bar.next()
         bar.finish()
