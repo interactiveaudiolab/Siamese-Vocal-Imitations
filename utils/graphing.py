@@ -15,8 +15,8 @@ def mrr_per_epoch(train_mrrs, val_mrrs, train_var=None, val_var=None, title="MRR
     plt.ylim(0, 1)
     plt.xlabel(xlabel)
     plt.title(title)
-    title = title_to_filename(title)
-    plt.savefig(title)
+    filename = title_to_filename(title)
+    plt.savefig(filename)
     plt.close()
     if train_var is not None or val_var is not None:
         mrr_per_epoch(train_mrrs, val_mrrs, title=title + " (No Error Bars)", xlabel=xlabel)
@@ -30,8 +30,8 @@ def loss_per_epoch(losses, var=None, title="Loss vs. Epoch"):
     plt.ylim(0, 1)
     plt.xlabel('epoch')
     plt.title(title)
-    title = title_to_filename(title)
-    plt.savefig(title)
+    filename = title_to_filename(title)
+    plt.savefig(filename)
     plt.close()
     if var is not None:
         loss_per_epoch(losses, title=title + " (No Error Bars)")
