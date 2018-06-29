@@ -78,7 +78,6 @@ def train_random_selection(use_cuda, data: VocalSketch):
         logger.info("Results from best model generated during random-selection training, evaluated on test data:")
         rrs = experimentation.reciprocal_ranks(siamese, testing_pairs, use_cuda)
         utilities.log_final_stats(rrs)
-        graphing.loss_per_epoch(losses)
         return siamese
     except Exception as e:
         utilities.save_model(siamese, model_path)
