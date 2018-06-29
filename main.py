@@ -68,7 +68,7 @@ def train_random_selection(use_cuda, data: VocalSketch):
             losses[epoch] = loss.mean()
             loss_var[epoch] = loss.var()
 
-            graphing.mrr_per_epoch(training_mrrs, validation_mrrs, training_mrr_vars, validation_mrr_vars, title="MRR vs. Epoch (Random Selection)")
+            graphing.mrr_per_epoch(training_mrrs, validation_mrrs, title="MRR vs. Epoch (Random Selection)")
             graphing.loss_per_epoch(losses, title='Loss vs. Epoch (Random Selection)')
 
         # get and save best model TODO: should this be by training or by validation?
