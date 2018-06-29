@@ -38,23 +38,6 @@ class VocalSketch:
         self.val = VocalSketchPartition(val_ref, val_ref_labels, imitations, imitation_labels, "validation")
         self.test = VocalSketchPartition(test_ref, test_ref_labels, imitations, imitation_labels, "testing")
 
-    @staticmethod
-    def create_pairs(references, reference_labels, imitations, imitation_labels):
-        bar = Bar("Creating all positive and negative pairs...", max=len(references) * len(imitations))
-        positive_pairs = []
-        negative_pairs = []
-        for reference, reference_label in zip(references, reference_labels):
-            for imitation, imitation_label in zip(imitations, imitation_labels):
-                if reference_label == imitation_label:
-                    positive_pairs.append([imitation, reference, True])
-                elif imitation_label in reference_labels:
-                    negative_pairs.append([imitation, reference, False])
-
-                bar.next()
-        bar.finish()
-
-        return positive_pairs, negative_pairs
-
 
 class VocalSketchPartition:
     def __init__(self, references, reference_labels, all_imitations, all_imitation_labels, dataset_type):
