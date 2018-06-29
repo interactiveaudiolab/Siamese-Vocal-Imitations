@@ -23,7 +23,7 @@ from models.siamese import Siamese
 def train_random_selection(use_cuda, data: VocalSketch):
     logger = logging.getLogger('logger')
 
-    n_epochs = 70  # 70 in Bongjun's version, 30 in the paper
+    n_epochs = 100
     model_path = "./model_output/random_selection/model_{0}"
 
     training_data = AllPositivesRandomNegatives(data.train)
