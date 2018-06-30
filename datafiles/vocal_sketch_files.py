@@ -55,14 +55,17 @@ class VocalSketchPartition:
         bar = Bar("Creating pairs for {0}...".format(dataset_type), max=len(self.references) * len(self.imitations))
         self.positive_pairs = []
         self.negative_pairs = []
+        self.all_pairs = []
         self.labels = np.zeros([len(self.imitations), len(self.references)])
         for i, (imitation, imitation_label) in enumerate(zip(self.imitations, self.imitation_labels)):
             for j, (reference, reference_label) in enumerate(zip(self.references, self.reference_labels)):
                 if reference_label == imitation_label:
                     self.positive_pairs.append([imitation, reference, True])
+                    self.all_pairs.append([imitation, reference, True])
                     self.labels[i, j] = 1
                 else:
                     self.negative_pairs.append([imitation, reference, False])
+                    self.all_pairs.append([imitation, reference, False])
                     self.labels[i, j] = 0
 
                 bar.next()

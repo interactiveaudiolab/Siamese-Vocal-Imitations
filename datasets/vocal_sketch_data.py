@@ -66,7 +66,7 @@ class AllPairs(dataset.Dataset):
         self.n_references = len(self.references)
         self.labels = data.labels
 
-        self.pairs = data.positive_pairs + data.negative_pairs
+        self.pairs = data.all_pairs
 
     def __getitem__(self, index):
         return self.pairs[index]
