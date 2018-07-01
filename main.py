@@ -47,29 +47,34 @@ def train_random_selection(use_cuda, data: VocalSketch):
         training_mrr_vars = np.zeros(n_epochs)
         validation_mrrs = np.zeros(n_epochs)
         validation_mrr_vars = np.zeros(n_epochs)
-        losses = np.zeros(n_epochs)
-        loss_var = np.zeros(n_epochs)
+        training_losses = np.zeros(n_epochs)
+        training_loss_var = np.zeros(n_epochs)
+        validation_losses = np.zeros(n_epochs)
         models = train_network(siamese, training_data, criterion, optimizer, n_epochs, use_cuda)
-        for epoch, (model, loss) in enumerate(models):
+        for epoch, (model, training_batch_losses) in enumerate(models):
             utilities.save_model(model, model_path.format(epoch))
+
+            validation_batch_losses = experimentation.loss(model, validation_pairs, criterion, use_cuda)
+            training_loss = training_batch_losses.mean()
+            validation_loss = validation_batch_losses.mean()
+            logger.info("Loss at epoch {0}:\n\ttrn = {1}\n\tval = {2}".format(epoch, training_loss, validation_loss))
+
+            training_losses[epoch] = training_loss
+            training_loss_var[epoch] = training_batch_losses.var()
+            validation_losses[epoch] = validation_loss
 
             logger.debug("Calculating MRRs...")
             training_mrr, training_mrr_var = experimentation.mean_reciprocal_ranks(model, training_pairs, use_cuda)
             val_mrr, val_mrr_var = experimentation.mean_reciprocal_ranks(model, validation_pairs, use_cuda)
             logger.info("MRRs at epoch {0}:\n\ttrn = {1}\n\tval = {2}".format(epoch, training_mrr, val_mrr))
-            logger.info("Loss at epoch {0} = {1}".format(epoch, loss.mean()))
 
             training_mrrs[epoch] = training_mrr
             validation_mrrs[epoch] = val_mrr
-
             training_mrr_vars[epoch] = training_mrr_var
             validation_mrr_vars[epoch] = val_mrr_var
 
-            losses[epoch] = loss.mean()
-            loss_var[epoch] = loss.var()
-
             graphing.mrr_per_epoch(training_mrrs, validation_mrrs, title="MRR vs. Epoch (Random Selection)")
-            graphing.loss_per_epoch(losses, title='Loss vs. Epoch (Random Selection)')
+            graphing.loss_per_epoch(training_losses, validation_losses, title='Loss vs. Epoch (Random Selection)')
 
         # get and save best model TODO: should this be by training or by validation?
         utilities.load_model(siamese, model_path.format(np.argmax(validation_mrrs)))
@@ -119,10 +124,13 @@ def train_fine_tuning(use_cuda, data: VocalSketch, use_cached_baseline=False, mi
     try:
         # fine tune until convergence
         logger.info("Fine tuning model, minimum # of passes = {0}".format(minimum_passes))
-        training_mrrs = []
-        validation_mrrs = []
-        losses = []
-        loss_vars = []
+        training_mrrs = np.zeros(n_epochs)
+        training_mrr_vars = np.zeros(n_epochs)
+        validation_mrrs = np.zeros(n_epochs)
+        validation_mrr_vars = np.zeros(n_epochs)
+        training_losses = np.zeros(n_epochs)
+        training_loss_var = np.zeros(n_epochs)
+        validation_losses = np.zeros(n_epochs)
         while not experimentation.convergence(best_validation_mrrs, convergence_threshold) or fine_tuning_pass < minimum_passes:
             fine_tuning_data.reset()
             logger.debug("Performing hard negative selection...")
@@ -131,21 +139,30 @@ def train_fine_tuning(use_cuda, data: VocalSketch, use_cached_baseline=False, mi
 
             logger.info("Beginning fine tuning pass {0}...".format(fine_tuning_pass))
             models = train_network(siamese, fine_tuning_data, criterion, optimizer, n_epochs, use_cuda)
-            for epoch, (model, loss) in enumerate(models):
+            for epoch, (model, training_batch_losses) in enumerate(models):
                 utilities.save_model(model, model_path.format(fine_tuning_pass, epoch))
+
+                validation_batch_losses = experimentation.loss(model, validation_pairs, criterion, use_cuda)
+                training_loss = training_batch_losses.mean()
+                validation_loss = validation_batch_losses.mean()
+                logger.info("Loss at pass {0}, epoch {1}:\n\ttrn = {2}\n\tval = {3}".format(fine_tuning_pass, epoch, training_loss, validation_loss))
+
+                training_losses[epoch] = training_loss
+                training_loss_var[epoch] = training_batch_losses.var()
+                validation_losses[epoch] = validation_loss
 
                 logger.debug("Calculating MRRs...")
                 training_mrr, training_mrr_var = experimentation.mean_reciprocal_ranks(model, training_pairs, use_cuda)
                 val_mrr, val_mrr_var = experimentation.mean_reciprocal_ranks(model, validation_pairs, use_cuda)
                 logger.info("MRRs at pass {0}, epoch {1}:\n\ttrn = {2}\n\tval = {3}".format(fine_tuning_pass, epoch, training_mrr, val_mrr))
-                logger.info("Loss at pass {0}, epoch {1} = {2}".format(fine_tuning_pass, epoch, loss.mean()))
-                training_mrrs.append(training_mrr)
-                validation_mrrs.append(val_mrr)
-                losses.append(loss.mean())
-                loss_vars.append(loss.var())
+
+                training_mrrs[epoch] = training_mrr
+                validation_mrrs[epoch] = val_mrr
+                training_mrr_vars[epoch] = training_mrr_var
+                validation_mrr_vars[epoch] = val_mrr_var
 
                 graphing.mrr_per_epoch(training_mrrs, validation_mrrs, title='MRR vs. Epoch (Fine Tuning)')
-                graphing.loss_per_epoch(losses, title='Loss vs. Epoch (Fine Tuning)')
+                graphing.loss_per_epoch(training_losses, validation_losses, title='Loss vs. Epoch (Fine Tuning)')
 
             utilities.load_model(siamese, model_path.format(fine_tuning_pass, np.argmax(validation_mrrs)))
             utilities.save_model(siamese, model_path.format(fine_tuning_pass, 'best'))

@@ -1,6 +1,6 @@
 import numpy as np
 from progress.bar import Bar
-from torch.utils.data import dataloader
+from torch.utils.data import dataloader, DataLoader
 
 from utils import utils
 from datasets.vocal_sketch_data import AllPairs
@@ -104,3 +104,40 @@ def hard_negative_selection(model: Siamese, pairs: AllPairs, use_cuda):
 
 def convergence(best_mrrs, convergence_threshold):
     return not (len(best_mrrs) <= 2) and np.abs(best_mrrs[len(best_mrrs) - 1] - best_mrrs[len(best_mrrs) - 2]) < convergence_threshold
+
+
+def loss(model: Siamese, dataset, objective, use_cuda: bool, batch_size=128):
+    """
+    Calculates the loss of model over dataset by objective. Optionally run on the GPU.
+    :param model: a siamese network
+    :param dataset: a dataset of imitation/reference pairs
+    :param objective: loss function
+    :param use_cuda: whether to run on GPU or not.
+    :param batch_size: optional param to set batch_size. Defaults to 128.
+    :return:
+    """
+    data = DataLoader(dataset, batch_size=batch_size, num_workers=1)
+    bar = Bar("Calculating loss", max=len(data))
+    batch_losses = np.zeros(len(data))
+    for i, (left, right, labels) in enumerate(data):
+        # TODO: make them floats at the source
+        labels = labels.float()
+
+        # reshape tensors and push to GPU if necessary
+        left = left.unsqueeze(1)
+        right = right.unsqueeze(1)
+        if use_cuda:
+            left = left.cuda()
+            right = right.cuda()
+            labels = labels.cuda()
+
+        # pass a batch through the network
+        outputs = model(left, right)
+
+        # calculate loss and optimize weights
+        batch_losses[i] = objective(outputs, labels).item()
+
+        bar.next()
+    bar.finish()
+
+    return batch_losses

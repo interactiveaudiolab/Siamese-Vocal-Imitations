@@ -8,7 +8,7 @@ module_load_time = time.time()
 
 
 def mrr_per_epoch(train_mrrs, val_mrrs, train_var=None, val_var=None, title="MRR vs. Epoch", xlabel='epoch'):
-    plt.errorbar(np.arange(len(train_mrrs)), train_mrrs, yerr=train_var, color='blue', label='train', capsize=5, errorevery=3)
+    plt.errorbar(np.arange(len(train_mrrs)), train_mrrs, yerr=train_var, color='blue', label='training', capsize=5, errorevery=3)
     plt.errorbar(np.arange(len(val_mrrs)), val_mrrs, yerr=val_var, color='orange', label='validation', capsize=5, errorevery=3)
     plt.legend()
     plt.ylabel('MRR')
@@ -22,9 +22,10 @@ def mrr_per_epoch(train_mrrs, val_mrrs, train_var=None, val_var=None, title="MRR
         mrr_per_epoch(train_mrrs, val_mrrs, title=title + " (No Error Bars)", xlabel=xlabel)
 
 
-def loss_per_epoch(losses, var=None, title="Loss vs. Epoch"):
-    plt.plot(losses, color='blue', label='train')
-    plt.errorbar(np.arange(len(losses)), losses, yerr=var, capsize=5, errorevery=5)
+def loss_per_epoch(train_loss, val_loss, var=None, title="Loss vs. Epoch"):
+    plt.plot(train_loss, color='blue', label='training')
+    plt.plot(val_loss, color='orange', label='validation')
+    plt.errorbar(np.arange(len(train_loss)), train_loss, yerr=var, capsize=5, errorevery=5)
     plt.legend()
     plt.ylabel('loss')
     plt.ylim(0, 1)
@@ -34,7 +35,7 @@ def loss_per_epoch(losses, var=None, title="Loss vs. Epoch"):
     plt.savefig(filename)
     plt.close()
     if var is not None:
-        loss_per_epoch(losses, title=title + " (No Error Bars)")
+        loss_per_epoch(train_loss, val_loss, title=title + " (No Error Bars)")
 
 
 def title_to_filename(title):
