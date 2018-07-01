@@ -5,3 +5,4 @@ model_output/*
 data/*
 *.log
 *.png
+*.pickle
