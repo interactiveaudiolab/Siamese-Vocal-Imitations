@@ -4,7 +4,10 @@ import time
 import matplotlib.pyplot as plt
 import numpy as np
 
+import utils.utils as utilities
+
 module_load_time = time.time()
+trial_number = utilities.get_trial_number()
 
 
 def mrr_per_epoch(train_mrrs, val_mrrs, train_var=None, val_var=None, title="MRR vs. Epoch", xlabel='epoch'):
@@ -14,7 +17,8 @@ def mrr_per_epoch(train_mrrs, val_mrrs, train_var=None, val_var=None, title="MRR
     plt.ylabel('MRR')
     plt.ylim(0, 1)
     plt.xlabel(xlabel)
-    plt.title(title)
+    plt.suptitle(title)
+    plt.title("Trial #{0}".format(trial_number))
     filename = title_to_filename(title)
     plt.savefig(filename)
     plt.close()
@@ -30,7 +34,8 @@ def loss_per_epoch(train_loss, val_loss, var=None, title="Loss vs. Epoch"):
     plt.ylabel('loss')
     plt.ylim(0, 1)
     plt.xlabel('epoch')
-    plt.title(title)
+    plt.suptitle(title)
+    plt.title("Trial #{0}".format(trial_number))
     filename = title_to_filename(title)
     plt.savefig(filename)
     plt.close()
@@ -39,8 +44,9 @@ def loss_per_epoch(train_loss, val_loss, var=None, title="Loss vs. Epoch"):
 
 
 def title_to_filename(title):
-    title = title.replace(' ', '_')
-    title = title.replace('.', '')
-    title += '_{0}.png'.format(module_load_time)
-    title = title.lower()
-    return os.path.join('./graphs', title)
+    file = title
+    file = file.replace(' ', '_')
+    file = file.replace('.', '')
+    file += '_{0}.png'.format(trial_number)
+    file = file.lower()
+    return os.path.join('./graphs', file)

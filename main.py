@@ -237,6 +237,8 @@ def main():
     logger.info('Beginning experiment...')
     logger.info("CUDA {0}...".format("enabled" if args.cuda else "disabled"))
 
+    utilities.update_trial_number()
+
     try:
         if args.spectrograms:
             preprocessing.load_data_set()

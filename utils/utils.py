@@ -1,5 +1,6 @@
 import logging
 import os
+import pickle
 
 import numpy as np
 import torch
@@ -73,3 +74,21 @@ def configure_parser(parser):
                         help='Ratios by which to partition the data into training, validation, and testing sets (in that order). Defaults to [.35, .15, .5].')
     parser.add_argument('-f', '--fine_tuning_passes', type=int, default=0,
                         help='Minimum amount of fine tuning passes to perform, regardless of convergence. Defaults to 0.')
+
+
+def update_trial_number():
+    trial_number = get_trial_number()
+    with open('state.pickle', 'wb') as handle:
+        pickle.dump(trial_number + 1, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+
+def get_trial_number():
+    try:
+        with open('state.pickle', 'rb') as handle:
+            trial_number = pickle.load(handle)
+    except FileNotFoundError:
+        with open('state.pickle', 'w+b') as handle:
+            trial_number = 0
+            pickle.dump(trial_number + 1, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+    return trial_number
