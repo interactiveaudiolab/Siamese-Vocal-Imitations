@@ -20,7 +20,7 @@ import utils.utils as utilities
 from models.siamese import Siamese
 
 
-def train_random_selection(use_cuda, data: VocalSketch):
+def train_random_selection(use_cuda, data: VocalSketch, use_dropout, use_normalization):
     logger = logging.getLogger('logger')
 
     n_epochs = 100
@@ -32,7 +32,7 @@ def train_random_selection(use_cuda, data: VocalSketch):
     testing_pairs = AllPairs(data.test)
 
     # get a siamese network, see Siamese class for architecture
-    siamese = Siamese()
+    siamese = Siamese(dropout=use_dropout, normalization=use_normalization)
     if use_cuda:
         siamese = siamese.cuda()
 
@@ -87,16 +87,16 @@ def train_random_selection(use_cuda, data: VocalSketch):
         exit(1)
 
 
-def train_fine_tuning(use_cuda, data: VocalSketch, use_cached_baseline=False, minimum_passes=0):
+def train_fine_tuning(use_cuda, data: VocalSketch, use_dropout, use_normalization, use_cached_baseline=False, minimum_passes=0):
     logger = logging.getLogger('logger')
     # get the baseline network
     if use_cached_baseline:
-        siamese = Siamese()
+        siamese = Siamese(dropout=use_dropout, normalization=use_normalization)
         if use_cuda:
             siamese = siamese.cuda()
         utilities.load_model(siamese, './model_output/random_selection/model_best')
     else:
-        siamese = train_random_selection(use_cuda, data)
+        siamese = train_random_selection(use_cuda, data, use_dropout, use_normalization)
 
     model_path = './model_output/fine_tuned/model_{0}_{1}'
 
@@ -227,20 +227,25 @@ def main(cli_args=None):
         utilities.configure_logger(logger)
         cli_args = parser.parse_args()
 
-    logger.info('Beginning trial ({0} left)...'.format(cli_args.trials - 1))
-    logger.info("CUDA {0}...".format("enabled" if cli_args.cuda else "disabled"))
+    n_trials = cli_args.trials
+    logger.info('Beginning trial ({0} left)...'.format(n_trials - 1))
+
+    # log all CLI args
+    arg_dict = vars(cli_args)
+    for key in arg_dict:
+        logger.debug("{0} = {1}".format(key, arg_dict[key]))
 
     utilities.update_trial_number()
-    n_trials = cli_args.trials
 
     try:
         if cli_args.spectrograms:
             preprocessing.load_data_set()
         vocal_sketch = VocalSketch(*cli_args.partitions)
         if cli_args.random_only:
-            train_random_selection(cli_args.cuda, vocal_sketch)
+            train_random_selection(cli_args.cuda, vocal_sketch, cli_args.dropout, cli_args.normalization)
         else:
-            train_fine_tuning(cli_args.cuda, vocal_sketch, use_cached_baseline=cli_args.cache_baseline, minimum_passes=cli_args.fine_tuning_passes)
+            train_fine_tuning(cli_args.cuda, vocal_sketch, cli_args.dropout, cli_args.normalization, use_cached_baseline=cli_args.cache_baseline,
+                              minimum_passes=cli_args.fine_tuning_passes)
         n_trials -= 1
         cli_args.trials = n_trials
         if n_trials > 0:

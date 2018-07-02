@@ -78,6 +78,10 @@ def configure_parser(parser):
                         help='Amount of trials to run. Defaults to 1.')
     parser.add_argument('-r', '--random_only', action='store_const', const=True, default=False,
                         help='Whether to only run the random selection phase of training and skip fine-tuning. Defaults fo false.')
+    parser.add_argument('-d', '--dropout', action='store_const', const=True, default=False,
+                        help='Whether to use drop-out in the Siamese network. Defaults to false.')
+    parser.add_argument('-n', '--normalization', action='store_const', const=True, default=False,
+                        help='Whether to use normalization in the Siamese network. Defaults to false.')
 
 
 def update_trial_number():
