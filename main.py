@@ -124,13 +124,13 @@ def train_fine_tuning(use_cuda, data: VocalSketch, use_cached_baseline=False, mi
     try:
         # fine tune until convergence
         logger.info("Fine tuning model, minimum # of passes = {0}".format(minimum_passes))
-        training_mrrs = np.zeros(n_epochs)
-        training_mrr_vars = np.zeros(n_epochs)
-        validation_mrrs = np.zeros(n_epochs)
-        validation_mrr_vars = np.zeros(n_epochs)
-        training_losses = np.zeros(n_epochs)
-        training_loss_var = np.zeros(n_epochs)
-        validation_losses = np.zeros(n_epochs)
+        training_mrrs = []
+        training_mrr_vars = []
+        validation_mrrs = []
+        validation_mrr_vars = []
+        training_losses = []
+        training_loss_var = []
+        validation_losses = []
         while not experimentation.convergence(best_validation_mrrs, convergence_threshold) or fine_tuning_pass < minimum_passes:
             fine_tuning_data.reset()
             logger.debug("Performing hard negative selection...")
@@ -147,19 +147,19 @@ def train_fine_tuning(use_cuda, data: VocalSketch, use_cached_baseline=False, mi
                 validation_loss = validation_batch_losses.mean()
                 logger.info("Loss at pass {0}, epoch {1}:\n\ttrn = {2}\n\tval = {3}".format(fine_tuning_pass, epoch, training_loss, validation_loss))
 
-                training_losses[epoch] = training_loss
-                training_loss_var[epoch] = training_batch_losses.var()
-                validation_losses[epoch] = validation_loss
+                training_losses.append(training_loss)
+                training_loss_var.append(training_batch_losses.var())
+                validation_losses.append(validation_loss)
 
                 logger.debug("Calculating MRRs...")
                 training_mrr, training_mrr_var = experimentation.mean_reciprocal_ranks(model, training_pairs, use_cuda)
                 val_mrr, val_mrr_var = experimentation.mean_reciprocal_ranks(model, validation_pairs, use_cuda)
                 logger.info("MRRs at pass {0}, epoch {1}:\n\ttrn = {2}\n\tval = {3}".format(fine_tuning_pass, epoch, training_mrr, val_mrr))
 
-                training_mrrs[epoch] = training_mrr
-                validation_mrrs[epoch] = val_mrr
-                training_mrr_vars[epoch] = training_mrr_var
-                validation_mrr_vars[epoch] = val_mrr_var
+                training_mrrs.append(training_mrr)
+                validation_mrrs.append(val_mrr)
+                training_mrr_vars.append(training_mrr_var)
+                validation_mrr_vars.append(val_mrr_var)
 
                 graphing.mrr_per_epoch(training_mrrs, validation_mrrs, title='MRR vs. Epoch (Fine Tuning)')
                 graphing.loss_per_epoch(training_losses, validation_losses, title='Loss vs. Epoch (Fine Tuning)')
