@@ -3,4 +3,4 @@
 # r = recursive
 # p = keep modification times intact
 # q = supress Cortex ASCII image (sorry Ethan)
-scp -rpq cortex:~/siamese/graphs/ ~/Downloads
+scp -rpq cortex:~/siamese/output/* ~/Downloads/graphs

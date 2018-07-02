@@ -41,6 +41,6 @@ def title_to_filename(title):
     file = title
     file = file.replace(' ', '_')
     file = file.replace('.', '')
-    file += '_{0}.png'.format(trial_number)
+    file += '.png'
     file = file.lower()
-    return os.path.join('./graphs', file)
+    return os.path.join('./output', str(trial_number), file)

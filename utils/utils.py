@@ -1,5 +1,6 @@
 import logging
 import os
+import pathlib
 import pickle
 
 import numpy as np
@@ -55,7 +56,7 @@ def configure_logger(logger):
     logger.setLevel(logging.DEBUG)
     # handlers and formatter
     console_handler = logging.StreamHandler()
-    file_handler = logging.FileHandler('siamese.log')
+    file_handler = logging.FileHandler('./output/{0}/siamese.log'.format(get_trial_number()))
     formatter = logging.Formatter('%(asctime)s - %(levelname)s \t %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
     console_handler.setFormatter(formatter)
     file_handler.setFormatter(formatter)
@@ -100,3 +101,8 @@ def get_trial_number():
             pickle.dump(trial_number + 1, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     return trial_number
+
+
+def create_output_directory():
+    trial_number = get_trial_number()
+    pathlib.Path('./output/{0}'.format(trial_number)).mkdir(exist_ok=True)

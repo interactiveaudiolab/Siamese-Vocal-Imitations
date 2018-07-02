@@ -75,6 +75,7 @@ def train_random_selection(use_cuda, data: VocalSketch, use_dropout, use_normali
         # get and save best model TODO: should this be by training or by validation?
         utilities.load_model(siamese, model_path.format(np.argmax(validation_mrrs)))
         utilities.save_model(siamese, model_path.format('best'))
+        utilities.save_model(siamese, './output/{0}/random_selection'.format(utilities.get_trial_number()))
 
         logger.info("Results from best model generated during random-selection training, evaluated on test data:")
         rrs = experimentation.reciprocal_ranks(siamese, testing_pairs, use_cuda)
@@ -166,6 +167,7 @@ def train_fine_tuning(use_cuda, data: VocalSketch, use_dropout, use_normalizatio
 
         utilities.load_model(siamese, model_path.format(np.argmax(best_validation_mrrs), 'best'))
         utilities.save_model(siamese, model_path.format('best', 'best'))
+        utilities.save_model(siamese, './output/{0}/fine_tuned'.format(utilities.get_trial_number()))
 
         rrs = experimentation.reciprocal_ranks(siamese, testing_pairs, use_cuda)
         logger.info("Results from best model generated after tine-tuning, evaluated on test data:")
@@ -217,11 +219,11 @@ def train_network(model, data, objective, optimizer, n_epochs, use_cuda, batch_s
 
 
 def main(cli_args=None):
-    logger = logging.getLogger('logger')
+    utilities.create_output_directory()
 
+    logger = logging.getLogger('logger')
     parser = argparse.ArgumentParser()
     utilities.configure_parser(parser)
-
     if cli_args is None:
         # set up logger
         utilities.configure_logger(logger)
