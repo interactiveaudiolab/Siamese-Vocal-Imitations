@@ -74,6 +74,10 @@ def configure_parser(parser):
                         help='Ratios by which to partition the data into training, validation, and testing sets (in that order). Defaults to [.35, .15, .5].')
     parser.add_argument('-f', '--fine_tuning_passes', type=int, default=0,
                         help='Minimum amount of fine tuning passes to perform, regardless of convergence. Defaults to 0.')
+    parser.add_argument('-t', '--trials', default=1, type=int,
+                        help='Amount of trials to run. Defaults to 1.')
+    parser.add_argument('-r', '--random_only', action='store_const', const=True, default=False,
+                        help='Whether to only run the random selection phase of training and skip fine-tuning. Defaults fo false.')
 
 
 def update_trial_number():

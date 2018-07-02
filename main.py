@@ -216,26 +216,35 @@ def train_network(model, data, objective, optimizer, n_epochs, use_cuda, batch_s
         yield model, batch_losses
 
 
-def main():
-    # set up logger
+def main(cli_args=None):
     logger = logging.getLogger('logger')
-    utilities.configure_logger(logger)
 
-    # parse arguments
     parser = argparse.ArgumentParser()
     utilities.configure_parser(parser)
-    args = parser.parse_args()
 
-    logger.info('Beginning experiment...')
-    logger.info("CUDA {0}...".format("enabled" if args.cuda else "disabled"))
+    if cli_args is None:
+        # set up logger
+        utilities.configure_logger(logger)
+        cli_args = parser.parse_args()
+
+    logger.info('Beginning trial ({0} left)...'.format(cli_args.trials - 1))
+    logger.info("CUDA {0}...".format("enabled" if cli_args.cuda else "disabled"))
 
     utilities.update_trial_number()
+    n_trials = cli_args.trials
 
     try:
-        if args.spectrograms:
+        if cli_args.spectrograms:
             preprocessing.load_data_set()
-        vocal_sketch = VocalSketch(*args.partitions)
-        train_fine_tuning(args.cuda, vocal_sketch, use_cached_baseline=args.cache_baseline, minimum_passes=args.fine_tuning_passes)
+        vocal_sketch = VocalSketch(*cli_args.partitions)
+        if cli_args.random_only:
+            train_random_selection(cli_args.cuda, vocal_sketch)
+        else:
+            train_fine_tuning(cli_args.cuda, vocal_sketch, use_cached_baseline=cli_args.cache_baseline, minimum_passes=cli_args.fine_tuning_passes)
+        n_trials -= 1
+        cli_args.trials = n_trials
+        if n_trials > 0:
+            main(cli_args)
     except Exception as e:
         logger.critical("Unhandled exception: {0}".format(str(e)))
         logger.critical(traceback.print_exc())
