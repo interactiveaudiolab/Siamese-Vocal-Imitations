@@ -44,9 +44,7 @@ def train_random_selection(use_cuda, data: VocalSketch):
     try:
         logger.info("Training using random selection...")
         training_mrrs = np.zeros(n_epochs)
-        training_mrr_vars = np.zeros(n_epochs)
         validation_mrrs = np.zeros(n_epochs)
-        validation_mrr_vars = np.zeros(n_epochs)
         training_losses = np.zeros(n_epochs)
         training_loss_var = np.zeros(n_epochs)
         validation_losses = np.zeros(n_epochs)
@@ -64,14 +62,12 @@ def train_random_selection(use_cuda, data: VocalSketch):
             validation_losses[epoch] = validation_loss
 
             logger.debug("Calculating MRRs...")
-            training_mrr, training_mrr_var = experimentation.mean_reciprocal_ranks(model, training_pairs, use_cuda)
-            val_mrr, val_mrr_var = experimentation.mean_reciprocal_ranks(model, validation_pairs, use_cuda)
+            training_mrr = experimentation.mean_reciprocal_ranks(model, training_pairs, use_cuda)
+            val_mrr = experimentation.mean_reciprocal_ranks(model, validation_pairs, use_cuda)
             logger.info("MRRs at epoch {0}:\n\ttrn = {1}\n\tval = {2}".format(epoch, training_mrr, val_mrr))
 
             training_mrrs[epoch] = training_mrr
             validation_mrrs[epoch] = val_mrr
-            training_mrr_vars[epoch] = training_mrr_var
-            validation_mrr_vars[epoch] = val_mrr_var
 
             graphing.mrr_per_epoch(training_mrrs, validation_mrrs, title="MRR vs. Epoch (Random Selection)")
             graphing.loss_per_epoch(training_losses, validation_losses, title='Loss vs. Epoch (Random Selection)')
@@ -125,9 +121,7 @@ def train_fine_tuning(use_cuda, data: VocalSketch, use_cached_baseline=False, mi
         # fine tune until convergence
         logger.info("Fine tuning model, minimum # of passes = {0}".format(minimum_passes))
         training_mrrs = []
-        training_mrr_vars = []
         validation_mrrs = []
-        validation_mrr_vars = []
         training_losses = []
         training_loss_var = []
         validation_losses = []
@@ -152,14 +146,12 @@ def train_fine_tuning(use_cuda, data: VocalSketch, use_cached_baseline=False, mi
                 validation_losses.append(validation_loss)
 
                 logger.debug("Calculating MRRs...")
-                training_mrr, training_mrr_var = experimentation.mean_reciprocal_ranks(model, training_pairs, use_cuda)
-                val_mrr, val_mrr_var = experimentation.mean_reciprocal_ranks(model, validation_pairs, use_cuda)
+                training_mrr = experimentation.mean_reciprocal_ranks(model, training_pairs, use_cuda)
+                val_mrr = experimentation.mean_reciprocal_ranks(model, validation_pairs, use_cuda)
                 logger.info("MRRs at pass {0}, epoch {1}:\n\ttrn = {2}\n\tval = {3}".format(fine_tuning_pass, epoch, training_mrr, val_mrr))
 
                 training_mrrs.append(training_mrr)
                 validation_mrrs.append(val_mrr)
-                training_mrr_vars.append(training_mrr_var)
-                validation_mrr_vars.append(val_mrr_var)
 
                 graphing.mrr_per_epoch(training_mrrs, validation_mrrs, title='MRR vs. Epoch (Fine Tuning)')
                 graphing.loss_per_epoch(training_losses, validation_losses, title='Loss vs. Epoch (Fine Tuning)')

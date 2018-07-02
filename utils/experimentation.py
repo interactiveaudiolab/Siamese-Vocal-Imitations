@@ -17,7 +17,7 @@ def mean_reciprocal_ranks(model: Siamese, pairs: AllPairs, use_cuda):
     :return: float, mean of reciprocal ranks
     """
     rrs = reciprocal_ranks(model, pairs, use_cuda)
-    return rrs.mean(), rrs.var()
+    return rrs.mean()
 
 
 def reciprocal_ranks(model: Siamese, pairs: AllPairs, use_cuda):
