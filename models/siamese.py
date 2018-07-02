@@ -32,8 +32,10 @@ class Siamese(nn.Module):
         )
 
         self.fully_connected = nn.Sequential(
+            nn.Dropout(p=.2),
             nn.Linear(48 * 55 + 48 * 25 * 2, 108),
             nn.ReLU(),
+            nn.Dropout(p=.2),
             nn.Linear(108, 1),
             nn.Sigmoid()
         )
