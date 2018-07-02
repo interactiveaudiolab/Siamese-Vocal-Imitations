@@ -219,6 +219,7 @@ def train_network(model, data, objective, optimizer, n_epochs, use_cuda, batch_s
 
 
 def main(cli_args=None):
+    utilities.update_trial_number()
     utilities.create_output_directory()
 
     logger = logging.getLogger('logger')
@@ -236,8 +237,6 @@ def main(cli_args=None):
     arg_dict = vars(cli_args)
     for key in arg_dict:
         logger.debug("{0} = {1}".format(key, arg_dict[key]))
-
-    utilities.update_trial_number()
 
     try:
         if cli_args.spectrograms:
