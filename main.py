@@ -156,10 +156,10 @@ def train_fine_tuning(use_cuda, data: VocalSketch, use_cached_baseline=False, mi
                 graphing.mrr_per_epoch(training_mrrs, validation_mrrs, title='MRR vs. Epoch (Fine Tuning)')
                 graphing.loss_per_epoch(training_losses, validation_losses, title='Loss vs. Epoch (Fine Tuning)')
 
-            utilities.load_model(siamese, model_path.format(fine_tuning_pass, np.argmax(validation_mrrs)))
+            utilities.load_model(siamese, model_path.format(fine_tuning_pass, np.argmax(validation_mrrs[fine_tuning_pass * n_epochs:])))
             utilities.save_model(siamese, model_path.format(fine_tuning_pass, 'best'))
-            best_validation_mrrs.append(np.max(validation_mrrs))
-            best_training_mrrs.append(np.max(training_mrrs))
+            best_validation_mrrs.append(np.max(validation_mrrs[fine_tuning_pass * n_epochs:]))
+            best_training_mrrs.append(np.max(training_mrrs[fine_tuning_pass * n_epochs:]))
             graphing.mrr_per_epoch(best_training_mrrs, best_validation_mrrs, title='Best MRR vs. Fine Tuning Pass (Fine Tuning)', xlabel="fine tuning pass")
 
             fine_tuning_pass += 1
