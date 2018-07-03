@@ -7,7 +7,7 @@ from utils import utils
 
 
 class VocalSketch:
-    def __init__(self, train_ratio, val_ratio, test_ratio):
+    def __init__(self, train_ratio, val_ratio, test_ratio, shuffle=True):
         if train_ratio + val_ratio + test_ratio != 1:
             raise ValueError("Training, validation, and testing ratios must add to 1")
 
@@ -16,26 +16,33 @@ class VocalSketch:
 
         references = utils.load_npy("references.npy")
         reference_labels = utils.load_npy("reference_labels.npy")
-        references, reference_labels = zip_shuffle(references, reference_labels)
 
         imitations = utils.load_npy("imitations.npy")
         imitation_labels = utils.load_npy("imitation_labels.npy")
-        imitations, imitation_labels = zip_shuffle(imitations, imitation_labels)
 
-        n_train = int(train_ratio * len(references))
-        n_val = int(val_ratio * len(references))
+        if shuffle:
+            references, reference_labels = zip_shuffle(references, reference_labels)
+            imitations, imitation_labels = zip_shuffle(imitations, imitation_labels)
+
+        n_train_val = int(train_ratio * len(references) + val_ratio * len(references))
         n_test = int(test_ratio * len(references))
 
-        train_ref = references[:n_train]
-        val_ref = references[n_train:n_train + n_val]
-        test_ref = references[n_train + n_val:]
+        # Split references up into training/validation set and testing set
+        train_val_ref = references[:n_train_val]
+        train_val_ref_labels = reference_labels[:n_train_val]
+        test_ref = references[n_train_val:]
+        test_ref_labels = reference_labels[n_train_val:]
 
-        train_ref_labels = reference_labels[:n_train]
-        val_ref_labels = reference_labels[n_train:n_train + n_val]
-        test_ref_labels = reference_labels[n_train + n_val:]
+        # Then, divide references over training and validation
+        train_val_imit, train_val_imit_lab = filter_imitations(imitations, imitation_labels, train_val_ref_labels)
+        n_train_imit = int(train_ratio / (train_ratio + val_ratio) * len(train_val_imit))
+        train_imit = train_val_imit[:n_train_imit]
+        val_imit = train_val_imit[n_train_imit:]
+        train_imit_labels = train_val_imit_lab[:n_train_imit]
+        val_imit_labels = train_val_imit_lab[n_train_imit:]
 
-        self.train = VocalSketchPartition(train_ref, train_ref_labels, imitations, imitation_labels, "training")
-        self.val = VocalSketchPartition(val_ref, val_ref_labels, imitations, imitation_labels, "validation")
+        self.train = VocalSketchPartition(train_val_ref, train_val_ref_labels, train_imit, train_imit_labels, "training")
+        self.val = VocalSketchPartition(train_val_ref, train_val_ref_labels, val_imit, val_imit_labels, "validation")
         self.test = VocalSketchPartition(test_ref, test_ref_labels, imitations, imitation_labels, "testing")
 
 
@@ -70,6 +77,17 @@ class VocalSketchPartition:
 
                 bar.next()
         bar.finish()
+
+
+def filter_imitations(all_imitations, all_imitation_labels, reference_labels):
+    imitations = []
+    imitation_labels = []
+    for i, l in zip(all_imitations, all_imitation_labels):
+        if l in reference_labels:
+            imitations.append(i)
+            imitation_labels.append(l)
+
+    return imitations, imitation_labels
 
 
 def zip_shuffle(a, b):
