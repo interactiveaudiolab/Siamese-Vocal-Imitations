@@ -1,6 +1,2 @@
 #!/bin/sh
-
-# r = recursive
-# p = keep modification times intact
-# q = supress Cortex ASCII image (sorry Ethan)
-scp -rpq cortex:~/siamese/output/* ~/Downloads/graphs
+rsync -r cortex:~/siamese/output ~/Downloads
