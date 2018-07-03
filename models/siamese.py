@@ -63,7 +63,6 @@ class Siamese(nn.Module):
                 nn.ReLU(),
             )
 
-
         if dropout:
             self.fully_connected = nn.Sequential(
                 nn.Dropout(p=.2),
@@ -89,6 +88,7 @@ class Siamese(nn.Module):
         # Flatten and concatenate them
         left_reshaped = left_output.view(len(left_output), -1)
         right_reshaped = right_output.view(len(right_output), -1)
+        # noinspection PyUnresolvedReferences
         concatenated = torch.cat((left_reshaped, right_reshaped), dim=1)
 
         # Calculate the FCN and flatten it

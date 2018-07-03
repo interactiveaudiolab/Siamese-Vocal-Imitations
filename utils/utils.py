@@ -28,7 +28,7 @@ def save_npy(array, suffix, ar_type=None):
 
 def prindent(string, n_indent):
     logger = logging.getLogger('logger')
-    p_str = ''.join(['\t' for i in range(n_indent)]) + string
+    p_str = ''.join(['\t' for _ in range(n_indent)]) + string
     logger.info(p_str)
 
 
