@@ -1,2 +1,2 @@
 #!/bin/sh
-rsync -r cortex:~/siamese/output ~/Downloads
+rsync -r cortex:~/siamese/output ~/Dropbox/NU/IAL/Siamese
