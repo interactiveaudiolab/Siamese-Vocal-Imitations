@@ -225,18 +225,17 @@ def main(cli_args=None):
     logger = logging.getLogger('logger')
     parser = argparse.ArgumentParser()
     utilities.configure_parser(parser)
+    utilities.configure_logger(logger)
     if cli_args is None:
-        # set up logger
-        utilities.configure_logger(logger)
         cli_args = parser.parse_args()
 
     n_trials = cli_args.trials
-    logger.info('Beginning trial ({0} left)...'.format(n_trials - 1))
+    logger.info('Beginning trial #{0}...'.format(utilities.get_trial_number()))
 
     # log all CLI args
     arg_dict = vars(cli_args)
     for key in arg_dict:
-        logger.debug("{0} = {1}".format(key, arg_dict[key]))
+        logger.debug("\t{0} = {1}".format(key, arg_dict[key]))
 
     try:
         if cli_args.spectrograms:

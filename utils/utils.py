@@ -54,12 +54,19 @@ def np_index_of(array, item):
 
 def configure_logger(logger):
     logger.setLevel(logging.DEBUG)
-    # handlers and formatter
     console_handler = logging.StreamHandler()
     file_handler = logging.FileHandler('./output/{0}/siamese.log'.format(get_trial_number()))
     formatter = logging.Formatter('%(asctime)s - %(levelname)s \t %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
     console_handler.setFormatter(formatter)
     file_handler.setFormatter(formatter)
+
+    # Remove any old handlers that may exist
+    old_handlers = []
+    for handler in logger.handlers:
+        old_handlers.append(handler)
+    for handler in old_handlers:
+        logger.removeHandler(handler)
+
     logger.addHandler(console_handler)
     logger.addHandler(file_handler)
 
