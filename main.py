@@ -9,14 +9,16 @@ from progress.bar import Bar
 from torch.nn import BCELoss
 from torch.utils.data.dataloader import DataLoader
 
+# MUST COME FIRST
+# noinspection PyUnresolvedReferences
+from utils import matplotlib_backend_hack
 import utils.experimentation as experimentation
 import utils.graphing as graphing
 import utils.utils as utilities
+from datafiles.urban_sound_8k import UrbanSound8K
 from datafiles.vocal_sketch_files import VocalSketch
 from datasets.vocal_sketch_data import AllPositivesRandomNegatives, AllPairs, FineTuned
 from models.siamese import Siamese
-# noinspection PyUnresolvedReferences
-from utils import matplotlib_backend_hack
 
 
 def train_random_selection(use_cuda, data: VocalSketch, use_dropout, use_normalization):
@@ -242,6 +244,7 @@ def main(cli_args=None):
 
     try:
         if cli_args.transfer_learning:
+            urban_sound = UrbanSound8K(recalculate_spectrograms=cli_args.spectrograms)
             transfer_learning()
         vocal_sketch = VocalSketch(*cli_args.partitions, recalculate_spectrograms=cli_args.spectrograms)
         if cli_args.random_only:
