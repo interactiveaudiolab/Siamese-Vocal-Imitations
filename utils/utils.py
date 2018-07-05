@@ -7,12 +7,12 @@ import numpy as np
 import torch
 
 
-def load_model(model, base_path):
-    model.load_state_dict(torch.load(base_path))
+def load_model(model, path):
+    model.load_state_dict(torch.load(path))
 
 
-def save_model(model, base_path):
-    torch.save(model.state_dict(), base_path)
+def save_model(model, path):
+    torch.save(model.state_dict(), path)
 
 
 def load_npy(name):
@@ -90,6 +90,9 @@ def configure_parser(parser):
                         help='Whether to use drop-out in the Siamese network. Defaults to false.')
     parser.add_argument('-n', '--normalization', action='store_const', const=True, default=False,
                         help='Whether to use normalization in the Siamese network. Defaults to false.')
+    parser.add_argument('-l', '--transfer_learning', action='store_const', const=True, default=False,
+                        help='Whether to perform transfer learning on each tower before training the Siamese network. Defaults to false, in which case the '
+                             'last generated weights will be used.')
 
 
 def update_trial_number():

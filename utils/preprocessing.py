@@ -1,4 +1,3 @@
-import csv
 import os
 
 import librosa
@@ -7,39 +6,6 @@ import numpy as np
 from progress.bar import Bar
 
 from utils.utils import save_npy
-
-
-def load_data_set():
-    """
-    Calculates normalized imitation and reference spectrograms and saves them as .npy files.
-    """
-    data_dir = os.environ['SIAMESE_DATA_DIR']
-    imitation_paths = recursive_wav_paths(data_dir + "/vocal_imitations/included")
-    reference_paths = recursive_wav_paths(data_dir + "/sound_recordings")
-    reference_csv = os.path.join(data_dir, "sound_recordings.csv")
-    imitation_csv = os.path.join(data_dir, "vocal_imitations.csv")
-
-    reference_labels = {}
-    with open(reference_csv) as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            reference_labels[row['filename']] = row['sound_label']
-
-    imitation_labels = {}
-    with open(imitation_csv) as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            imitation_labels[row['filename']] = row['sound_label']
-
-    n = 0
-    label_no = {}
-    for file_name, label in reference_labels.items():
-        if label not in label_no:
-            label_no[label] = n
-            n += 1
-
-    calculate_spectrograms(imitation_paths, imitation_labels, label_no, 'imitation', imitation_spectrogram)
-    calculate_spectrograms(reference_paths, reference_labels, label_no, 'reference', reference_spectrogram)
 
 
 def calculate_spectrograms(paths, file_labels, label_no, file_type, spectrogram_func):

@@ -9,15 +9,14 @@ from progress.bar import Bar
 from torch.nn import BCELoss
 from torch.utils.data.dataloader import DataLoader
 
-# noinspection PyUnresolvedReferences
-from utils import matplotlib_backend_hack
-from datafiles.vocal_sketch_files import VocalSketch
-from datasets.vocal_sketch_data import AllPositivesRandomNegatives, AllPairs, FineTuned
 import utils.experimentation as experimentation
 import utils.graphing as graphing
-import utils.preprocessing as preprocessing
 import utils.utils as utilities
+from datafiles.vocal_sketch_files import VocalSketch
+from datasets.vocal_sketch_data import AllPositivesRandomNegatives, AllPairs, FineTuned
 from models.siamese import Siamese
+# noinspection PyUnresolvedReferences
+from utils import matplotlib_backend_hack
 
 
 def train_random_selection(use_cuda, data: VocalSketch, use_dropout, use_normalization):
@@ -218,6 +217,10 @@ def train_network(model, data, objective, optimizer, n_epochs, use_cuda, batch_s
         yield model, batch_losses
 
 
+def transfer_learning():
+    pass
+
+
 def main(cli_args=None):
     utilities.update_trial_number()
     utilities.create_output_directory()
@@ -238,9 +241,9 @@ def main(cli_args=None):
         logger.debug("\t{0} = {1}".format(key, arg_dict[key]))
 
     try:
-        if cli_args.spectrograms:
-            preprocessing.load_data_set()
-        vocal_sketch = VocalSketch(*cli_args.partitions)
+        if cli_args.transfer_learning:
+            transfer_learning()
+        vocal_sketch = VocalSketch(*cli_args.partitions, recalculate_spectrograms=cli_args.spectrograms)
         if cli_args.random_only:
             train_random_selection(cli_args.cuda, vocal_sketch, cli_args.dropout, cli_args.normalization)
         else:

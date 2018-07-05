@@ -1,13 +1,19 @@
+import csv
 import logging
+import os
 
 import numpy as np
 from progress.bar import Bar
 
+import utils.preprocessing as preprocessing
 from utils import utils
 
 
 class VocalSketch:
-    def __init__(self, train_ratio, val_ratio, test_ratio, shuffle=True):
+    def __init__(self, train_ratio, val_ratio, test_ratio, shuffle=True, recalculate_spectrograms=False):
+        if recalculate_spectrograms:
+            calculate_spectrograms()
+
         if train_ratio + val_ratio + test_ratio != 1:
             raise ValueError("Training, validation, and testing ratios must add to 1")
 
@@ -94,3 +100,36 @@ def zip_shuffle(a, b):
     assert len(a) == len(b)
     p = np.random.permutation(len(a))
     return a[p], b[p]
+
+
+def calculate_spectrograms():
+    """
+    Calculates normalized imitation and reference spectrograms and saves them as .npy files.
+    """
+    data_dir = os.environ['SIAMESE_DATA_DIR']
+    imitation_paths = preprocessing.recursive_wav_paths(os.path.join(data_dir, "/vocal_imitations/included"))
+    reference_paths = preprocessing.recursive_wav_paths(os.path.join(data_dir, "/sound_recordings"))
+    reference_csv = os.path.join(data_dir, "sound_recordings.csv")
+    imitation_csv = os.path.join(data_dir, "vocal_imitations.csv")
+
+    reference_labels = {}
+    with open(reference_csv) as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            reference_labels[row['filename']] = row['sound_label']
+
+    imitation_labels = {}
+    with open(imitation_csv) as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            imitation_labels[row['filename']] = row['sound_label']
+
+    n = 0
+    label_no = {}
+    for file_name, label in reference_labels.items():
+        if label not in label_no:
+            label_no[label] = n
+            n += 1
+
+    preprocessing.calculate_spectrograms(imitation_paths, imitation_labels, label_no, 'imitation', preprocessing.imitation_spectrogram)
+    preprocessing.calculate_spectrograms(reference_paths, reference_labels, label_no, 'reference', preprocessing.reference_spectrogram)
