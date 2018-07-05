@@ -183,7 +183,7 @@ def train_fine_tuning(use_cuda, data: VocalSketch, use_dropout, use_normalizatio
 
 def transfer_learning(use_cuda, data: UrbanSound8K):
     logger = logging.getLogger('logging')
-    model_path = './model_output/right_tower/model_{1}'
+    model_path = './model_output/right_tower/model_{0}'
 
     n_epochs = 50
     model = RightTower()
