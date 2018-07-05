@@ -54,7 +54,7 @@ def train_random_selection(use_cuda, data: VocalSketch, use_dropout, use_normali
         for epoch, (model, training_batch_losses) in enumerate(models):
             utilities.save_model(model, model_path.format(epoch))
 
-            validation_batch_losses = experimentation.right_tower_loss(model, validation_pairs, criterion, use_cuda)
+            validation_batch_losses = experimentation.siamese_loss(model, validation_pairs, criterion, use_cuda)
             training_loss = training_batch_losses.mean()
             validation_loss = validation_batch_losses.mean()
             logger.info("Loss at epoch {0}:\n\ttrn = {1}\n\tval = {2}".format(epoch, training_loss, validation_loss))
@@ -139,7 +139,7 @@ def train_fine_tuning(use_cuda, data: VocalSketch, use_dropout, use_normalizatio
             for epoch, (model, training_batch_losses) in enumerate(models):
                 utilities.save_model(model, model_path.format(fine_tuning_pass, epoch))
 
-                validation_batch_losses = experimentation.right_tower_loss(model, validation_pairs, criterion, use_cuda)
+                validation_batch_losses = experimentation.siamese_loss(model, validation_pairs, criterion, use_cuda)
                 training_loss = training_batch_losses.mean()
                 validation_loss = validation_batch_losses.mean()
                 logger.info("Loss at pass {0}, epoch {1}:\n\ttrn = {2}\n\tval = {3}".format(fine_tuning_pass, epoch, training_loss, validation_loss))
