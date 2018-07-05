@@ -117,7 +117,7 @@ def train_fine_tuning(use_cuda, data: VocalSketch, use_dropout, use_normalizatio
     fine_tuning_pass = 0
 
     # same optimizer with a different learning rate
-    optimizer = torch.optim.SGD(siamese.parameters(), lr=.0001, weight_decay=.0001, momentum=.9, nesterov=True)
+    optimizer = torch.optim.SGD(siamese.parameters(), lr=.001, weight_decay=.0001, momentum=.9, nesterov=True)
     try:
         # fine tune until convergence
         logger.info("Fine tuning model, minimum # of passes = {0}".format(minimum_passes))
