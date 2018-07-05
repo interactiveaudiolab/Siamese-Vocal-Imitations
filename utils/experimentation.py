@@ -2,6 +2,8 @@ import numpy as np
 from progress.bar import Bar
 from torch.utils.data import dataloader, DataLoader
 
+from datasets.urban_sound_8k import UrbanSound10FCV
+from models.transfer_learning import RightTower
 from utils import utils
 from datasets.vocal_sketch_data import AllPairs
 from models.siamese import Siamese
@@ -106,7 +108,7 @@ def convergence(best_mrrs, convergence_threshold):
     return not (len(best_mrrs) <= 2) and np.abs(best_mrrs[len(best_mrrs) - 1] - best_mrrs[len(best_mrrs) - 2]) < convergence_threshold
 
 
-def loss(model: Siamese, dataset, objective, use_cuda: bool, batch_size=128):
+def siamese_loss(model: Siamese, dataset, objective, use_cuda: bool, batch_size=128):
     """
     Calculates the loss of model over dataset by objective. Optionally run on the GPU.
     :param model: a siamese network
@@ -133,6 +135,33 @@ def loss(model: Siamese, dataset, objective, use_cuda: bool, batch_size=128):
 
         # pass a batch through the network
         outputs = model(left, right)
+
+        # calculate loss and optimize weights
+        batch_losses[i] = objective(outputs, labels).item()
+
+        bar.next()
+    bar.finish()
+
+    return batch_losses
+
+
+def right_tower_loss(model: RightTower, dataset: UrbanSound10FCV, objective, use_cuda: bool, batch_size=128):
+    """
+    Calculates the loss of model over dataset by objective. Optionally run on the GPU.
+    """
+    data = DataLoader(dataset, batch_size=batch_size, num_workers=1)
+    bar = Bar("Calculating loss", max=len(data))
+    batch_losses = np.zeros(len(data))
+    for i, (audio, labels) in enumerate(data):
+
+        # reshape tensors and push to GPU if necessary
+        audio = audio.unsqueeze(1)
+        if use_cuda:
+            audio = audio.cuda()
+            labels = labels.cuda()
+
+        # pass a batch through the network
+        outputs = model(audio)
 
         # calculate loss and optimize weights
         batch_losses[i] = objective(outputs, labels).item()

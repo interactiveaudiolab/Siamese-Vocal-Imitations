@@ -5,9 +5,7 @@ import traceback
 import numpy as np
 import torch
 import torch.optim
-from progress.bar import Bar
-from torch.nn import BCELoss
-from torch.utils.data.dataloader import DataLoader
+from torch.nn import BCELoss, CrossEntropyLoss
 
 # MUST COME FIRST
 # noinspection PyUnresolvedReferences
@@ -15,10 +13,13 @@ from utils import matplotlib_backend_hack
 import utils.experimentation as experimentation
 import utils.graphing as graphing
 import utils.utils as utilities
+from utils.training import train_siamese_network, train_right_tower
 from datafiles.urban_sound_8k import UrbanSound8K
 from datafiles.vocal_sketch_files import VocalSketch
+from datasets.urban_sound_8k import UrbanSound10FCV
 from datasets.vocal_sketch_data import AllPositivesRandomNegatives, AllPairs, FineTuned
 from models.siamese import Siamese
+from models.transfer_learning import RightTower
 
 
 def train_random_selection(use_cuda, data: VocalSketch, use_dropout, use_normalization):
@@ -49,11 +50,11 @@ def train_random_selection(use_cuda, data: VocalSketch, use_dropout, use_normali
         training_losses = np.zeros(n_epochs)
         training_loss_var = np.zeros(n_epochs)
         validation_losses = np.zeros(n_epochs)
-        models = train_network(siamese, training_data, criterion, optimizer, n_epochs, use_cuda)
+        models = train_siamese_network(siamese, training_data, criterion, optimizer, n_epochs, use_cuda)
         for epoch, (model, training_batch_losses) in enumerate(models):
             utilities.save_model(model, model_path.format(epoch))
 
-            validation_batch_losses = experimentation.loss(model, validation_pairs, criterion, use_cuda)
+            validation_batch_losses = experimentation.right_tower_loss(model, validation_pairs, criterion, use_cuda)
             training_loss = training_batch_losses.mean()
             validation_loss = validation_batch_losses.mean()
             logger.info("Loss at epoch {0}:\n\ttrn = {1}\n\tval = {2}".format(epoch, training_loss, validation_loss))
@@ -83,7 +84,7 @@ def train_random_selection(use_cuda, data: VocalSketch, use_dropout, use_normali
         utilities.log_final_stats(rrs)
         return siamese
     except Exception as e:
-        utilities.save_model(siamese, model_path)
+        utilities.save_model(siamese, model_path.format('crash_backup'))
         logger.critical("Exception occurred while training: {0}".format(str(e)))
         logger.critical(traceback.print_exc())
         exit(1)
@@ -134,11 +135,11 @@ def train_fine_tuning(use_cuda, data: VocalSketch, use_dropout, use_normalizatio
             fine_tuning_data.add_negatives(references)
 
             logger.info("Beginning fine tuning pass {0}...".format(fine_tuning_pass))
-            models = train_network(siamese, fine_tuning_data, criterion, optimizer, n_epochs, use_cuda)
+            models = train_siamese_network(siamese, fine_tuning_data, criterion, optimizer, n_epochs, use_cuda)
             for epoch, (model, training_batch_losses) in enumerate(models):
                 utilities.save_model(model, model_path.format(fine_tuning_pass, epoch))
 
-                validation_batch_losses = experimentation.loss(model, validation_pairs, criterion, use_cuda)
+                validation_batch_losses = experimentation.right_tower_loss(model, validation_pairs, criterion, use_cuda)
                 training_loss = training_batch_losses.mean()
                 validation_loss = validation_batch_losses.mean()
                 logger.info("Loss at pass {0}, epoch {1}:\n\ttrn = {2}\n\tval = {3}".format(fine_tuning_pass, epoch, training_loss, validation_loss))
@@ -174,53 +175,49 @@ def train_fine_tuning(use_cuda, data: VocalSketch, use_dropout, use_normalizatio
         logger.info("Results from best model generated after tine-tuning, evaluated on test data:")
         utilities.log_final_stats(rrs)
     except Exception as e:
-        utilities.save_model(siamese, model_path)
+        utilities.save_model(siamese, model_path.format('crash', 'backup'))
         print("Exception occurred while training: {0}".format(str(e)))
         print(traceback.print_exc())
         exit(1)
 
 
-def train_network(model, data, objective, optimizer, n_epochs, use_cuda, batch_size=128):
-    for epoch in range(n_epochs):
-        # if we're using all positives and random negatives, choose new negatives on each epoch
-        if isinstance(data, AllPositivesRandomNegatives):
-            data.reselect_negatives()
+def transfer_learning(use_cuda, data: UrbanSound8K):
+    logger = logging.getLogger('logging')
+    model_path = './model_output/right_tower/model_{1}'
 
-        train_data = DataLoader(data, batch_size=batch_size, num_workers=1)
-        bar = Bar("Training epoch {0}".format(epoch), max=len(train_data))
-        batch_losses = np.zeros(len(train_data))
-        for i, (left, right, labels) in enumerate(train_data):
-            # clear out the gradients
-            optimizer.zero_grad()
+    n_epochs = 50
+    model = RightTower()
+    if use_cuda:
+        model.cuda()
 
-            # TODO: make them floats at the source
-            labels = labels.float()
+    loss = CrossEntropyLoss()
+    optimizer = torch.optim.SGD(model.parameters(), lr=.01, weight_decay=.001, momentum=.9, nesterov=True)
+    dataset = UrbanSound10FCV(data)
+    try:
+        logger.info("Training right tower...")
+        training_losses = np.zeros(n_epochs)
+        validation_losses = np.zeros(n_epochs)
+        models = train_right_tower(model, dataset, loss, optimizer, n_epochs, use_cuda)
+        for epoch, (model, training_batch_losses) in enumerate(models):
+            utilities.save_model(model, model_path.format(epoch))
 
-            # reshape tensors and push to GPU if necessary
-            left = left.unsqueeze(1)
-            right = right.unsqueeze(1)
-            if use_cuda:
-                left = left.cuda()
-                right = right.cuda()
-                labels = labels.cuda()
+            dataset.validation_mode()
+            validation_batch_losses = experimentation.siamese_loss(model, dataset, loss, use_cuda)
+            dataset.training_mode()
 
-            # pass a batch through the network
-            outputs = model(left, right)
+            training_loss = training_batch_losses.mean()
+            validation_loss = validation_batch_losses.mean()
+            logger.info("Loss at epoch {0}:\n\ttrn = {1}\n\tval = {2}".format(epoch, training_loss, validation_loss))
 
-            # calculate loss and optimize weights
-            loss = objective(outputs, labels)
-            loss.backward()
-            optimizer.step()
-            batch_losses[i] = loss.item()
+            training_losses[epoch] = training_loss
+            validation_losses[epoch] = validation_loss
 
-            bar.next()
-        bar.finish()
-
-        yield model, batch_losses
-
-
-def transfer_learning():
-    pass
+            graphing.loss_per_epoch(training_losses, validation_losses, title='Loss vs. Epoch (TL, Right Tower)')
+    except Exception as e:
+        utilities.save_model(model, model_path.format('crash_backup'))
+        print("Exception occurred while training right tower: {0}".format(str(e)))
+        print(traceback.print_exc())
+        exit(1)
 
 
 def main(cli_args=None):
@@ -245,7 +242,7 @@ def main(cli_args=None):
     try:
         if cli_args.transfer_learning:
             urban_sound = UrbanSound8K(recalculate_spectrograms=cli_args.spectrograms)
-            transfer_learning()
+            transfer_learning(cli_args.cuda, urban_sound)
         vocal_sketch = VocalSketch(*cli_args.partitions, recalculate_spectrograms=cli_args.spectrograms)
         if cli_args.random_only:
             train_random_selection(cli_args.cuda, vocal_sketch, cli_args.dropout, cli_args.normalization)
