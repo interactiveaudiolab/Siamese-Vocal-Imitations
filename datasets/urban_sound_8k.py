@@ -18,11 +18,11 @@ class UrbanSound10FCV(dataset.Dataset):
         self.train_data = []
         self.validation_data = []
         for d, l in zip(self.folds[self.current_fold], self.fold_labels[self.current_fold]):
-            self.train_data.append([d, l])
+            self.validation_data.append([d, l])
 
         for i in [j for j in range(len(self.folds)) if j != self.current_fold]:
             for d, l in zip(self.folds[i], self.fold_labels[i]):
-                self.validation_data.append([d, l])
+                self.train_data.append([d, l])
 
     def validation_mode(self):
         if self.validating:
