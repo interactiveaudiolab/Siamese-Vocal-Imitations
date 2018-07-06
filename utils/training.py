@@ -54,7 +54,6 @@ def train_right_tower(model, data: UrbanSound10FCV, objective, optimizer, n_epoc
             # clear out the gradients
             optimizer.zero_grad()
 
-
             # reshape tensors and push to GPU if necessary
             audio = audio.unsqueeze(1)
             if use_cuda:
@@ -65,6 +64,7 @@ def train_right_tower(model, data: UrbanSound10FCV, objective, optimizer, n_epoc
             outputs = model(audio)
 
             # calculate loss and optimize weights
+            labels = labels.long()
             loss = objective(outputs, labels)
             loss.backward()
             optimizer.step()

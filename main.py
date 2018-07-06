@@ -194,25 +194,27 @@ def transfer_learning(use_cuda, data: UrbanSound8K):
     optimizer = torch.optim.SGD(model.parameters(), lr=.01, weight_decay=.001, momentum=.9, nesterov=True)
     dataset = UrbanSound10FCV(data)
     try:
-        logger.info("Training right tower...")
-        training_losses = np.zeros(n_epochs)
-        validation_losses = np.zeros(n_epochs)
-        models = train_right_tower(model, dataset, loss, optimizer, n_epochs, use_cuda)
-        for epoch, (model, training_batch_losses) in enumerate(models):
-            utilities.save_model(model, model_path.format(epoch))
+        for fold in range(dataset.n_folds):
+            logger.info("Training right tower, fold {0}...".format(fold))
+            dataset.set_fold(fold)
+            training_losses = np.zeros(n_epochs)
+            validation_losses = np.zeros(n_epochs)
+            models = train_right_tower(model, dataset, loss, optimizer, n_epochs, use_cuda)
+            for epoch, (model, training_batch_losses) in enumerate(models):
+                utilities.save_model(model, model_path.format(fold))
 
-            dataset.validation_mode()
-            validation_batch_losses = experimentation.siamese_loss(model, dataset, loss, use_cuda)
-            dataset.training_mode()
+                dataset.validation_mode()
+                validation_batch_losses = experimentation.right_tower_loss(model, dataset, loss, use_cuda)
+                dataset.training_mode()
 
-            training_loss = training_batch_losses.mean()
-            validation_loss = validation_batch_losses.mean()
-            logger.info("Loss at epoch {0}:\n\ttrn = {1}\n\tval = {2}".format(epoch, training_loss, validation_loss))
+                training_loss = training_batch_losses.mean()
+                validation_loss = validation_batch_losses.mean()
+                logger.info("Loss at epoch {0}:\n\ttrn = {1}\n\tval = {2}".format(epoch, training_loss, validation_loss))
 
-            training_losses[epoch] = training_loss
-            validation_losses[epoch] = validation_loss
+                training_losses[epoch] = training_loss
+                validation_losses[epoch] = validation_loss
 
-            graphing.loss_per_epoch(training_losses, validation_losses, title='Loss vs. Epoch (TL, Right Tower)')
+                graphing.loss_per_epoch(training_losses, validation_losses, title='Loss vs. Epoch (TL, Right Tower)')
     except Exception as e:
         utilities.save_model(model, model_path.format('crash_backup'))
         print("Exception occurred while training right tower: {0}".format(str(e)))

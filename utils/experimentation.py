@@ -164,6 +164,7 @@ def right_tower_loss(model: RightTower, dataset: UrbanSound10FCV, objective, use
         outputs = model(audio)
 
         # calculate loss and optimize weights
+        labels = labels.long()
         batch_losses[i] = objective(outputs, labels).item()
 
         bar.next()
