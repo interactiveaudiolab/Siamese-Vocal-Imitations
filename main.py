@@ -38,6 +38,7 @@ def train_random_selection(use_cuda, data: VocalSketch, use_dropout, use_normali
     if use_cuda:
         siamese = siamese.cuda()
 
+    logger.info("Copying weights from right tower...")
     right_tower = RightTower()
     utilities.load_model(right_tower, './model_output/right_tower/model_9_49')
     copy_weights(siamese, right_tower)
