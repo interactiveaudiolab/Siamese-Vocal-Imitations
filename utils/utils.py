@@ -7,8 +7,11 @@ import numpy as np
 import torch
 
 
-def load_model(model, path):
-    model.load_state_dict(torch.load(path))
+def load_model(model, path, use_cuda=True):
+    if use_cuda:
+        model.load_state_dict(torch.load(path))
+    else:
+        model.load_state_dict(torch.load(path, map_location=lambda storage, loc: storage))
 
 
 def save_model(model, path):
