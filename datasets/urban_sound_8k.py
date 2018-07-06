@@ -6,19 +6,22 @@ from datafiles.urban_sound_8k import UrbanSound8K
 class UrbanSound10FCV(dataset.Dataset):
     def __init__(self, data: UrbanSound8K):
         self.folds = data.folds
+        self.n_folds = len(data.folds)
         self.fold_labels = data.fold_labels
-        self.current_fold = None
         self.validating = False
+        self.current_fold = None
+        self.train_data = None
+        self.validation_data = None
+
+    def set_fold(self, fold):
+        self.current_fold = fold
         self.train_data = []
         self.validation_data = []
-
-    def change_fold(self, fold):
-        self.current_fold = fold
-        for d, l in zip(self.folds[self.current_fold], self.folds[self.current_fold]):
+        for d, l in zip(self.folds[self.current_fold], self.fold_labels[self.current_fold]):
             self.train_data.append([d, l])
 
         for i in [j for j in range(len(self.folds)) if j != self.current_fold]:
-            for d, l in zip(self.folds[i], self.folds[i]):
+            for d, l in zip(self.folds[i], self.fold_labels[i]):
                 self.validation_data.append([d, l])
 
     def validation_mode(self):
