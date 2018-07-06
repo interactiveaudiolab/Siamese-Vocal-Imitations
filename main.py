@@ -183,7 +183,7 @@ def train_fine_tuning(use_cuda, data: VocalSketch, use_dropout, use_normalizatio
 
 def transfer_learning(use_cuda, data: UrbanSound8K):
     logger = logging.getLogger('logger')
-    model_path = './model_output/right_tower/model_{0}'
+    model_path = './model_output/right_tower/model_{0}_{1}'
 
     n_epochs = 50
     model = RightTower()
@@ -202,7 +202,7 @@ def transfer_learning(use_cuda, data: UrbanSound8K):
             dataset.set_fold(fold)
             models = train_right_tower(model, dataset, loss, optimizer, n_epochs, use_cuda)
             for epoch, (model, training_batch_losses) in enumerate(models):
-                utilities.save_model(model, model_path.format(fold))
+                utilities.save_model(model, model_path.format(fold, epoch))
 
                 dataset.validation_mode()
                 validation_batch_losses = experimentation.right_tower_loss(model, dataset, loss, use_cuda)
