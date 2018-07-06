@@ -13,7 +13,7 @@ from utils import matplotlib_backend_hack
 import utils.experimentation as experimentation
 import utils.graphing as graphing
 import utils.utils as utilities
-from utils.training import train_siamese_network, train_right_tower
+from utils.training import train_siamese_network, train_right_tower, copy_weights
 from datafiles.urban_sound_8k import UrbanSound8K
 from datafiles.vocal_sketch_files import VocalSketch
 from datasets.urban_sound_8k import UrbanSound10FCV
@@ -37,6 +37,10 @@ def train_random_selection(use_cuda, data: VocalSketch, use_dropout, use_normali
     siamese = Siamese(dropout=use_dropout, normalization=use_normalization)
     if use_cuda:
         siamese = siamese.cuda()
+
+    right_tower = RightTower()
+    utilities.load_model(right_tower, './model_output/right_tower/model_9_49')
+    copy_weights(siamese, right_tower)
 
     criterion = BCELoss()
 

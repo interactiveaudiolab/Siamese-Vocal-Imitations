@@ -4,6 +4,7 @@ from torch.utils.data import DataLoader
 
 from datasets.urban_sound_8k import UrbanSound10FCV
 from datasets.vocal_sketch_data import AllPositivesRandomNegatives
+from models.siamese import Siamese
 
 
 def train_siamese_network(model, data, objective, optimizer, n_epochs, use_cuda, batch_size=128):
@@ -74,3 +75,17 @@ def train_right_tower(model, data: UrbanSound10FCV, objective, optimizer, n_epoc
         bar.finish()
 
         yield model, batch_losses
+
+
+def copy_weights(siamese: Siamese, tower):
+    siamese_params = siamese.state_dict()
+    tower_params = tower.state_dict()
+
+    tower_dict = dict(tower_params)
+    siamese_dict = dict(siamese_params)
+
+    for param in tower_dict:
+        if param in siamese_dict:
+            siamese_dict[param].data.copy_(tower_dict[param])
+
+    siamese.load_state_dict(siamese_dict)
