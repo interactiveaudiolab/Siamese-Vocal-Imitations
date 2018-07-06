@@ -13,7 +13,7 @@ def train_siamese_network(model, data, objective, optimizer, n_epochs, use_cuda,
             data.reselect_negatives()
 
         train_data = DataLoader(data, batch_size=batch_size, num_workers=1)
-        bar = Bar("Training epoch {0}".format(epoch), max=len(train_data))
+        bar = Bar("Training siamese, epoch {0}".format(epoch), max=len(train_data))
         batch_losses = np.zeros(len(train_data))
         for i, (left, right, labels) in enumerate(train_data):
             # clear out the gradients
@@ -48,7 +48,7 @@ def train_siamese_network(model, data, objective, optimizer, n_epochs, use_cuda,
 def train_right_tower(model, data: UrbanSound10FCV, objective, optimizer, n_epochs, use_cuda, batch_size=128):
     for epoch in range(n_epochs):
         train_data = DataLoader(data, batch_size=batch_size, num_workers=1)
-        bar = Bar("Training epoch {0}".format(epoch), max=len(train_data))
+        bar = Bar("Training right tower, epoch {0}".format(epoch), max=len(train_data))
         batch_losses = np.zeros(len(train_data))
         for i, (audio, labels) in enumerate(train_data):
             # clear out the gradients
