@@ -36,7 +36,7 @@ class LeftTower(nn.Module):
                 nn.MaxPool2d((1, 2), (1, 2)),
             )
 
-    def forward(self, left, right):
+    def forward(self, left):
         left_output = self.left_branch(left)
         return left_output.view(-1)
 
@@ -90,6 +90,6 @@ class RightTower(nn.Module):
                 nn.Softmax()
             )
 
-    def forward(self, left, right):
+    def forward(self, right):
         right_output = self.right_branch(right)
         return right_output.view(-1)
