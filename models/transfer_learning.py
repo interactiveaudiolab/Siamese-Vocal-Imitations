@@ -58,15 +58,7 @@ class RightTower(nn.Module):
 
                 nn.Conv2d(48, 48, (5, 5)),
                 nn.BatchNorm2d(48, momentum=.01, eps=.001),
-                nn.ReLU(),
-
-                nn.Dropout(p=.5),
-                nn.Linear(48 * 25 * 2, 64),
-                nn.ReLU(),
-
-                nn.Dropout(p=.5),
-                nn.Linear(64, 10),
-                nn.Softmax()
+                nn.ReLU()
             )
         else:
             self.right_branch = nn.Sequential(
@@ -80,16 +72,20 @@ class RightTower(nn.Module):
 
                 nn.Conv2d(48, 48, (5, 5)),
                 nn.ReLU(),
-
-                nn.Dropout(p=.5),
-                nn.Linear(48 * 25 * 2, 64),
-                nn.ReLU(),
-
-                nn.Dropout(p=.5),
-                nn.Linear(64, 10),
-                nn.Softmax()
             )
+
+        self.fcn = nn.Sequential(
+            nn.Dropout(p=.5),
+            nn.Linear(48 * 25 * 2, 64),
+            nn.ReLU(),
+
+            nn.Dropout(p=.5),
+            nn.Linear(64, 10),
+            nn.Softmax(dim=1)
+        )
 
     def forward(self, right):
         right_output = self.right_branch(right)
-        return right_output.view(-1)
+        right_reshaped = right_output.view(len(right_output), -1)
+        output = self.fcn(right_reshaped)
+        return output
