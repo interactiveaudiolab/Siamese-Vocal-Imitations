@@ -12,8 +12,10 @@ def mrr_per_epoch(train_mrrs, val_mrrs, title="MRR vs. Epoch", xlabel='epoch'):
     plt.legend()
 
     plt.ylabel('MRR')
-    plt.yticks(np.arange(0, 1.1, .1))
-    plt.ylim(0, 1)
+    y_max = 1
+    y_tick_interval = .1
+    plt.yticks(np.arange(0, y_max + y_tick_interval, y_tick_interval))
+    plt.ylim(0, y_max)
 
     plt.xlabel(xlabel)
 
@@ -31,8 +33,10 @@ def loss_per_epoch(train_loss, val_loss, title="Loss vs. Epoch"):
     plt.legend()
 
     plt.ylabel('loss')
-    plt.yticks(np.arange(0, 2.1, .1))
-    plt.ylim(0, 2)
+    y_max = 2
+    y_tick_interval = .1
+    plt.yticks(np.arange(0, y_max + y_tick_interval, y_tick_interval))
+    plt.ylim(0, y_max)
 
     plt.xlabel('epoch')
     plt.suptitle(title)
