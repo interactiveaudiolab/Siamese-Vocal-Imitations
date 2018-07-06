@@ -219,7 +219,9 @@ def transfer_learning(use_cuda, data: UrbanSound8K):
 
             accuracy = experimentation.right_tower_accuracy(model, dataset, use_cuda)
             fold_accuracies[fold] = accuracy
-            logger.info("Accuracy after validating on fold {0} = {1}".format(fold, accuracy))
+            dataset.validation_mode()
+            logger.info("Validation accuracy on fold {0} = {1}".format(fold, accuracy))
+            dataset.training_mode()
             utilities.save_model(model, "./output/{0}/right_tower".format(utilities.get_trial_number()))
 
         logger.info("Average accuracy across all folds = {0}".format(np.mean(fold_accuracies)))
