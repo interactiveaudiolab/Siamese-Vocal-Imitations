@@ -16,7 +16,7 @@ def mean_reciprocal_ranks(model: Siamese, pairs: AllPairs, use_cuda):
     Return the mean reciprocal rank across a given set of pairs and a given model.
 
     :param model: siamese network
-    :param pairs: dataset of desired pairs to calculate confusion matrix across
+    :param pairs: dataset of desired pairs to calculate MRR across
     :param use_cuda: bool, whether to run on gpu
     :return: float, mean of reciprocal ranks
     """
@@ -29,43 +29,43 @@ def reciprocal_ranks(model: Siamese, pairs: AllPairs, use_cuda):
     Return an array of the reciprocal ranks across a given set of pairs and a given model.
 
     :param model: siamese network
-    :param pairs: dataset of desired pairs to calculate confusion matrix across
+    :param pairs: dataset of desired pairs to calculate RR across
     :param use_cuda: bool, whether to run on gpu
     :return: rrs, ndarray of reciprocal ranks
     """
-    confusion = confusion_matrix(model, pairs, use_cuda)
+    pairwise = pairwise_inference_matrix(model, pairs, use_cuda)
 
     rrs = np.zeros([pairs.n_imitations])
     for i, imitation in enumerate(pairs.imitations):
-        # get the column of the confusion matrix corresponding to this imitation
-        confusion_col = confusion[i, :]
+        # get the column of the pairwise matrix corresponding to this imitation
+        pairwise_col = pairwise[i, :]
         # get the index of the correct reference for this imitation
         reference_index = utils.np_index_of(pairs.labels[i, :], 1)
         # get the similarity of the correct reference
-        similarity = confusion_col[reference_index]
-        # sort confusion column descending
-        confusion_col[::-1].sort()
+        similarity = pairwise_col[reference_index]
+        # sort pairwise column descending
+        pairwise_col[::-1].sort()
         # find the rank of the similarity
-        index = utils.np_index_of(confusion_col, similarity)
+        index = utils.np_index_of(pairwise_col, similarity)
         rank = index + 1
         rrs[i] = 1 / rank
 
     return rrs
 
 
-def confusion_matrix(model: Siamese, pairs_dataset: AllPairs, use_cuda):
+def pairwise_inference_matrix(model: Siamese, pairs_dataset: AllPairs, use_cuda):
     """
-    Calculates the confusion matrix for a given model across a set of pairs (typically, all of them).
+    Calculates the pairwise inference matrix for a given model across a set of pairs (typically, all of them).
 
     :param model: siamese network
-    :param pairs_dataset: dataset of desired pairs to calculate confusion matrix across
+    :param pairs_dataset: dataset of desired pairs to calculate pairwise matrix across
     :param use_cuda: bool, whether to run on GPU
-    :return: confusion matrix
+    :return: pairwise matrix
     """
     rrs = np.array([])
     pairs = dataloader.DataLoader(pairs_dataset, batch_size=128, num_workers=1)
 
-    bar = Bar("Calculating confusion matrix", max=len(pairs))
+    bar = Bar("Calculating pairwise inference matrix", max=len(pairs))
     for imitations, references, label in pairs:
         # reshape tensors and push to GPU if necessary
         imitations = imitations.unsqueeze(1)
@@ -96,13 +96,13 @@ def hard_negative_selection(model: Siamese, pairs: AllPairs, use_cuda):
     :param use_cuda: bool, whether to run on GPU
     :return: ndarray of reference indexes, indexed by imitation number
     """
-    confusion = confusion_matrix(model, pairs, use_cuda)
+    pairwise = pairwise_inference_matrix(model, pairs, use_cuda)
 
     # zero out all positive examples
-    confusion = confusion * np.logical_not(pairs.labels)
+    pairwise = pairwise * np.logical_not(pairs.labels)
 
     # indexes of max in each column
-    references = confusion.argmax(axis=1)
+    references = pairwise.argmax(axis=1)
     return references
 
 
