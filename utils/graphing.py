@@ -33,7 +33,7 @@ def loss_per_epoch(train_loss, val_loss, title="Loss vs. Epoch"):
     plt.legend()
 
     plt.ylabel('loss')
-    y_max = 2
+    y_max = max(2, max(train_loss) + .5, max(val_loss) + .5)
     y_tick_interval = .1
     plt.yticks(np.arange(0, y_max + y_tick_interval, y_tick_interval))
     plt.ylim(0, y_max)
