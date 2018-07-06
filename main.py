@@ -182,7 +182,7 @@ def train_fine_tuning(use_cuda, data: VocalSketch, use_dropout, use_normalizatio
 
 
 def transfer_learning(use_cuda, data: UrbanSound8K):
-    logger = logging.getLogger('logging')
+    logger = logging.getLogger('logger')
     model_path = './model_output/right_tower/model_{0}'
 
     n_epochs = 50
@@ -194,11 +194,12 @@ def transfer_learning(use_cuda, data: UrbanSound8K):
     optimizer = torch.optim.SGD(model.parameters(), lr=.01, weight_decay=.001, momentum=.9, nesterov=True)
     dataset = UrbanSound10FCV(data)
     try:
+        fold_accuracies = np.zeros(dataset.n_folds)
+        training_losses = []
+        validation_losses = []
         for fold in range(dataset.n_folds):
-            logger.info("Training right tower, fold {0}...".format(fold))
+            logger.info("Training right tower, validating on fold {0}...".format(fold))
             dataset.set_fold(fold)
-            training_losses = np.zeros(n_epochs)
-            validation_losses = np.zeros(n_epochs)
             models = train_right_tower(model, dataset, loss, optimizer, n_epochs, use_cuda)
             for epoch, (model, training_batch_losses) in enumerate(models):
                 utilities.save_model(model, model_path.format(fold))
@@ -209,12 +210,19 @@ def transfer_learning(use_cuda, data: UrbanSound8K):
 
                 training_loss = training_batch_losses.mean()
                 validation_loss = validation_batch_losses.mean()
-                logger.info("Loss at epoch {0}:\n\ttrn = {1}\n\tval = {2}".format(epoch, training_loss, validation_loss))
+                logger.info("Loss at fold {0}, epoch {1}:\n\ttrn = {2}\n\tval = {3}".format(fold, epoch, training_loss, validation_loss))
 
-                training_losses[epoch] = training_loss
-                validation_losses[epoch] = validation_loss
+                training_losses.append(training_loss)
+                validation_losses.append(validation_loss)
 
                 graphing.loss_per_epoch(training_losses, validation_losses, title='Loss vs. Epoch (TL, Right Tower)')
+
+            accuracy = experimentation.right_tower_accuracy(model, dataset, use_cuda)
+            fold_accuracies[fold] = accuracy
+            logger.info("Accuracy after validating on fold {0} = {1}".format(fold, accuracy))
+            utilities.save_model(model, "./output/{0}/right_tower".format(utilities.get_trial_number()))
+
+        logger.info("Average accuracy across all folds = {0}".format(np.mean(fold_accuracies)))
     except Exception as e:
         utilities.save_model(model, model_path.format('crash_backup'))
         print("Exception occurred while training right tower: {0}".format(str(e)))

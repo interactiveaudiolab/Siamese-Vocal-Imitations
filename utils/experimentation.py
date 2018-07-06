@@ -1,3 +1,5 @@
+import torch
+
 import numpy as np
 from progress.bar import Bar
 from torch.utils.data import dataloader, DataLoader
@@ -171,3 +173,29 @@ def right_tower_loss(model: RightTower, dataset: UrbanSound10FCV, objective, use
     bar.finish()
 
     return batch_losses
+
+
+def right_tower_accuracy(model: RightTower, dataset: UrbanSound10FCV, use_cuda: bool, batch_size=128):
+    data = DataLoader(dataset, batch_size=batch_size, num_workers=1)
+    bar = Bar("Calculating accuracy", max=len(data))
+    correct = 0
+    total = 0
+    for i, (audio, labels) in enumerate(data):
+
+        # reshape tensors and push to GPU if necessary
+        audio = audio.unsqueeze(1)
+        if use_cuda:
+            audio = audio.cuda()
+            labels = labels.cuda()
+
+        # pass a batch through the network
+        outputs = model(audio)
+
+        _, predicted = torch.max(outputs.data, 1)
+        total += labels.size(0)
+        correct += (predicted == labels).sum().item()
+
+        bar.next()
+    bar.finish()
+
+    return correct / total
