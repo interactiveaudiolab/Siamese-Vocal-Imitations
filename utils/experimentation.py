@@ -191,6 +191,7 @@ def right_tower_accuracy(model: RightTower, dataset: UrbanSound10FCV, use_cuda: 
         # pass a batch through the network
         outputs = model(audio)
 
+        labels = labels.long()
         _, predicted = torch.max(outputs.data, 1)
         total += labels.size(0)
         correct += (predicted == labels).sum().item()
