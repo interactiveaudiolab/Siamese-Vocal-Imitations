@@ -147,7 +147,7 @@ def siamese_loss(model: Siamese, dataset, objective, use_cuda: bool, batch_size=
     return batch_losses
 
 
-def right_tower_loss(model: RightTower, dataset: UrbanSound10FCV, objective, use_cuda: bool, batch_size=128):
+def tower_loss(model, dataset, objective, use_cuda: bool, batch_size=128):
     """
     Calculates the loss of model over dataset by objective. Optionally run on the GPU.
     """
@@ -175,7 +175,7 @@ def right_tower_loss(model: RightTower, dataset: UrbanSound10FCV, objective, use
     return batch_losses
 
 
-def right_tower_accuracy(model: RightTower, dataset: UrbanSound10FCV, use_cuda: bool, batch_size=128):
+def tower_accuracy(model, dataset, use_cuda: bool, batch_size=128):
     data = DataLoader(dataset, batch_size=batch_size, num_workers=1)
     bar = Bar("Calculating accuracy", max=len(data))
     correct = 0

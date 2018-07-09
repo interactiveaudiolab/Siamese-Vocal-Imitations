@@ -46,7 +46,7 @@ def train_siamese_network(model, data, objective, optimizer, n_epochs, use_cuda,
         yield model, batch_losses
 
 
-def train_right_tower(model, data: UrbanSound10FCV, objective, optimizer, n_epochs, use_cuda, batch_size=128):
+def train_tower(model, data, objective, optimizer, n_epochs, use_cuda, batch_size=128):
     for epoch in range(n_epochs):
         train_data = DataLoader(data, batch_size=batch_size, num_workers=1)
         bar = Bar("Training right tower, epoch {0}".format(epoch), max=len(train_data))

@@ -10,16 +10,18 @@ from torch.nn import BCELoss, CrossEntropyLoss
 # MUST COME FIRST
 # noinspection PyUnresolvedReferences
 from utils import matplotlib_backend_hack
+from datafiles.voxforge import Voxforge
+from datasets.voxforge import All
 import utils.experimentation as experimentation
 import utils.graphing as graphing
 import utils.utils as utilities
-from utils.training import train_siamese_network, train_right_tower, copy_weights
+from utils.training import train_siamese_network, train_tower, copy_weights
 from datafiles.urban_sound_8k import UrbanSound8K
 from datafiles.vocal_sketch_files import VocalSketch
 from datasets.urban_sound_8k import UrbanSound10FCV
 from datasets.vocal_sketch_data import AllPositivesRandomNegatives, AllPairs, FineTuned
 from models.siamese import Siamese
-from models.transfer_learning import RightTower
+from models.transfer_learning import RightTower, LeftTower
 
 
 def train_random_selection(use_cuda, data: VocalSketch, use_dropout, use_normalization):
@@ -186,7 +188,53 @@ def train_fine_tuning(use_cuda, data: VocalSketch, use_dropout, use_normalizatio
         exit(1)
 
 
-def transfer_learning(use_cuda, data: UrbanSound8K):
+def left_tower_transfer_learning(use_cuda, data: Voxforge):
+    logger = logging.getLogger('logger')
+    model_path = './model_output/right_tower/model_{0}'
+
+    n_epochs = 50
+    model = LeftTower()
+    if use_cuda:
+        model.cuda()
+
+    loss = CrossEntropyLoss()
+    optimizer = torch.optim.SGD(model.parameters(), lr=.01, weight_decay=.001, momentum=.9, nesterov=True)
+    dataset = All(data)
+    try:
+        training_losses = []
+        validation_losses = []
+        logger.info("Training left tower....")
+        models = train_tower(model, dataset, loss, optimizer, n_epochs, use_cuda)
+        for epoch, (model, training_batch_losses) in enumerate(models):
+            utilities.save_model(model, model_path.format(epoch))
+
+            dataset.validation_mode()
+            validation_batch_losses = experimentation.tower_loss(model, dataset, loss, use_cuda)
+            dataset.training_mode()
+
+            training_loss = training_batch_losses.mean()
+            validation_loss = validation_batch_losses.mean()
+            logger.info("Loss at epoch {0}:\n\ttrn = {1}\n\tval = {2}".format(epoch, training_loss, validation_loss))
+
+            training_losses.append(training_loss)
+            validation_losses.append(validation_loss)
+
+            graphing.loss_per_epoch(training_losses, validation_losses, title='Loss vs. Epoch (TL, Left Tower)')
+
+        dataset.validation_mode()
+        accuracy = experimentation.tower_accuracy(model, dataset, use_cuda)
+        dataset.training_mode()
+        logger.info("Final validation accuracy = {0}".format(accuracy))
+        utilities.save_model(model, "./output/{0}/left_tower".format(utilities.get_trial_number()))
+
+    except Exception as e:
+        utilities.save_model(model, model_path.format('crash_backup'))
+        print("Exception occurred while training left tower: {0}".format(str(e)))
+        print(traceback.print_exc())
+        exit(1)
+
+
+def right_tower_transfer_learning(use_cuda, data: UrbanSound8K):
     logger = logging.getLogger('logger')
     model_path = './model_output/right_tower/model_{0}_{1}'
 
@@ -205,12 +253,12 @@ def transfer_learning(use_cuda, data: UrbanSound8K):
         for fold in range(dataset.n_folds):
             logger.info("Training right tower, validating on fold {0}...".format(fold))
             dataset.set_fold(fold)
-            models = train_right_tower(model, dataset, loss, optimizer, n_epochs, use_cuda)
+            models = train_tower(model, dataset, loss, optimizer, n_epochs, use_cuda)
             for epoch, (model, training_batch_losses) in enumerate(models):
                 utilities.save_model(model, model_path.format(fold, epoch))
 
                 dataset.validation_mode()
-                validation_batch_losses = experimentation.right_tower_loss(model, dataset, loss, use_cuda)
+                validation_batch_losses = experimentation.tower_loss(model, dataset, loss, use_cuda)
                 dataset.training_mode()
 
                 training_loss = training_batch_losses.mean()
@@ -222,7 +270,7 @@ def transfer_learning(use_cuda, data: UrbanSound8K):
 
                 graphing.loss_per_epoch(training_losses, validation_losses, title='Loss vs. Epoch (TL, Right Tower)')
 
-            accuracy = experimentation.right_tower_accuracy(model, dataset, use_cuda)
+            accuracy = experimentation.tower_accuracy(model, dataset, use_cuda)
             fold_accuracies[fold] = accuracy
             dataset.validation_mode()
             logger.info("Validation accuracy on fold {0} = {1}".format(fold, accuracy))
@@ -258,8 +306,11 @@ def main(cli_args=None):
 
     try:
         if cli_args.transfer_learning:
+            voxforge = Voxforge(recalculate_spectrograms=cli_args.spectrograms)
+            left_tower_transfer_learning(cli_args.cuda, voxforge)
             urban_sound = UrbanSound8K(recalculate_spectrograms=cli_args.spectrograms)
-            transfer_learning(cli_args.cuda, urban_sound)
+            right_tower_transfer_learning(cli_args.cuda, urban_sound)
+
         vocal_sketch = VocalSketch(*cli_args.partitions, recalculate_spectrograms=cli_args.spectrograms)
         if cli_args.random_only:
             train_random_selection(cli_args.cuda, vocal_sketch, cli_args.dropout, cli_args.normalization)
