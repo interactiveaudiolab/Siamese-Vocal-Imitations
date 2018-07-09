@@ -44,10 +44,20 @@ def train_random_selection(use_cuda, data: VocalSketch, use_dropout, use_normali
     if use_cuda:
         siamese = siamese.cuda()
 
-    logger.info("Copying weights from right tower...")
-    right_tower = RightTower()
-    utilities.load_model(right_tower, './model_output/right_tower/model_9_49')
-    training.copy_weights(siamese, right_tower)
+    try:
+        logger.info("Copying weights from left tower...")
+        left_tower = LeftTower()
+        utilities.load_model(left_tower, './model_output/left_tower/model_final')
+        training.copy_weights(siamese, left_tower)
+    except FileNotFoundError:
+        logger.error("Could not find a pre-trained left tower model. Skipping transfer learning for this branch.")
+    try:
+        logger.info("Copying weights from right tower...")
+        right_tower = RightTower()
+        utilities.load_model(right_tower, './model_output/right_tower/model_final')
+        training.copy_weights(siamese, right_tower)
+    except FileNotFoundError:
+        logger.error("Could not find a pre-trained right tower model. Skipping transfer learning for this branch.")
 
     criterion = BCELoss()
 
@@ -230,6 +240,7 @@ def left_tower_transfer_learning(use_cuda, data: Voxforge):
         dataset.training_mode()
         logger.info("Final validation accuracy = {0}".format(accuracy))
         utilities.save_model(model, "./output/{0}/left_tower".format(utilities.get_trial_number()))
+        utilities.save_model(model, model_path.format('final'))
 
     except Exception as e:
         utilities.save_model(model, model_path.format('crash_backup'))
@@ -280,6 +291,7 @@ def right_tower_transfer_learning(use_cuda, data: UrbanSound8K):
             logger.info("Validation accuracy on fold {0} = {1}".format(fold, accuracy))
             dataset.training_mode()
             utilities.save_model(model, "./output/{0}/right_tower".format(utilities.get_trial_number()))
+            utilities.save_model(model, model_path.format('final'))
 
         logger.info("Average accuracy across all folds = {0}".format(np.mean(fold_accuracies)))
     except Exception as e:
