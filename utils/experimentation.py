@@ -3,8 +3,10 @@ import torch
 from progress.bar import Bar
 from torch.utils.data import dataloader, DataLoader
 
+from datasets.tower_data import TowerData
 from datasets.vocal_sketch import AllPairs
 from models.siamese import Siamese
+from models.transfer_learning import Tower
 from utils import utils
 
 
@@ -144,7 +146,7 @@ def siamese_loss(model: Siamese, dataset, objective, use_cuda: bool, batch_size=
     return batch_losses
 
 
-def tower_loss(model, dataset, objective, use_cuda: bool, batch_size=128):
+def tower_loss(model: Tower, dataset: TowerData, objective, use_cuda: bool, batch_size=128):
     """
     Calculates the loss of model over dataset by objective. Optionally run on the GPU.
     """
@@ -172,7 +174,7 @@ def tower_loss(model, dataset, objective, use_cuda: bool, batch_size=128):
     return batch_losses
 
 
-def tower_accuracy(model, dataset, use_cuda: bool, batch_size=128):
+def tower_accuracy(model: Tower, dataset: TowerData, use_cuda: bool, batch_size=128):
     data = DataLoader(dataset, batch_size=batch_size, num_workers=1)
     bar = Bar("Calculating accuracy", max=len(data))
     correct = 0

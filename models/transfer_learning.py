@@ -1,7 +1,15 @@
 import torch.nn as nn
 
 
-class LeftTower(nn.Module):
+class Tower(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, i):
+        raise NotImplementedError
+
+
+class LeftTower(Tower):
     def __init__(self, normalization=True):
         super(LeftTower, self).__init__()
         if normalization:
@@ -53,7 +61,7 @@ class LeftTower(nn.Module):
         return output
 
 
-class RightTower(nn.Module):
+class RightTower(Tower):
     def __init__(self, normalization=True):
         super(RightTower, self).__init__()
         if normalization:

@@ -2,11 +2,13 @@ import numpy as np
 from progress.bar import Bar
 from torch.utils.data import DataLoader
 
+from datasets.tower_data import TowerData
 from datasets.vocal_sketch import AllPositivesRandomNegatives
 from models.siamese import Siamese
+from models.transfer_learning import Tower
 
 
-def train_siamese_network(model, data, objective, optimizer, n_epochs, use_cuda, batch_size=128):
+def train_siamese_network(model: Siamese, data, objective, optimizer, n_epochs, use_cuda, batch_size=128):
     for epoch in range(n_epochs):
         # if we're using all positives and random negatives, choose new negatives on each epoch
         if isinstance(data, AllPositivesRandomNegatives):
@@ -45,7 +47,7 @@ def train_siamese_network(model, data, objective, optimizer, n_epochs, use_cuda,
         yield model, batch_losses
 
 
-def train_tower(model, data, objective, optimizer, n_epochs, use_cuda, batch_size=128):
+def train_tower(model: Tower, data: TowerData, objective, optimizer, n_epochs, use_cuda, batch_size=128):
     for epoch in range(n_epochs):
         train_data = DataLoader(data, batch_size=batch_size, num_workers=1)
         bar = Bar("Training right tower, epoch {0}".format(epoch), max=len(train_data))
@@ -76,7 +78,7 @@ def train_tower(model, data, objective, optimizer, n_epochs, use_cuda, batch_siz
         yield model, batch_losses
 
 
-def copy_weights(siamese: Siamese, tower):
+def copy_weights(siamese: Siamese, tower: Tower):
     siamese_params = siamese.state_dict()
     tower_params = tower.state_dict()
 
