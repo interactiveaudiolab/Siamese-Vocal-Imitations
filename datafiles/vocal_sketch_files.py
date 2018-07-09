@@ -7,6 +7,7 @@ from progress.bar import Bar
 
 import utils.preprocessing as preprocessing
 from utils import utils
+from utils.utils import zip_shuffle
 
 
 class VocalSketch:
@@ -94,12 +95,6 @@ def filter_imitations(all_imitations, all_imitation_labels, reference_labels):
             imitation_labels.append(l)
 
     return imitations, imitation_labels
-
-
-def zip_shuffle(a, b):
-    assert len(a) == len(b)
-    p = np.random.permutation(len(a))
-    return a[p], b[p]
 
 
 def calculate_spectrograms():
