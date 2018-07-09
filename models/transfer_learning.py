@@ -4,41 +4,53 @@ import torch.nn as nn
 class LeftTower(nn.Module):
     def __init__(self, normalization=True):
         super(LeftTower, self).__init__()
-
-        # left branch: vocal imitations
         if normalization:
-            # left branch: vocal imitations
             self.left_branch = nn.Sequential(
                 nn.Conv2d(1, 48, (6, 6)),
                 nn.BatchNorm2d(48, momentum=.01, eps=.001),
                 nn.ReLU(),
                 nn.MaxPool2d(2, 2),
+
                 nn.Conv2d(48, 48, (6, 6)),
                 nn.BatchNorm2d(48, momentum=.01, eps=.001),
                 nn.ReLU(),
                 nn.MaxPool2d(2, 2),
+
                 nn.Conv2d(48, 48, (6, 6)),
                 nn.BatchNorm2d(48, momentum=.01, eps=.001),
                 nn.ReLU(),
                 nn.MaxPool2d((1, 2), (1, 2)),
             )
         else:
-            # left branch: vocal imitations
             self.left_branch = nn.Sequential(
                 nn.Conv2d(1, 48, (6, 6)),
                 nn.ReLU(),
                 nn.MaxPool2d(2, 2),
+
                 nn.Conv2d(48, 48, (6, 6)),
                 nn.ReLU(),
                 nn.MaxPool2d(2, 2),
+
                 nn.Conv2d(48, 48, (6, 6)),
                 nn.ReLU(),
                 nn.MaxPool2d((1, 2), (1, 2)),
             )
 
+        self.fcn = nn.Sequential(
+            nn.Dropout(p=.5),
+            nn.Linear(48 * 25 * 2, 64),
+            nn.ReLU(),
+
+            nn.Dropout(p=.5),
+            nn.Linear(64, 7),
+            nn.Softmax(dim=1)
+        )
+
     def forward(self, left):
-        left_output = self.left_branch(left)
-        return left_output.view(-1)
+        left_output = self.right_branch(left)
+        left_reshaped = left_output.view(len(left_output), -1)
+        output = self.fcn(left_reshaped)
+        return output
 
 
 class RightTower(nn.Module):
