@@ -13,10 +13,12 @@ class Siamese(nn.Module):
                 nn.BatchNorm2d(48, momentum=.01, eps=.001),
                 nn.ReLU(),
                 nn.MaxPool2d(2, 2),
+
                 nn.Conv2d(48, 48, (6, 6)),
                 nn.BatchNorm2d(48, momentum=.01, eps=.001),
                 nn.ReLU(),
                 nn.MaxPool2d(2, 2),
+
                 nn.Conv2d(48, 48, (6, 6)),
                 nn.BatchNorm2d(48, momentum=.01, eps=.001),
                 nn.ReLU(),
@@ -28,10 +30,12 @@ class Siamese(nn.Module):
                 nn.Conv2d(1, 24, (5, 5)),
                 nn.BatchNorm2d(24, momentum=.01, eps=.001),
                 nn.ReLU(),
+
                 nn.MaxPool2d((2, 4), (2, 4)),
                 nn.Conv2d(24, 48, (5, 5)),
                 nn.BatchNorm2d(48, momentum=.01, eps=.001),
                 nn.ReLU(),
+
                 nn.MaxPool2d((2, 4), (2, 4)),
                 nn.Conv2d(48, 48, (5, 5)),
                 nn.BatchNorm2d(48, momentum=.01, eps=.001),
@@ -43,9 +47,11 @@ class Siamese(nn.Module):
                 nn.Conv2d(1, 48, (6, 6)),
                 nn.ReLU(),
                 nn.MaxPool2d(2, 2),
+
                 nn.Conv2d(48, 48, (6, 6)),
                 nn.ReLU(),
                 nn.MaxPool2d(2, 2),
+
                 nn.Conv2d(48, 48, (6, 6)),
                 nn.ReLU(),
                 nn.MaxPool2d((1, 2), (1, 2)),
@@ -56,9 +62,11 @@ class Siamese(nn.Module):
                 nn.Conv2d(1, 24, (5, 5)),
                 nn.ReLU(),
                 nn.MaxPool2d((2, 4), (2, 4)),
+
                 nn.Conv2d(24, 48, (5, 5)),
                 nn.ReLU(),
                 nn.MaxPool2d((2, 4), (2, 4)),
+
                 nn.Conv2d(48, 48, (5, 5)),
                 nn.ReLU(),
             )
@@ -68,6 +76,7 @@ class Siamese(nn.Module):
                 nn.Dropout(p=.2),
                 nn.Linear(48 * 55 + 48 * 25 * 2, 108),
                 nn.ReLU(),
+
                 nn.Dropout(p=.2),
                 nn.Linear(108, 1),
                 nn.Sigmoid()
@@ -76,6 +85,7 @@ class Siamese(nn.Module):
             self.fully_connected = nn.Sequential(
                 nn.Linear(48 * 55 + 48 * 25 * 2, 108),
                 nn.ReLU(),
+
                 nn.Linear(108, 1),
                 nn.Sigmoid()
             )
