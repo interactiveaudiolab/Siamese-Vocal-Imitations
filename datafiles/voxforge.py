@@ -19,12 +19,12 @@ def calculate_spectrograms():
     """
     data_dir = os.environ['SIAMESE_DATA_DIR']
     sub_path = os.path.join(data_dir, "voxforge")
-    sub_pathes = []
+    sub_paths = []
     all_labels = []
     for path in os.listdir(sub_path):
         abs_path = os.path.join(sub_path, path)
         if os.path.isdir(abs_path):
-            sub_pathes.append(abs_path)
+            sub_paths.append(abs_path)
             all_labels.append(path)
 
     label_n = {}
@@ -36,11 +36,12 @@ def calculate_spectrograms():
 
     all_paths = []
     labels = {}
-    for sub_path, label in zip(sub_pathes, all_labels):
+    for sub_path, label in zip(sub_paths, all_labels):
         paths = preprocessing.recursive_wav_paths(sub_path)
         for path in paths:
-            labels[path] = label
-    preprocessing.calculate_spectrograms(all_paths, labels, label_n, 'voxforge', preprocessing.reference_spectrogram)
+            all_paths.append(path)
+            labels[os.path.basename(path)] = label
+    preprocessing.calculate_spectrograms(all_paths, labels, label_n, 'voxforge', preprocessing.imitation_spectrogram)
 
 
 class Voxforge:

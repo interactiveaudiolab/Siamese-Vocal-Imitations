@@ -1,6 +1,5 @@
 from torch.utils.data import dataset
 
-from datafiles.urban_sound_8k import UrbanSound8K
 from datafiles.voxforge import Voxforge
 from utils.utils import zip_shuffle
 
