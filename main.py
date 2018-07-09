@@ -17,9 +17,9 @@ import utils.graphing as graphing
 import utils.utils as utilities
 from utils.training import train_siamese_network, train_tower, copy_weights
 from datafiles.urban_sound_8k import UrbanSound8K
-from datafiles.vocal_sketch_files import VocalSketch
+from datafiles.vocal_sketch import VocalSketch
 from datasets.urban_sound_8k import UrbanSound10FCV
-from datasets.vocal_sketch_data import AllPositivesRandomNegatives, AllPairs, FineTuned
+from datasets.vocal_sketch import AllPositivesRandomNegatives, AllPairs, FineTuned
 from models.siamese import Siamese
 from models.transfer_learning import RightTower, LeftTower
 

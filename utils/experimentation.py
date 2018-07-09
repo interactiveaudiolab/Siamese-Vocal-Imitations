@@ -1,14 +1,11 @@
-import torch
-
 import numpy as np
+import torch
 from progress.bar import Bar
 from torch.utils.data import dataloader, DataLoader
 
-from datasets.urban_sound_8k import UrbanSound10FCV
-from models.transfer_learning import RightTower
-from utils import utils
-from datasets.vocal_sketch_data import AllPairs
+from datasets.vocal_sketch import AllPairs
 from models.siamese import Siamese
+from utils import utils
 
 
 def mean_reciprocal_ranks(model: Siamese, pairs: AllPairs, use_cuda):

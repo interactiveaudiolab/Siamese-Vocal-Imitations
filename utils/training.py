@@ -2,8 +2,7 @@ import numpy as np
 from progress.bar import Bar
 from torch.utils.data import DataLoader
 
-from datasets.urban_sound_8k import UrbanSound10FCV
-from datasets.vocal_sketch_data import AllPositivesRandomNegatives
+from datasets.vocal_sketch import AllPositivesRandomNegatives
 from models.siamese import Siamese
 
 
