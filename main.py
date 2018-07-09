@@ -10,16 +10,20 @@ from torch.nn import BCELoss, CrossEntropyLoss
 # MUST COME FIRST
 # noinspection PyUnresolvedReferences
 from utils import matplotlib_backend_hack
-from datafiles.voxforge import Voxforge
-from datasets.voxforge import All
+
 import utils.experimentation as experimentation
 import utils.graphing as graphing
 import utils.utils as utilities
-from utils.training import train_siamese_network, train_tower, copy_weights
+import utils.training as training
+
+from datafiles.voxforge import Voxforge
 from datafiles.urban_sound_8k import UrbanSound8K
 from datafiles.vocal_sketch import VocalSketch
+
+from datasets.voxforge import All
 from datasets.urban_sound_8k import UrbanSound10FCV
 from datasets.vocal_sketch import AllPositivesRandomNegatives, AllPairs, FineTuned
+
 from models.siamese import Siamese
 from models.transfer_learning import RightTower, LeftTower
 
@@ -43,7 +47,7 @@ def train_random_selection(use_cuda, data: VocalSketch, use_dropout, use_normali
     logger.info("Copying weights from right tower...")
     right_tower = RightTower()
     utilities.load_model(right_tower, './model_output/right_tower/model_9_49')
-    copy_weights(siamese, right_tower)
+    training.copy_weights(siamese, right_tower)
 
     criterion = BCELoss()
 
@@ -57,7 +61,7 @@ def train_random_selection(use_cuda, data: VocalSketch, use_dropout, use_normali
         training_losses = np.zeros(n_epochs)
         training_loss_var = np.zeros(n_epochs)
         validation_losses = np.zeros(n_epochs)
-        models = train_siamese_network(siamese, training_data, criterion, optimizer, n_epochs, use_cuda)
+        models = training.train_siamese_network(siamese, training_data, criterion, optimizer, n_epochs, use_cuda)
         for epoch, (model, training_batch_losses) in enumerate(models):
             utilities.save_model(model, model_path.format(epoch))
 
@@ -142,7 +146,7 @@ def train_fine_tuning(use_cuda, data: VocalSketch, use_dropout, use_normalizatio
             fine_tuning_data.add_negatives(references)
 
             logger.info("Beginning fine tuning pass {0}...".format(fine_tuning_pass))
-            models = train_siamese_network(siamese, fine_tuning_data, criterion, optimizer, n_epochs, use_cuda)
+            models = training.train_siamese_network(siamese, fine_tuning_data, criterion, optimizer, n_epochs, use_cuda)
             for epoch, (model, training_batch_losses) in enumerate(models):
                 utilities.save_model(model, model_path.format(fine_tuning_pass, epoch))
 
@@ -204,7 +208,7 @@ def left_tower_transfer_learning(use_cuda, data: Voxforge):
         training_losses = []
         validation_losses = []
         logger.info("Training left tower....")
-        models = train_tower(model, dataset, loss, optimizer, n_epochs, use_cuda)
+        models = training.train_tower(model, dataset, loss, optimizer, n_epochs, use_cuda)
         for epoch, (model, training_batch_losses) in enumerate(models):
             utilities.save_model(model, model_path.format(epoch))
 
@@ -253,7 +257,7 @@ def right_tower_transfer_learning(use_cuda, data: UrbanSound8K):
         for fold in range(dataset.n_folds):
             logger.info("Training right tower, validating on fold {0}...".format(fold))
             dataset.set_fold(fold)
-            models = train_tower(model, dataset, loss, optimizer, n_epochs, use_cuda)
+            models = training.train_tower(model, dataset, loss, optimizer, n_epochs, use_cuda)
             for epoch, (model, training_batch_losses) in enumerate(models):
                 utilities.save_model(model, model_path.format(fold, epoch))
 
