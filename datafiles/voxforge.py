@@ -67,11 +67,15 @@ class Voxforge:
 
         self.audio = np.empty(shape=[0, 39, 482])
         self.labels = np.array([])
+        bar = Bar("Loading voxforge spectrograms from file", max=n_batches)
         for batch_n in range(n_batches):
             audio_batch = load_npy('voxforge_{0}.npy'.format(batch_n))
             self.audio = np.concatenate([self.audio, audio_batch])
             label_batch = load_npy('voxforge_{0}_labels.npy'.format(batch_n))
             self.labels = np.concatenate([self.labels, label_batch])
+            bar.next()
+        bar.finish()
+
         self.unique_labels = []
         for l in self.labels:
             if l not in self.unique_labels:
