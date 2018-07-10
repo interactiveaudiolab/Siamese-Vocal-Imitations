@@ -7,40 +7,33 @@ import utils.utils as utilities
 
 
 def mrr_per_epoch(train_mrrs, val_mrrs, title="MRR vs. Epoch", xlabel='epoch'):
-    plt.plot(train_mrrs, color='blue', label='training')
-    plt.plot(val_mrrs, color='orange', label='validation')
-    plt.legend()
-
-    plt.ylabel('MRR')
-    y_max = 1
-    y_tick_interval = .1
-    plt.yticks(np.arange(0, y_max + y_tick_interval, y_tick_interval))
-    plt.ylim(0, y_max)
-
-    plt.xlabel(xlabel)
-
-    plt.suptitle(title)
-    plt.title("Trial #{0}".format(utilities.get_trial_number()))
-
-    filename = title_to_filename(title)
-    plt.savefig(filename)
-    plt.close()
+    graph(train_mrrs, val_mrrs, title, 1, 'MRR', xlabel)
 
 
 def loss_per_epoch(train_loss, val_loss, title="Loss vs. Epoch"):
-    plt.plot(train_loss, color='blue', label='training')
-    plt.plot(val_loss, color='orange', label='validation')
+    y_max = max(2, max(train_loss) + .5, max(val_loss) + .5)
+    graph(train_loss, val_loss, title, y_max, 'loss', 'epoch')
+
+
+def accuracy_per_epoch(train, val, title):
+    graph(train, val, title, 1, 'accuracy', 'epoch')
+
+
+def graph(train, val, title, y_max, y_label, x_label):
+    plt.plot(train, color='blue', label='training')
+    plt.plot(val, color='orange', label='validation')
     plt.legend()
 
-    plt.ylabel('loss')
-    y_max = max(2, max(train_loss) + .5, max(val_loss) + .5)
+    plt.ylabel(y_label)
     y_tick_interval = .1
     plt.yticks(np.arange(0, y_max + y_tick_interval, y_tick_interval))
     plt.ylim(0, y_max)
 
-    plt.xlabel('epoch')
+    plt.xlabel(x_label)
+
     plt.suptitle(title)
     plt.title("Trial #{0}".format(utilities.get_trial_number()))
+
     filename = title_to_filename(title)
     plt.savefig(filename)
     plt.close()

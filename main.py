@@ -217,6 +217,8 @@ def left_tower_transfer_learning(use_cuda, data: Voxforge):
     try:
         training_losses = []
         validation_losses = []
+        training_accuracies = []
+        validation_accuracies = []
         logger.info("Training left tower....")
         models = training.train_tower(model, dataset, loss, optimizer, n_epochs, use_cuda)
         for epoch, (model, training_batch_losses) in enumerate(models):
@@ -234,6 +236,17 @@ def left_tower_transfer_learning(use_cuda, data: Voxforge):
             validation_losses.append(validation_loss)
 
             graphing.loss_per_epoch(training_losses, validation_losses, title='Loss vs. Epoch (TL, Left Tower)')
+
+            training_accuracy = experimentation.tower_accuracy(model, dataset, use_cuda)
+            dataset.validation_mode()
+            validation_accuracy = experimentation.tower_accuracy(model, dataset, use_cuda)
+            dataset.training_mode()
+
+            training_accuracies.append(training_accuracy)
+            validation_accuracies.append(validation_accuracy)
+            logger.info("Accuracy at epoch {0}:\n\ttrn = {1}\n\tval = {2}".format(epoch, training_accuracy, validation_accuracy))
+
+            graphing.accuracy_per_epoch(training_accuracies, validation_accuracies, 'Accuracy vs. Epoch (TL, Left Tower)')
 
         dataset.validation_mode()
         accuracy = experimentation.tower_accuracy(model, dataset, use_cuda)
@@ -265,6 +278,8 @@ def right_tower_transfer_learning(use_cuda, data: UrbanSound8K):
         fold_accuracies = np.zeros(dataset.n_folds)
         training_losses = []
         validation_losses = []
+        training_accuracies = []
+        validation_accuracies = []
         for fold in range(dataset.n_folds):
             logger.info("Training right tower, validating on fold {0}...".format(fold))
             dataset.set_fold(fold)
@@ -284,6 +299,18 @@ def right_tower_transfer_learning(use_cuda, data: UrbanSound8K):
                 validation_losses.append(validation_loss)
 
                 graphing.loss_per_epoch(training_losses, validation_losses, title='Loss vs. Epoch (TL, Right Tower)')
+
+                training_accuracy = experimentation.tower_accuracy(model, dataset, use_cuda)
+                dataset.validation_mode()
+                validation_accuracy = experimentation.tower_accuracy(model, dataset, use_cuda)
+                dataset.training_mode()
+
+                training_accuracies.append(training_accuracy)
+                validation_accuracies.append(validation_accuracy)
+
+                logger.info("Loss at fold {0}, epoch {1}:\n\ttrn = {2}\n\tval = {3}".format(fold, epoch, training_accuracy, validation_accuracy))
+
+                graphing.accuracy_per_epoch(training_accuracies, validation_accuracies, 'Accuracy vs. Epoch (TL, Left Tower)')
 
             accuracy = experimentation.tower_accuracy(model, dataset, use_cuda)
             fold_accuracies[fold] = accuracy
