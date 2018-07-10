@@ -46,7 +46,7 @@ class LeftTower(Tower):
 
         self.fcn = nn.Sequential(
             nn.Dropout(p=.5),
-            nn.Linear(48 * 25 * 2, 64),
+            nn.Linear(48 * 55, 64),
             nn.ReLU(),
 
             nn.Dropout(p=.5),
@@ -58,7 +58,7 @@ class LeftTower(Tower):
         self.fcn = nn.DataParallel(self.fcn)
 
     def forward(self, left):
-        left_output = self.right_branch(left)
+        left_output = self.left_branch(left)
         left_reshaped = left_output.view(len(left_output), -1)
         output = self.fcn(left_reshaped)
         return output

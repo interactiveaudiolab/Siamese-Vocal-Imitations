@@ -162,7 +162,7 @@ def tower_loss(model: Tower, dataset: TowerData, objective, use_cuda: bool, batc
             labels = labels.cuda()
 
         # pass a batch through the network
-        outputs = model(audio)
+        outputs = model(audio.float())
 
         # calculate loss and optimize weights
         labels = labels.long()

@@ -63,7 +63,7 @@ def train_tower(model: Tower, data: TowerData, objective, optimizer, n_epochs, u
                 labels = labels.cuda()
 
             # pass a batch through the network
-            outputs = model(audio)
+            outputs = model(audio.float())
 
             # calculate loss and optimize weights
             labels = labels.long()
