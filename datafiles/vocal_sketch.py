@@ -3,7 +3,7 @@ import logging
 import os
 
 import numpy as np
-from progress.bar import Bar
+from utils.progress_bar import Bar
 
 import utils.preprocessing as preprocessing
 from utils import utils

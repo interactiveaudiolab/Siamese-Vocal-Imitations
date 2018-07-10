@@ -3,7 +3,7 @@ import os
 import librosa
 import numpy as np
 
-from progress.bar import Bar
+from utils.progress_bar import Bar
 
 from utils.utils import save_npy
 

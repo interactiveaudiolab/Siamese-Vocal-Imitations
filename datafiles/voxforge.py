@@ -1,7 +1,7 @@
 import os
 
 import numpy as np
-from progress.bar import Bar
+from utils.progress_bar import Bar
 
 from utils import preprocessing
 from utils.utils import load_npy

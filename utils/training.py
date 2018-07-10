@@ -1,11 +1,11 @@
 import numpy as np
-from progress.bar import Bar
 from torch.utils.data import DataLoader
 
 from datasets.tower_data import TowerData
 from datasets.vocal_sketch import AllPositivesRandomNegatives
 from models.siamese import Siamese
 from models.transfer_learning import Tower
+from utils.progress_bar import Bar
 
 
 def train_siamese_network(model: Siamese, data, objective, optimizer, n_epochs, use_cuda, batch_size=128):

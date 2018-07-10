@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-from progress.bar import Bar
+from utils.progress_bar import Bar
 from torch.utils.data import dataloader, DataLoader
 
 from datasets.tower_data import TowerData
