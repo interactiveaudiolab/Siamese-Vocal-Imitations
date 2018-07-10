@@ -188,7 +188,7 @@ def tower_accuracy(model: Tower, dataset: TowerData, use_cuda: bool, batch_size=
             labels = labels.cuda()
 
         # pass a batch through the network
-        outputs = model(audio)
+        outputs = model(audio.float())
 
         labels = labels.long()
         _, predicted = torch.max(outputs.data, 1)
