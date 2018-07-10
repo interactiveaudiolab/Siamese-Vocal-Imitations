@@ -95,6 +95,8 @@ def normalize_spectrograms(spectrograms):
     """
     data: (num_examples, num_freq_bins, num_time_frames)
     """
+    if len(spectrograms) == 0:
+        return []
 
     m = np.mean(spectrograms, axis=(1, 2))
     m = m.reshape(m.shape[0], 1, 1)
