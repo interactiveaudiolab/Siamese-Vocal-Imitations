@@ -22,16 +22,13 @@ class Bar(BarInterface):
     def update_average(self):
         avg = self.elapsed / self.index
         self.long_term_avg_eta = int(avg * self.remaining)
-        if self.long_term_avg_eta is None:
-            print("what?!")
-            print(self.elapsed, self.index, avg, self.remaining)
 
     @property
     def long_eta_td(self):
         if self.long_term_avg_eta:
             s = str(timedelta(seconds=self.long_term_avg_eta))
             return s
-        return '?'
+        return '??:??:??'
 
     @property
     def long_elapsed_td(self):
