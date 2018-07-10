@@ -1,6 +1,7 @@
 import os
 
 import numpy as np
+from progress.bar import Bar
 
 from utils import preprocessing
 from utils.utils import load_npy
@@ -34,25 +35,24 @@ def calculate_spectrograms(per_language):
 
     all_paths = []
     labels = {}
-    label_counts = {language: 0 for language in languages}
+    bar = Bar("Preparing to calculate voxforge spectrograms...", max=len(languages) * per_language)
     for language in languages:
         language_dir = os.path.join(data_dir, language)
         paths = preprocessing.recursive_wav_paths(language_dir)
         np.random.shuffle(paths)
+        paths = paths[:per_language]
         for path in paths:
-            label_counts[language] += 1
-            if label_counts[language] > per_language:
-                break
             all_paths.append(path)
             labels[os.path.basename(path)] = language
-
+            bar.next()
+    bar.finish()
     preprocessing.calculate_spectrograms(all_paths, labels, label_n, 'voxforge', preprocessing.imitation_spectrogram)
 
 
 class Voxforge:
     def __init__(self, recalculate_spectrograms=False) -> None:
         super().__init__()
-        self.per_language = 10000  # we only plan to use 8000, but let's give ourselves a little overhead for now
+        self.per_language = 8000
         if recalculate_spectrograms:
             calculate_spectrograms(self.per_language)
 

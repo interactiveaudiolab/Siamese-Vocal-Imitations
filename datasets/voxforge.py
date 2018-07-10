@@ -15,9 +15,8 @@ class All(TowerData):
 
         self.by_label = dict({(u, []) for u in self.unique_labels})
 
-        examples_per_language = 8000
-        n_train = int(.7 * examples_per_language)
-        n_validate = int(.3 * examples_per_language)
+        n_train = int(.7 * data.per_language)
+        n_validate = int(.3 * data.per_language)
 
         for unique_label in self.unique_labels:
             for audio, label in zip(self.audio, self.labels):
