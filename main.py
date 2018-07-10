@@ -241,7 +241,6 @@ def left_tower_transfer_learning(use_cuda, data: Voxforge):
         logger.info("Final validation accuracy = {0}".format(accuracy))
         utilities.save_model(model, "./output/{0}/left_tower".format(utilities.get_trial_number()))
         utilities.save_model(model, model_path.format('final'))
-
     except Exception as e:
         utilities.save_model(model, model_path.format('crash_backup'))
         print("Exception occurred while training left tower: {0}".format(str(e)))
@@ -312,18 +311,18 @@ def main(cli_args=None):
     if cli_args is None:
         cli_args = parser.parse_args()
 
-    n_trials = cli_args.trials
     logger.info('Beginning trial #{0}...'.format(utilities.get_trial_number()))
 
     # log all CLI args
-    arg_dict = vars(cli_args)
-    for key in arg_dict:
-        logger.debug("\t{0} = {1}".format(key, arg_dict[key]))
+    for key in vars(cli_args):
+        logger.debug("\t{0} = {1}".format(key, vars(cli_args)[key]))
 
     try:
-        if cli_args.transfer_learning:
+        if cli_args.transfer_learning in ['left', 'imitation', 'both']:
             voxforge = Voxforge(recalculate_spectrograms=cli_args.spectrograms)
             left_tower_transfer_learning(cli_args.cuda, voxforge)
+
+        if cli_args.transfer_learning in ['right', 'reference', 'both']:
             urban_sound = UrbanSound8K(recalculate_spectrograms=cli_args.spectrograms)
             right_tower_transfer_learning(cli_args.cuda, urban_sound)
 
@@ -333,9 +332,8 @@ def main(cli_args=None):
         else:
             train_fine_tuning(cli_args.cuda, vocal_sketch, cli_args.dropout, cli_args.normalization, use_cached_baseline=cli_args.cache_baseline,
                               minimum_passes=cli_args.fine_tuning_passes)
-        n_trials -= 1
-        cli_args.trials = n_trials
-        if n_trials > 0:
+        cli_args.trials -= 1
+        if cli_args.trials > 0:
             main(cli_args)
     except Exception as e:
         logger.critical("Unhandled exception: {0}".format(str(e)))
