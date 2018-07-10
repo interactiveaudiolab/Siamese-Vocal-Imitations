@@ -13,7 +13,7 @@ class All(TowerData):
         if shuffle:
             self.labels, self.audio = zip_shuffle(self.labels, self.audio)
 
-        self.by_label = dict({(u, []) for u in self.unique_labels})
+        self.by_label = {u:[] for u in self.unique_labels}
 
         n_train = int(.7 * data.per_language)
         n_validate = int(.3 * data.per_language)
