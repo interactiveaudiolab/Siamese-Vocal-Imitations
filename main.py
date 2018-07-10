@@ -204,7 +204,7 @@ def train_fine_tuning(use_cuda, data: VocalSketch, use_dropout, use_normalizatio
 
 def left_tower_transfer_learning(use_cuda, data: Voxforge):
     logger = logging.getLogger('logger')
-    model_path = './model_output/right_tower/model_{0}'
+    model_path = './model_output/left_tower/model_{0}'
 
     n_epochs = 50
     model = LeftTower()
@@ -250,7 +250,8 @@ def left_tower_transfer_learning(use_cuda, data: Voxforge):
 
 def right_tower_transfer_learning(use_cuda, data: UrbanSound8K):
     logger = logging.getLogger('logger')
-    model_path = './model_output/right_tower/model_{0}_{1}'
+    short_model_path = './model_output/right_tower/model_{0}'
+    model_path = short_model_path + '_{1}'
 
     n_epochs = 50
     model = RightTower()
@@ -290,11 +291,11 @@ def right_tower_transfer_learning(use_cuda, data: UrbanSound8K):
             logger.info("Validation accuracy on fold {0} = {1}".format(fold, accuracy))
             dataset.training_mode()
             utilities.save_model(model, "./output/{0}/right_tower".format(utilities.get_trial_number()))
-            utilities.save_model(model, model_path.format('final'))
+            utilities.save_model(model, short_model_path.format('final'))
 
         logger.info("Average accuracy across all folds = {0}".format(np.mean(fold_accuracies)))
     except Exception as e:
-        utilities.save_model(model, model_path.format('crash_backup'))
+        utilities.save_model(model, short_model_path.format('crash_backup'))
         print("Exception occurred while training right tower: {0}".format(str(e)))
         print(traceback.print_exc())
         exit(1)
