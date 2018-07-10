@@ -310,7 +310,7 @@ def right_tower_transfer_learning(use_cuda, data: UrbanSound8K):
 
                 logger.info("Accuracy at fold {0}, epoch {1}:\n\ttrn = {2}\n\tval = {3}".format(fold, epoch, training_accuracy, validation_accuracy))
 
-                graphing.accuracy_per_epoch(training_accuracies, validation_accuracies, 'Accuracy vs. Epoch (TL, Left Tower)')
+                graphing.accuracy_per_epoch(training_accuracies, validation_accuracies, 'Accuracy vs. Epoch (TL, Right Tower)')
 
             accuracy = experimentation.tower_accuracy(model, dataset, use_cuda)
             fold_accuracies[fold] = accuracy
