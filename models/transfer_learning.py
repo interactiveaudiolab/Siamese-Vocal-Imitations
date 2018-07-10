@@ -54,6 +54,9 @@ class LeftTower(Tower):
             nn.Softmax(dim=1)
         )
 
+        self.left_branch = nn.DataParallel(self.left_branch)
+        self.fcn = nn.DataParallel(self.fcn)
+
     def forward(self, left):
         left_output = self.right_branch(left)
         left_reshaped = left_output.view(len(left_output), -1)
@@ -103,6 +106,9 @@ class RightTower(Tower):
             nn.Linear(64, 10),
             nn.Softmax(dim=1)
         )
+
+        self.right_branch = nn.DataParallel(self.right_branch)
+        self.fcn = nn.DataParallel(self.fcn)
 
     def forward(self, right):
         right_output = self.right_branch(right)

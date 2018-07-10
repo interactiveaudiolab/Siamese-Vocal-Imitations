@@ -90,6 +90,10 @@ class Siamese(nn.Module):
                 nn.Sigmoid()
             )
 
+        self.left_branch = nn.DataParallel(self.left_branch)
+        self.right_branch = nn.DataParallel(self.right_branch)
+        self.fully_connected = nn.DataParallel(self.fully_connected)
+
     def forward(self, left, right):
         # Calculate both CNN branches
         left_output = self.left_branch(left)

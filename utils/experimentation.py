@@ -64,7 +64,7 @@ def pairwise_inference_matrix(model: Siamese, pairs_dataset: AllPairs, use_cuda)
     rrs = np.array([])
     pairs = dataloader.DataLoader(pairs_dataset, batch_size=128, num_workers=1)
 
-    bar = Bar("Calculating pairwise inference matrix", max=len(pairs))
+    #bar = Bar("Calculating pairwise inference matrix", max=len(pairs))
     for imitations, references, label in pairs:
         # reshape tensors and push to GPU if necessary
         imitations = imitations.unsqueeze(1)
@@ -78,8 +78,8 @@ def pairwise_inference_matrix(model: Siamese, pairs_dataset: AllPairs, use_cuda)
         np_output = output.detach().cpu().numpy()
         rrs = np.concatenate([rrs, np_output])
 
-        bar.next()
-    bar.finish()
+        #bar.next()
+    #bar.finish()
 
     # Reshape vector into matrix
     rrs = rrs.reshape([pairs_dataset.n_imitations, pairs_dataset.n_references])
@@ -120,7 +120,7 @@ def siamese_loss(model: Siamese, dataset, objective, use_cuda: bool, batch_size=
     :return:
     """
     data = DataLoader(dataset, batch_size=batch_size, num_workers=1)
-    bar = Bar("Calculating loss", max=len(data))
+    #bar = Bar("Calculating loss", max=len(data))
     batch_losses = np.zeros(len(data))
     for i, (left, right, labels) in enumerate(data):
         # TODO: make them floats at the source
@@ -140,8 +140,8 @@ def siamese_loss(model: Siamese, dataset, objective, use_cuda: bool, batch_size=
         # calculate loss and optimize weights
         batch_losses[i] = objective(outputs, labels).item()
 
-        bar.next()
-    bar.finish()
+        #bar.next()
+    #bar.finish()
 
     return batch_losses
 
@@ -151,7 +151,7 @@ def tower_loss(model: Tower, dataset: TowerData, objective, use_cuda: bool, batc
     Calculates the loss of model over dataset by objective. Optionally run on the GPU.
     """
     data = DataLoader(dataset, batch_size=batch_size, num_workers=1)
-    bar = Bar("Calculating loss", max=len(data))
+    #bar = Bar("Calculating loss", max=len(data))
     batch_losses = np.zeros(len(data))
     for i, (audio, labels) in enumerate(data):
 
@@ -168,15 +168,15 @@ def tower_loss(model: Tower, dataset: TowerData, objective, use_cuda: bool, batc
         labels = labels.long()
         batch_losses[i] = objective(outputs, labels).item()
 
-        bar.next()
-    bar.finish()
+        #bar.next()
+    #bar.finish()
 
     return batch_losses
 
 
 def tower_accuracy(model: Tower, dataset: TowerData, use_cuda: bool, batch_size=128):
     data = DataLoader(dataset, batch_size=batch_size, num_workers=1)
-    bar = Bar("Calculating accuracy", max=len(data))
+    #bar = Bar("Calculating accuracy", max=len(data))
     correct = 0
     total = 0
     for i, (audio, labels) in enumerate(data):
@@ -195,7 +195,7 @@ def tower_accuracy(model: Tower, dataset: TowerData, use_cuda: bool, batch_size=
         total += labels.size(0)
         correct += (predicted == labels).sum().item()
 
-        bar.next()
-    bar.finish()
+        #bar.next()
+    #bar.finish()
 
     return correct / total
