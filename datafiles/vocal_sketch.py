@@ -102,8 +102,8 @@ def calculate_spectrograms():
     Calculates normalized imitation and reference spectrograms and saves them as .npy files.
     """
     data_dir = os.environ['SIAMESE_DATA_DIR']
-    imitation_paths = preprocessing.recursive_wav_paths(os.path.join(data_dir, 'vs1.0', "/vocal_imitations/included"))
-    reference_paths = preprocessing.recursive_wav_paths(os.path.join(data_dir, 'vs1.0', "/sound_recordings"))
+    imitation_paths = preprocessing.recursive_wav_paths(os.path.join(data_dir, "vs1.0/vocal_imitations/included"))
+    reference_paths = preprocessing.recursive_wav_paths(os.path.join(data_dir, "vs1.0/sound_recordings"))
     reference_csv = os.path.join(data_dir, 'vs1.0', "sound_recordings.csv")
     imitation_csv = os.path.join(data_dir, 'vs1.0', "vocal_imitations.csv")
 
