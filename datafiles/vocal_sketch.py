@@ -102,8 +102,12 @@ def calculate_spectrograms():
     Calculates normalized imitation and reference spectrograms and saves them as .npy files.
     """
     data_dir = os.environ['SIAMESE_DATA_DIR']
-    imitation_paths = preprocessing.recursive_wav_paths(os.path.join(data_dir, "vs1.0/vocal_imitations/included"))
-    reference_paths = preprocessing.recursive_wav_paths(os.path.join(data_dir, "vs1.0/sound_recordings"))
+    imitation_path = os.path.join(data_dir, "vs1.0/vocal_imitations/included")
+    reference_path = os.path.join(data_dir, "vs1.0/sound_recordings")
+
+    imitation_paths = preprocessing.recursive_wav_paths(imitation_path)
+    reference_paths = preprocessing.recursive_wav_paths(reference_path)
+
     reference_csv = os.path.join(data_dir, 'vs1.0', "sound_recordings.csv")
     imitation_csv = os.path.join(data_dir, 'vs1.0', "vocal_imitations.csv")
 
@@ -111,13 +115,15 @@ def calculate_spectrograms():
     with open(reference_csv) as f:
         reader = csv.DictReader(f)
         for row in reader:
-            reference_labels[row['filename']] = row['sound_label']
+            path = os.path.join(reference_path, row['filename'])
+            reference_labels[path] = row['sound_label']
 
     imitation_labels = {}
     with open(imitation_csv) as f:
         reader = csv.DictReader(f)
         for row in reader:
-            imitation_labels[row['filename']] = row['sound_label']
+            path = os.path.join(imitation_path, row['filename'])
+            imitation_labels[path] = row['sound_label']
 
     n = 0
     label_no = {}

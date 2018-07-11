@@ -17,8 +17,7 @@ def calculate_spectrograms(paths, file_labels, label_no, save_location, spectrog
         spectrogram = spectrogram_func(path)
         spectrograms.append(spectrogram)
 
-        file_name = os.path.basename(path)
-        label = file_labels[file_name]
+        label = file_labels[path]
         labels.append(label_no[label])
 
         bar.next()

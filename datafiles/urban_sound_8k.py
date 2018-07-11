@@ -36,7 +36,8 @@ def calculate_spectrograms():
         reader = csv.DictReader(f)
         for row in reader:
             fold = int(row['fold']) - 1  # folds are 1 indexed in the CSV
-            labels[fold][row['slice_file_name']] = row['class']
+            path = os.path.join(audio_path, 'fold{0}'.format(fold + 1), row['slice_file_name'])
+            labels[fold][path] = row['class']
             if row['class'] not in label_n:
                 label_n[row['class']] = n
                 n += 1

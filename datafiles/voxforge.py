@@ -45,7 +45,7 @@ def calculate_spectrograms(per_language: int, n_batches: int):
         paths = paths[:per_language]
         for path in paths:
             all_paths.append(path)
-            labels[os.path.basename(path)] = language
+            labels[path] = language
             bar.next()
     bar.finish()
     batch_size = int(len(all_paths) / n_batches)
