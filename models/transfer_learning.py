@@ -45,13 +45,13 @@ class LeftTower(Tower):
             )
 
         self.fcn = nn.Sequential(
-            nn.Dropout(p=.5),
-            nn.Linear(48 * 55, 64),
+            # nn.Dropout(p=.5),
+            nn.Linear(48 * 55, 256),
             nn.ReLU(),
 
-            nn.Dropout(p=.5),
-            nn.Linear(64, 7),
-            nn.Softmax(dim=1)
+            # nn.Dropout(p=.5),
+            nn.Linear(256, 7),
+            nn.Sigmoid()
         )
 
         self.left_branch = nn.DataParallel(self.left_branch)
