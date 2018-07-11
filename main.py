@@ -317,9 +317,9 @@ def right_tower_transfer_learning(use_cuda, data: UrbanSound8K):
             dataset.validation_mode()
             logger.info("Validation accuracy on fold {0} = {1}".format(fold, accuracy))
             dataset.training_mode()
-            utilities.save_model(model, "./output/{0}/right_tower".format(utilities.get_trial_number()))
-            utilities.save_model(model, short_model_path.format('final'))
 
+        utilities.save_model(model, "./output/{0}/right_tower".format(utilities.get_trial_number()))
+        utilities.save_model(model, short_model_path.format('final'))
         logger.info("Average accuracy across all folds = {0}".format(np.mean(fold_accuracies)))
     except Exception as e:
         utilities.save_model(model, short_model_path.format('crash_backup'))
