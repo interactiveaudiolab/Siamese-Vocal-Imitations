@@ -6,6 +6,7 @@ class Siamese(nn.Module):
     def __init__(self, dropout=True, normalization=True):
         super(Siamese, self).__init__()
 
+        self.parallel = False
         if normalization:
             # left branch: vocal imitations
             self.left_branch = nn.Sequential(
@@ -90,9 +91,9 @@ class Siamese(nn.Module):
                 nn.Sigmoid()
             )
 
-        self.left_branch = nn.DataParallel(self.left_branch)
-        self.right_branch = nn.DataParallel(self.right_branch)
-        self.fully_connected = nn.DataParallel(self.fully_connected)
+        # self.left_branch = nn.DataParallel(self.left_branch)
+        # self.right_branch = nn.DataParallel(self.right_branch)
+        # self.fully_connected = nn.DataParallel(self.fully_connected)
 
     def forward(self, left, right):
         # Calculate both CNN branches
@@ -108,3 +109,27 @@ class Siamese(nn.Module):
         # Calculate the FCN and flatten it
         output = self.fully_connected(concatenated)
         return output.view(-1)
+
+    def use_parallel(self, parallel):
+        self.parallel = parallel
+
+#
+# class ParallelSiamese(Siamese):
+#     def __init__(self):
+#         super().__init__()
+#         self.left_branch = nn.DataParallel(self.left_branch)
+#         self.right_branch = nn.DataParallel(self.right_branch)
+#         self.fully_connected = nn.DataParallel(self.fully_connected)
+#
+#     def forward(self, left, right):
+#         super().forward(left, right)
+#
+#     def copy_weights_from(self, siamese: Siamese):
+#         parallel = dict(self.state_dict())
+#         non_parallel = dict(siamese.state_dict())
+#
+#         for param in non_parallel:
+#             if param in parallel:
+#                 parallel[param].data.copy_(non_parallel[param])
+#
+#         self.load_state_dict(parallel)

@@ -54,8 +54,8 @@ class LeftTower(Tower):
             nn.Sigmoid()
         )
 
-        self.left_branch = nn.DataParallel(self.left_branch)
-        self.fcn = nn.DataParallel(self.fcn)
+        # self.left_branch = nn.DataParallel(self.left_branch)
+        # self.fcn = nn.DataParallel(self.fcn)
 
     def forward(self, left):
         left_output = self.left_branch(left)
@@ -107,8 +107,8 @@ class RightTower(Tower):
             nn.Softmax(dim=1)
         )
 
-        self.right_branch = nn.DataParallel(self.right_branch)
-        self.fcn = nn.DataParallel(self.fcn)
+        # self.right_branch = nn.DataParallel(self.right_branch)
+        # self.fcn = nn.DataParallel(self.fcn)
 
     def forward(self, right):
         right_output = self.right_branch(right)

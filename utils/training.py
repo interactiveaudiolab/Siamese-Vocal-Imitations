@@ -15,7 +15,7 @@ def train_siamese_network(model: Siamese, data, objective, optimizer, n_epochs, 
             data.reselect_negatives()
 
         train_data = DataLoader(data, batch_size=batch_size, num_workers=1)
-        #bar = Bar("Training siamese, epoch {0}".format(epoch), max=len(train_data))
+        bar = Bar("Training siamese, epoch {0}".format(epoch), max=len(train_data))
         batch_losses = np.zeros(len(train_data))
         for i, (left, right, labels) in enumerate(train_data):
             # clear out the gradients
@@ -41,8 +41,8 @@ def train_siamese_network(model: Siamese, data, objective, optimizer, n_epochs, 
             optimizer.step()
             batch_losses[i] = loss.item()
 
-            #bar.next()
-        #bar.finish()
+            bar.next()
+        bar.finish()
 
         yield model, batch_losses
 
@@ -50,7 +50,7 @@ def train_siamese_network(model: Siamese, data, objective, optimizer, n_epochs, 
 def train_tower(model: Tower, data: TowerData, objective, optimizer, n_epochs, use_cuda, batch_size=128):
     for epoch in range(n_epochs):
         train_data = DataLoader(data, batch_size=batch_size, num_workers=1)
-        #bar = Bar("Training right tower, epoch {0}".format(epoch), max=len(train_data))
+        bar = Bar("Training right tower, epoch {0}".format(epoch), max=len(train_data))
         batch_losses = np.zeros(len(train_data))
         for i, (audio, labels) in enumerate(train_data):
             # clear out the gradients
@@ -72,8 +72,8 @@ def train_tower(model: Tower, data: TowerData, objective, optimizer, n_epochs, u
             optimizer.step()
             batch_losses[i] = loss.item()
 
-            #bar.next()
-        #bar.finish()
+            bar.next()
+        bar.finish()
 
         yield model, batch_losses
 
