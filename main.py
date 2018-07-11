@@ -356,9 +356,9 @@ def main(cli_args=None):
 
         vocal_sketch = VocalSketch(*cli_args.partitions, recalculate_spectrograms=cli_args.spectrograms)
         if cli_args.random_only:
-            train_random_selection(cli_args.cuda, vocal_sketch, cli_args.dropout, cli_args.normalization)
+            train_random_selection(cli_args.cuda, vocal_sketch, cli_args.dropout, cli_args.no_normalization)
         else:
-            train_fine_tuning(cli_args.cuda, vocal_sketch, cli_args.dropout, cli_args.normalization, use_cached_baseline=cli_args.cache_baseline,
+            train_fine_tuning(cli_args.cuda, vocal_sketch, cli_args.dropout, cli_args.no_normalization, use_cached_baseline=cli_args.cache_baseline,
                               minimum_passes=cli_args.fine_tuning_passes)
         cli_args.trials -= 1
         if cli_args.trials > 0:
