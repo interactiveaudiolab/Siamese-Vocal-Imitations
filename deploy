@@ -1,3 +1,3 @@
 #!/bin/sh
 
-rsync -R *.py datafiles/*.py datasets/*.py models/*.py utils/*.py cortex:~/siamese
+rsync -R *.py datafiles/*.py datasets/*.py models/*.py utils/*.py experiments/*.py cortex:~/siamese
