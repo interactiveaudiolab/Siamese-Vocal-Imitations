@@ -92,8 +92,8 @@ def train_random_selection(use_cuda, data: VocalSketch, use_dropout, use_normali
             training_mrrs[epoch] = training_mrr
             validation_mrrs[epoch] = val_mrr
 
-            graphing.mrr_per_epoch(training_mrrs, validation_mrrs, title="MRR vs. Epoch (Random Selection)")
-            graphing.loss_per_epoch(training_losses, validation_losses, title='Loss vs. Epoch (Random Selection)')
+            graphing.mrr_per_epoch(training_mrrs, validation_mrrs, "Random Selection")
+            graphing.loss_per_epoch(training_losses, validation_losses, "Random Selection")
 
         # get and save best model TODO: should this be by training or by validation?
         utilities.load_model(siamese, model_path.format(np.argmax(validation_mrrs)))
@@ -177,14 +177,14 @@ def train_fine_tuning(use_cuda, data: VocalSketch, use_dropout, use_normalizatio
                 training_mrrs.append(training_mrr)
                 validation_mrrs.append(val_mrr)
 
-                graphing.mrr_per_epoch(training_mrrs, validation_mrrs, title='MRR vs. Epoch (Fine Tuning)')
-                graphing.loss_per_epoch(training_losses, validation_losses, title='Loss vs. Epoch (Fine Tuning)')
+                graphing.mrr_per_epoch(training_mrrs, validation_mrrs, 'Fine Tuning')
+                graphing.loss_per_epoch(training_losses, validation_losses, 'Fine Tuning')
 
             utilities.load_model(siamese, model_path.format(fine_tuning_pass, np.argmax(validation_mrrs[fine_tuning_pass * n_epochs:])))
             utilities.save_model(siamese, model_path.format(fine_tuning_pass, 'best'))
             best_validation_mrrs.append(np.max(validation_mrrs[fine_tuning_pass * n_epochs:]))
             best_training_mrrs.append(np.max(training_mrrs[fine_tuning_pass * n_epochs:]))
-            graphing.mrr_per_epoch(best_training_mrrs, best_validation_mrrs, title='Best MRR vs. Fine Tuning Pass (Fine Tuning)', xlabel="fine tuning pass")
+            graphing.mrr_per_epoch(best_training_mrrs, best_validation_mrrs, 'Fine Tuning', title='Best MRR vs. Fine Tuning Pass', xlabel="fine tuning pass")
 
             fine_tuning_pass += 1
 
@@ -235,7 +235,7 @@ def left_tower_transfer_learning(use_cuda, data: Voxforge):
             training_losses.append(training_loss)
             validation_losses.append(validation_loss)
 
-            graphing.loss_per_epoch(training_losses, validation_losses, title='Loss vs. Epoch (TL, Left Tower)')
+            graphing.loss_per_epoch(training_losses, validation_losses, 'TL, Left Tower')
 
             training_accuracy = experimentation.tower_accuracy(model, dataset, use_cuda)
             dataset.validation_mode()
@@ -246,7 +246,7 @@ def left_tower_transfer_learning(use_cuda, data: Voxforge):
             validation_accuracies.append(validation_accuracy)
             logger.info("Accuracy at epoch {0}:\n\ttrn = {1}\n\tval = {2}".format(epoch, training_accuracy, validation_accuracy))
 
-            graphing.accuracy_per_epoch(training_accuracies, validation_accuracies, 'Accuracy vs. Epoch (TL, Left Tower)')
+            graphing.accuracy_per_epoch(training_accuracies, validation_accuracies, 'TL, Left Tower')
 
         dataset.validation_mode()
         accuracy = experimentation.tower_accuracy(model, dataset, use_cuda)
@@ -298,7 +298,7 @@ def right_tower_transfer_learning(use_cuda, data: UrbanSound8K):
                 training_losses.append(training_loss)
                 validation_losses.append(validation_loss)
 
-                graphing.loss_per_epoch(training_losses, validation_losses, title='Loss vs. Epoch (TL, Right Tower)')
+                graphing.loss_per_epoch(training_losses, validation_losses, 'TL, Right Tower')
 
                 training_accuracy = experimentation.tower_accuracy(model, dataset, use_cuda)
                 dataset.validation_mode()
@@ -310,7 +310,7 @@ def right_tower_transfer_learning(use_cuda, data: UrbanSound8K):
 
                 logger.info("Accuracy at fold {0}, epoch {1}:\n\ttrn = {2}\n\tval = {3}".format(fold, epoch, training_accuracy, validation_accuracy))
 
-                graphing.accuracy_per_epoch(training_accuracies, validation_accuracies, 'Accuracy vs. Epoch (TL, Right Tower)')
+                graphing.accuracy_per_epoch(training_accuracies, validation_accuracies, 'TL, Right Tower')
 
             accuracy = experimentation.tower_accuracy(model, dataset, use_cuda)
             fold_accuracies[fold] = accuracy
