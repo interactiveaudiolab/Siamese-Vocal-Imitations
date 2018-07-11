@@ -7,7 +7,7 @@ from torch.nn import BCELoss
 
 from datafiles.vocal_sketch import VocalSketch
 from datasets.vocal_sketch import FineTuned, AllPairs
-from experiments.random_selection import train
+import experiments.random_selection
 from models.siamese import Siamese
 from utils import utils as utilities, experimentation as experimentation, training as training, graphing as graphing
 
@@ -21,7 +21,7 @@ def train(use_cuda, data: VocalSketch, use_dropout, use_normalization, use_cache
             siamese = siamese.cuda()
         utilities.load_model(siamese, './model_output/random_selection/model_best')
     else:
-        siamese = train(use_cuda, data, use_dropout, use_normalization)
+        siamese = experiments.random_selection.train(use_cuda, data, use_dropout, use_normalization)
 
     model_path = './model_output/fine_tuned/model_{0}_{1}'
 
