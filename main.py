@@ -4,6 +4,7 @@ import traceback
 
 # MUST COME FIRST
 # noinspection PyUnresolvedReferences
+import utils.matplotlib_backend_hack
 import experiments.fine_tuning
 import experiments.random_selection
 import experiments.transfer_learning
