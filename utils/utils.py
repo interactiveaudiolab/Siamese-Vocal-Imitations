@@ -18,15 +18,17 @@ def save_model(model, path):
     torch.save(model.state_dict(), path)
 
 
-def load_npy(name):
-    return np.load(os.environ['SIAMESE_DATA_DIR'] + "/npy/" + name)
+def load_npy(name, prefix):
+    path = os.path.join(os.environ['SIAMESE_DATA_DIR'], "npy", prefix, name)
+    return np.load(path)
 
 
-def save_npy(array, suffix, ar_type=None):
+def save_npy(array, name, prefix, ar_type=None):
     array = np.array(array)
     if ar_type:
         array = array.astype(ar_type)
-    np.save(os.environ['SIAMESE_DATA_DIR'] + "/npy/" + suffix, array)
+    path = os.path.join(os.environ['SIAMESE_DATA_DIR'], "npy", prefix, name)
+    np.save(path, array)
 
 
 def prindent(string, n_indent):

@@ -53,7 +53,7 @@ def calculate_spectrograms(per_language: int, n_batches: int):
     for batch_n in range(n_batches):
         logger.debug("Batch {0} of {1}...".format(batch_n, n_batches))
         batch = all_paths[batch_size * batch_n: batch_size * (batch_n + 1)]
-        preprocessing.calculate_spectrograms(batch, labels, label_n, 'voxforge_{0}'.format(batch_n), preprocessing.imitation_spectrogram)
+        preprocessing.calculate_spectrograms(batch, labels, label_n, 'voxforge_{0}'.format(batch_n), 'voxforge', preprocessing.imitation_spectrogram)
 
 
 class Voxforge:
@@ -68,9 +68,9 @@ class Voxforge:
         self.labels = np.array([])
         bar = Bar("Loading voxforge spectrograms from file", max=n_batches)
         for batch_n in range(n_batches):
-            audio_batch = load_npy('voxforge_{0}.npy'.format(batch_n))
+            audio_batch = load_npy('voxforge_{0}.npy'.format(batch_n), 'voxforge')
             self.spectrograms = np.concatenate([self.spectrograms, audio_batch])
-            label_batch = load_npy('voxforge_{0}_labels.npy'.format(batch_n))
+            label_batch = load_npy('voxforge_{0}_labels.npy'.format(batch_n), 'voxforge')
             self.labels = np.concatenate([self.labels, label_batch])
             bar.next()
         bar.finish()

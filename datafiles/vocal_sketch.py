@@ -11,9 +11,9 @@ from utils.utils import zip_shuffle
 
 
 class VocalSketch:
-    def __init__(self, train_ratio, val_ratio, test_ratio, shuffle=True, recalculate_spectrograms=False):
+    def __init__(self, train_ratio, val_ratio, test_ratio, version, shuffle=True, recalculate_spectrograms=False):
         if recalculate_spectrograms:
-            calculate_spectrograms()
+            self.calculate_spectrograms()
 
         if train_ratio + val_ratio + test_ratio != 1:
             raise ValueError("Training, validation, and testing ratios must add to 1")
@@ -21,11 +21,11 @@ class VocalSketch:
         logger = logging.getLogger('logger')
         logger.info("train, validation, test ratios = {0}, {1}, {2}".format(train_ratio, val_ratio, test_ratio))
 
-        references = utils.load_npy("references.npy")
-        reference_labels = utils.load_npy("reference_labels.npy")
+        references = utils.load_npy("references.npy", version)
+        reference_labels = utils.load_npy("reference_labels.npy", version)
 
-        imitations = utils.load_npy("imitations.npy")
-        imitation_labels = utils.load_npy("imitation_labels.npy")
+        imitations = utils.load_npy("imitations.npy", version)
+        imitation_labels = utils.load_npy("imitation_labels.npy", version)
 
         if shuffle:
             references, reference_labels = zip_shuffle(references, reference_labels)
@@ -41,7 +41,7 @@ class VocalSketch:
         test_ref_labels = reference_labels[n_train_val:]
 
         # Then, divide references over training and validation
-        train_val_imit, train_val_imit_lab = filter_imitations(imitations, imitation_labels, train_val_ref_labels)
+        train_val_imit, train_val_imit_lab = self.filter_imitations(imitations, imitation_labels, train_val_ref_labels)
         n_train_imit = int(train_ratio / (train_ratio + val_ratio) * len(train_val_imit))
         train_imit = train_val_imit[:n_train_imit]
         val_imit = train_val_imit[n_train_imit:]
@@ -51,6 +51,117 @@ class VocalSketch:
         self.train = VocalSketchPartition(train_val_ref, train_val_ref_labels, train_imit, train_imit_labels, "training")
         self.val = VocalSketchPartition(train_val_ref, train_val_ref_labels, val_imit, val_imit_labels, "validation")
         self.test = VocalSketchPartition(test_ref, test_ref_labels, imitations, imitation_labels, "testing")
+
+    @staticmethod
+    def calculate_spectrograms():
+        raise NotImplementedError
+
+    @staticmethod
+    def filter_imitations(all_imitations, all_imitation_labels, reference_labels):
+        imitations = []
+        imitation_labels = []
+        for i, l in zip(all_imitations, all_imitation_labels):
+            if l in reference_labels:
+                imitations.append(i)
+                imitation_labels.append(l)
+
+        return imitations, imitation_labels
+
+
+class VocalSketch_v1(VocalSketch):
+    def __init__(self, train_ratio, val_ratio, test_ratio, shuffle=True, recalculate_spectrograms=False):
+        super().__init__(train_ratio, val_ratio, test_ratio, "vs1.0", shuffle, recalculate_spectrograms)
+
+    @staticmethod
+    def calculate_spectrograms():
+        """
+        Calculates normalized imitation and reference spectrograms and saves them as .npy files.
+        """
+        data_dir = os.environ['SIAMESE_DATA_DIR']
+        imitation_path = os.path.join(data_dir, "vs1.0/vocal_imitations/included")
+        reference_path = os.path.join(data_dir, "vs1.0/sound_recordings")
+
+        imitation_paths = preprocessing.recursive_wav_paths(imitation_path)
+        reference_paths = preprocessing.recursive_wav_paths(reference_path)
+
+        reference_csv = os.path.join(data_dir, 'vs1.0', "sound_recordings.csv")
+        imitation_csv = os.path.join(data_dir, 'vs1.0', "vocal_imitations.csv")
+
+        reference_labels = {}
+        with open(reference_csv) as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                path = os.path.join(reference_path, row['filename'])
+                reference_labels[path] = row['sound_label']
+
+        imitation_labels = {}
+        with open(imitation_csv) as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                path = os.path.join(imitation_path, row['filename'])
+                imitation_labels[path] = row['sound_label']
+
+        n = 0
+        label_no = {}
+        for file_name, label in reference_labels.items():
+            if label not in label_no:
+                label_no[label] = n
+                n += 1
+
+        preprocessing.calculate_spectrograms(imitation_paths, imitation_labels, label_no, 'imitations', 'vs1.0', preprocessing.imitation_spectrogram)
+        preprocessing.calculate_spectrograms(reference_paths, reference_labels, label_no, 'references', 'vs1.0', preprocessing.reference_spectrogram)
+
+
+class VocalSketch_v2(VocalSketch):
+    def __init__(self, train_ratio, val_ratio, test_ratio, shuffle=True, recalculate_spectrograms=False):
+        super().__init__(train_ratio, val_ratio, test_ratio, "vs2.0", shuffle, recalculate_spectrograms)
+
+    @staticmethod
+    def calculate_spectrograms():
+        """
+        Calculates normalized imitation and reference spectrograms and saves them as .npy files.
+        """
+        data_dir = os.environ['SIAMESE_DATA_DIR']
+        imitation_path_1 = os.path.join(data_dir, "vs2.0/vocal_imitations/included")
+        imitation_path_2 = os.path.join(data_dir, "vs2.0/vocal_imitations_set2/included")
+        reference_path = os.path.join(data_dir, "vs2.0/sound_recordings")
+
+        imitation_paths = preprocessing.recursive_wav_paths(imitation_path_1) + preprocessing.recursive_wav_paths(imitation_path_2)
+        reference_paths = preprocessing.recursive_wav_paths(reference_path)
+
+        imitation_csv_1 = os.path.join(data_dir, 'vs2.0', "vocal_imitations.csv")
+        imitation_csv_2 = os.path.join(data_dir, 'vs2.0', "vocal_imitaitons_set2.csv")  # not a typo, the CSV's name is misspelled
+        reference_csv = os.path.join(data_dir, 'vs2.0', "sound_recordings.csv")
+
+        reference_labels = {}
+        with open(reference_csv) as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                path = os.path.join(reference_path, row['filename'])
+                reference_labels[path] = row['sound_label']
+
+        imitation_labels = {}
+        with open(imitation_csv_1) as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                path = os.path.join(imitation_path_1, row['filename'])
+                imitation_labels[path] = row['sound_label']
+
+        with open(imitation_csv_2) as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                path = os.path.join(imitation_path_2, row['filename'])
+                imitation_labels[path] = row['sound_label']
+
+        n = 0
+        label_no = {}
+        for file_name, label in reference_labels.items():
+            if label not in label_no:
+                label_no[label] = n
+                n += 1
+
+        preprocessing.calculate_spectrograms(imitation_paths, imitation_labels, label_no, 'imitations', 'vs2.0', preprocessing.imitation_spectrogram)
+        preprocessing.calculate_spectrograms(reference_paths, reference_labels, label_no, 'references', 'vs2.0', preprocessing.reference_spectrogram)
 
 
 class VocalSketchPartition:
@@ -84,53 +195,3 @@ class VocalSketchPartition:
 
                 bar.next()
         bar.finish()
-
-
-def filter_imitations(all_imitations, all_imitation_labels, reference_labels):
-    imitations = []
-    imitation_labels = []
-    for i, l in zip(all_imitations, all_imitation_labels):
-        if l in reference_labels:
-            imitations.append(i)
-            imitation_labels.append(l)
-
-    return imitations, imitation_labels
-
-
-def calculate_spectrograms():
-    """
-    Calculates normalized imitation and reference spectrograms and saves them as .npy files.
-    """
-    data_dir = os.environ['SIAMESE_DATA_DIR']
-    imitation_path = os.path.join(data_dir, "vs1.0/vocal_imitations/included")
-    reference_path = os.path.join(data_dir, "vs1.0/sound_recordings")
-
-    imitation_paths = preprocessing.recursive_wav_paths(imitation_path)
-    reference_paths = preprocessing.recursive_wav_paths(reference_path)
-
-    reference_csv = os.path.join(data_dir, 'vs1.0', "sound_recordings.csv")
-    imitation_csv = os.path.join(data_dir, 'vs1.0', "vocal_imitations.csv")
-
-    reference_labels = {}
-    with open(reference_csv) as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            path = os.path.join(reference_path, row['filename'])
-            reference_labels[path] = row['sound_label']
-
-    imitation_labels = {}
-    with open(imitation_csv) as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            path = os.path.join(imitation_path, row['filename'])
-            imitation_labels[path] = row['sound_label']
-
-    n = 0
-    label_no = {}
-    for file_name, label in reference_labels.items():
-        if label not in label_no:
-            label_no[label] = n
-            n += 1
-
-    preprocessing.calculate_spectrograms(imitation_paths, imitation_labels, label_no, 'imitations', preprocessing.imitation_spectrogram)
-    preprocessing.calculate_spectrograms(reference_paths, reference_labels, label_no, 'references', preprocessing.reference_spectrogram)

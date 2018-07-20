@@ -12,7 +12,7 @@ import utils.utils as utilities
 
 from datafiles.voxforge import Voxforge
 from datafiles.urban_sound_8k import UrbanSound8K
-from datafiles.vocal_sketch import VocalSketch
+from datafiles.vocal_sketch import VocalSketch_v2
 
 
 def main(cli_args=None):
@@ -41,7 +41,7 @@ def main(cli_args=None):
             urban_sound = UrbanSound8K(recalculate_spectrograms=cli_args.spectrograms)
             experiments.transfer_learning.train_right(cli_args.cuda, urban_sound)
 
-        vocal_sketch = VocalSketch(*cli_args.partitions, recalculate_spectrograms=cli_args.spectrograms)
+        vocal_sketch = VocalSketch_v2(*cli_args.partitions, recalculate_spectrograms=cli_args.spectrograms)
         if cli_args.random_only:
             experiments.random_selection.train(cli_args.cuda, vocal_sketch, cli_args.dropout, cli_args.no_normalization)
         else:

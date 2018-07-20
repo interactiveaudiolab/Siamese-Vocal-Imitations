@@ -8,9 +8,9 @@ from utils.progress_bar import Bar
 from utils.utils import save_npy
 
 
-def calculate_spectrograms(paths, file_labels, label_no, save_location, spectrogram_func):
+def calculate_spectrograms(paths, file_labels, label_no, save_location, dataset_name, spectrogram_func):
     # calculate spectrograms and save
-    bar = Bar('Calculating spectrograms and saving them at {0}...'.format(save_location), max=len(paths))
+    bar = Bar('Calculating spectrograms and saving them at {0}/{1}.npy...'.format(dataset_name, save_location), max=len(paths))
     spectrograms = []
     labels = []
     for path in paths:
@@ -23,8 +23,8 @@ def calculate_spectrograms(paths, file_labels, label_no, save_location, spectrog
         bar.next()
 
     spectrograms = normalize_spectrograms(np.array(spectrograms))
-    save_npy(spectrograms, '{0}.npy'.format(save_location), "float32")
-    save_npy(labels, '{0}_labels.npy'.format(save_location), "uint8")
+    save_npy(spectrograms, '{0}.npy'.format(save_location), dataset_name, "float32")
+    save_npy(labels, '{0}_labels.npy'.format(save_location), dataset_name,"uint8")
     bar.finish()
 
 

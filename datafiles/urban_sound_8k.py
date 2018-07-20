@@ -45,7 +45,8 @@ def calculate_spectrograms():
     for audio_path in audio_paths:
         paths = preprocessing.recursive_wav_paths(audio_path)
         fold_n = path_to_fold_n(audio_path)
-        preprocessing.calculate_spectrograms(paths, labels[fold_n], label_n, 'urbansound_{0}'.format(fold_n), preprocessing.reference_spectrogram)
+        preprocessing.calculate_spectrograms(paths, labels[fold_n], label_n, 'urbansound_{0}'.format(fold_n), 'urbansound8k',
+                                             preprocessing.reference_spectrogram)
 
 
 class UrbanSound8K:
@@ -57,7 +58,7 @@ class UrbanSound8K:
         self.folds = []
         self.fold_labels = []
         for fold_n in range(10):
-            fold = load_npy('urbansound_{0}.npy'.format(fold_n))
-            label = load_npy('urbansound_{0}_labels.npy'.format(fold_n))
+            fold = load_npy('urbansound_{0}.npy'.format(fold_n), 'urbansound8k')
+            label = load_npy('urbansound_{0}_labels.npy'.format(fold_n), 'urbansound8k')
             self.folds.append(fold)
             self.fold_labels.append(label)
