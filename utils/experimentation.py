@@ -63,7 +63,7 @@ def pairwise_inference_matrix(model: Siamese, pairs_dataset: AllPairs, use_cuda)
     """
     rrs = np.array([])
     pairs = dataloader.DataLoader(pairs_dataset, batch_size=128, num_workers=1)
-
+    model = model.eval()
     bar = Bar("Calculating pairwise inference matrix", max=len(pairs))
     for imitations, references, label in pairs:
         # reshape tensors and push to GPU if necessary
@@ -119,6 +119,8 @@ def siamese_loss(model: Siamese, dataset, objective, use_cuda: bool, batch_size=
     :param batch_size: optional param to set batch_size. Defaults to 128.
     :return:
     """
+    model = model.eval()
+
     data = DataLoader(dataset, batch_size=batch_size, num_workers=1)
     bar = Bar("Calculating loss", max=len(data))
     batch_losses = np.zeros(len(data))

@@ -10,6 +10,7 @@ from utils.progress_bar import Bar
 
 def train_siamese_network(model: Siamese, data, objective, optimizer, n_epochs, use_cuda, batch_size=128):
     for epoch in range(n_epochs):
+        model = model.train()
         # if we're using all positives and random negatives, choose new negatives on each epoch
         if isinstance(data, AllPositivesRandomNegatives):
             data.reselect_negatives()
