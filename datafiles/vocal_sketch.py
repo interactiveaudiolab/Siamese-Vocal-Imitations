@@ -21,11 +21,21 @@ class VocalSketch:
         logger = logging.getLogger('logger')
         logger.info("train, validation, test ratios = {0}, {1}, {2}".format(train_ratio, val_ratio, test_ratio))
 
-        references = utils.load_npy("references.npy", version)
-        reference_labels = utils.load_npy("reference_labels.npy", version)
+        try:
+            references = utils.load_npy("references.npy", version)
+            reference_labels = utils.load_npy("references_labels.npy", version)
 
-        imitations = utils.load_npy("imitations.npy", version)
-        imitation_labels = utils.load_npy("imitation_labels.npy", version)
+            imitations = utils.load_npy("imitations.npy", version)
+            imitation_labels = utils.load_npy("imitations_labels.npy", version)
+        except FileNotFoundError:
+            logger.warning("No saved spectrograms for Vocal Sketch (version: {0}). Calculating them...".format(version))
+            self.calculate_spectrograms()
+
+            references = utils.load_npy("references.npy", version)
+            reference_labels = utils.load_npy("references_labels.npy", version)
+
+            imitations = utils.load_npy("imitations.npy", version)
+            imitation_labels = utils.load_npy("imitations_labels.npy", version)
 
         if shuffle:
             references, reference_labels = zip_shuffle(references, reference_labels)
