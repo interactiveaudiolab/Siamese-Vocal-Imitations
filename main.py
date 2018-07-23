@@ -9,10 +9,7 @@ import experiments.fine_tuning
 import experiments.random_selection
 import experiments.transfer_learning
 import utils.utils as utilities
-
-from datafiles.voxforge import Voxforge
-from datafiles.urban_sound_8k import UrbanSound8K
-from datafiles.vocal_sketch import VocalSketch_v2
+from datafiles.vocal_sketch import VocalSketch_v2, VocalSketch_v1
 
 
 def main(cli_args=None):
@@ -33,7 +30,11 @@ def main(cli_args=None):
         logger.debug("\t{0} = {1}".format(key, vars(cli_args)[key]))
 
     try:
-        vocal_sketch = VocalSketch_v2(*cli_args.partitions, recalculate_spectrograms=cli_args.spectrograms)
+        if cli_args.vocal_sketch_version == 1:
+            vocal_sketch = VocalSketch_v1(*cli_args.partitions, recalculate_spectrograms=cli_args.spectrograms)
+        else:
+            vocal_sketch = VocalSketch_v2(*cli_args.partitions, recalculate_spectrograms=cli_args.spectrograms)
+
         if cli_args.random_only:
             experiments.random_selection.train(cli_args.cuda, vocal_sketch, cli_args.dropout, cli_args.no_normalization)
         else:

@@ -93,6 +93,8 @@ def configure_parser(parser):
                         help='Whether to only run the random selection phase of training and skip fine-tuning. Defaults fo false.')
     parser.add_argument('-d', '--dropout', action='store_const', const=True, default=False,
                         help='Whether to use drop-out in training the Siamese network. Defaults to false.')
+    parser.add_argument('-v', '--vocal_sketch_version', default=2, type=int, choices=[1, 2],
+                        help='Version of vocal sketch dataset to use. Defaults to vocal sketch 2.0.')
 
 
 def update_trial_number():
