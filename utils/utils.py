@@ -30,7 +30,11 @@ def save_npy(array, name, prefix, ar_type=None):
     if ar_type:
         array = array.astype(ar_type)
     path = os.path.join(get_dataset_dir(), "npy", prefix, name)
-    np.save(path, array)
+    try:
+        np.save(path, array)
+    except FileNotFoundError:  # can occur when the parent directory doesn't exist
+        os.mkdir(os.path.dirname(path))
+        np.save(path, array)
 
 
 def prindent(string, n_indent):
