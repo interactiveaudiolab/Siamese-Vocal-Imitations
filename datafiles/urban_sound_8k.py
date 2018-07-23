@@ -2,7 +2,7 @@ import csv
 import os
 
 from utils import preprocessing
-from utils.utils import load_npy
+from utils.utils import load_npy, get_dataset_dir
 
 
 def path_to_fold_n(audio_path):
@@ -17,7 +17,7 @@ def calculate_spectrograms():
     """
     Calculates normalized imitation and reference spectrograms and saves them as .npy files.
     """
-    data_dir = os.environ['SIAMESE_DATA_DIR']
+    data_dir = get_dataset_dir()
     audio_path = os.path.join(data_dir, "UrbanSound8K", "audio")
     audio_paths = []
     for path in os.listdir(audio_path):

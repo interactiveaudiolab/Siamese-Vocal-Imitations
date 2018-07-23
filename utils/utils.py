@@ -2,9 +2,11 @@ import logging
 import os
 import pathlib
 import pickle
+import sys
 
 import numpy as np
 import torch
+import yaml
 
 
 def load_model(model, path, use_cuda=True):
@@ -19,7 +21,7 @@ def save_model(model, path):
 
 
 def load_npy(name, prefix):
-    path = os.path.join(os.environ['SIAMESE_DATA_DIR'], "npy", prefix, name)
+    path = os.path.join(get_dataset_dir(), "npy", prefix, name)
     return np.load(path)
 
 
@@ -27,7 +29,7 @@ def save_npy(array, name, prefix, ar_type=None):
     array = np.array(array)
     if ar_type:
         array = array.astype(ar_type)
-    path = os.path.join(os.environ['SIAMESE_DATA_DIR'], "npy", prefix, name)
+    path = os.path.join(get_dataset_dir(), "npy", prefix, name)
     np.save(path, array)
 
 
@@ -124,3 +126,19 @@ def zip_shuffle(a, b):
     assert len(a) == len(b)
     p = np.random.permutation(len(a))
     return a[p], b[p]
+
+
+def get_dataset_dir():
+    try:
+        with open('config.yaml') as f:
+            config = yaml.safe_load(f)
+            try:
+                return config['SIAMESE_DATA_DIR']
+            except KeyError:
+                logger = logging.getLogger('logger')
+                logger.critical("No entry for SIAMESE_DATA_DIR found in config.yaml.")
+                sys.exit()
+    except FileNotFoundError:
+        logger = logging.getLogger('logger')
+        logger.critical("No config.yaml file found. Please generate one in the top level directory.")
+        sys.exit()

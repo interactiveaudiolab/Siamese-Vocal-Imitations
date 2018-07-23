@@ -7,7 +7,7 @@ from utils.progress_bar import Bar
 
 import utils.preprocessing as preprocessing
 from utils import utils
-from utils.utils import zip_shuffle
+from utils.utils import zip_shuffle, get_dataset_dir
 
 
 class VocalSketch:
@@ -87,7 +87,7 @@ class VocalSketch_v1(VocalSketch):
         """
         Calculates normalized imitation and reference spectrograms and saves them as .npy files.
         """
-        data_dir = os.environ['SIAMESE_DATA_DIR']
+        data_dir = get_dataset_dir()
         imitation_path = os.path.join(data_dir, "vs1.0/vocal_imitations/included")
         reference_path = os.path.join(data_dir, "vs1.0/sound_recordings")
 
@@ -131,7 +131,7 @@ class VocalSketch_v2(VocalSketch):
         """
         Calculates normalized imitation and reference spectrograms and saves them as .npy files.
         """
-        data_dir = os.environ['SIAMESE_DATA_DIR']
+        data_dir = get_dataset_dir()
         imitation_path_1 = os.path.join(data_dir, "vs2.0/vocal_imitations/included")
         imitation_path_2 = os.path.join(data_dir, "vs2.0/vocal_imitations_set2/included")
         reference_path = os.path.join(data_dir, "vs2.0/sound_recordings")

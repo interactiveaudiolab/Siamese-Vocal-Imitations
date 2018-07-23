@@ -5,7 +5,7 @@ import numpy as np
 from utils.progress_bar import Bar
 
 from utils import preprocessing
-from utils.utils import load_npy
+from utils.utils import load_npy, get_dataset_dir
 
 
 def path_to_fold_n(audio_path):
@@ -21,7 +21,7 @@ def calculate_spectrograms(per_language: int, n_batches: int):
     Calculates normalized imitation and reference spectrograms and saves them as .npy files.
     """
     logger = logging.getLogger('logger')
-    data_dir = os.path.join(os.environ['SIAMESE_DATA_DIR'], "voxforge")
+    data_dir = os.path.join(get_dataset_dir(), "voxforge")
     languages = []
     for path in os.listdir(data_dir):
         abs_path = os.path.join(data_dir, path)
