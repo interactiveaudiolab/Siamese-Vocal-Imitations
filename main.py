@@ -33,14 +33,6 @@ def main(cli_args=None):
         logger.debug("\t{0} = {1}".format(key, vars(cli_args)[key]))
 
     try:
-        if cli_args.transfer_learning in ['left', 'imitation', 'both']:
-            voxforge = Voxforge(recalculate_spectrograms=cli_args.spectrograms)
-            experiments.transfer_learning.train_left(cli_args.cuda, voxforge)
-
-        if cli_args.transfer_learning in ['right', 'reference', 'both']:
-            urban_sound = UrbanSound8K(recalculate_spectrograms=cli_args.spectrograms)
-            experiments.transfer_learning.train_right(cli_args.cuda, urban_sound)
-
         vocal_sketch = VocalSketch_v2(*cli_args.partitions, recalculate_spectrograms=cli_args.spectrograms)
         if cli_args.random_only:
             experiments.random_selection.train(cli_args.cuda, vocal_sketch, cli_args.dropout, cli_args.no_normalization)

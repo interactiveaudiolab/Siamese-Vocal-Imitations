@@ -92,12 +92,7 @@ def configure_parser(parser):
     parser.add_argument('-r', '--random_only', action='store_const', const=True, default=False,
                         help='Whether to only run the random selection phase of training and skip fine-tuning. Defaults fo false.')
     parser.add_argument('-d', '--dropout', action='store_const', const=True, default=False,
-                        help='Whether to use drop-out in the Siamese network. Defaults to false.')
-    parser.add_argument('-n', '--no_normalization', action='store_const', const=False, default=True,
-                        help='Whether to skip the use of normalization in the Siamese network. Defaults to true.')
-    parser.add_argument('-l', '--transfer_learning', default='none', type=str, choices=['none', 'left', 'right', 'both', 'imitation', 'reference'],
-                        help='Whether to perform transfer learning on each tower before training the Siamese network. Defaults to none, '
-                             'in which case the last generated weights will be used if they exist.')
+                        help='Whether to use drop-out in training the Siamese network. Defaults to false.')
 
 
 def update_trial_number():

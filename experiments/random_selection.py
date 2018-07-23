@@ -28,21 +28,6 @@ def train(use_cuda, data: VocalSketch, use_dropout, use_normalization):
     if use_cuda:
         siamese = siamese.cuda()
 
-    # try:
-    #     logger.info("Copying weights from left tower...")
-    #     left_tower = LeftTower()
-    #     utilities.load_model(left_tower, './model_output/left_tower/model_final')
-    #     training.copy_weights(siamese, left_tower)
-    # except FileNotFoundError:
-    #     logger.error("Could not find a pre-trained left tower model. Skipping transfer learning for this branch.")
-    # try:
-    #     logger.info("Copying weights from right tower...")
-    #     right_tower = RightTower()
-    #     utilities.load_model(right_tower, './model_output/right_tower/model_final')
-    #     training.copy_weights(siamese, right_tower)
-    # except FileNotFoundError:
-    #     logger.error("Could not find a pre-trained right tower model. Skipping transfer learning for this branch.")
-
     criterion = BCELoss()
 
     # use stochastic gradient descent, same parameters as in paper
