@@ -52,7 +52,10 @@ class VocalSketch:
 
         # Then, divide references over training and validation
         train_val_imit, train_val_imit_lab = self.filter_imitations(imitations, imitation_labels, train_val_ref_labels)
-        n_train_imit = int(train_ratio / (train_ratio + val_ratio) * len(train_val_imit))
+        try:
+            n_train_imit = int(train_ratio / (train_ratio + val_ratio) * len(train_val_imit))
+        except ZeroDivisionError:
+            n_train_imit = 0
         train_imit = train_val_imit[:n_train_imit]
         val_imit = train_val_imit[n_train_imit:]
         train_imit_labels = train_val_imit_lab[:n_train_imit]

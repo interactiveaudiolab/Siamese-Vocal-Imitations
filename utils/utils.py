@@ -59,14 +59,7 @@ def np_index_of(array, item):
     return where[0][0]  # where is a 2d array
 
 
-def configure_logger(logger):
-    logger.setLevel(logging.DEBUG)
-    console_handler = logging.StreamHandler()
-    file_handler = logging.FileHandler('./output/{0}/siamese.log'.format(get_trial_number()))
-    formatter = logging.Formatter('%(asctime)s - %(levelname)s \t %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
-    console_handler.setFormatter(formatter)
-    file_handler.setFormatter(formatter)
-
+def configure_logger(logger, console_only=False):
     # Remove any old handlers that may exist
     old_handlers = []
     for handler in logger.handlers:
@@ -74,8 +67,16 @@ def configure_logger(logger):
     for handler in old_handlers:
         logger.removeHandler(handler)
 
+    logger.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s \t %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+    if not console_only:
+        file_handler = logging.FileHandler('./output/{0}/siamese.log'.format(get_trial_number()))
+        file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
+
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
     logger.addHandler(console_handler)
-    logger.addHandler(file_handler)
 
 
 def configure_parser(parser):
