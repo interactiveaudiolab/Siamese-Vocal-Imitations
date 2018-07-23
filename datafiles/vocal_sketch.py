@@ -84,6 +84,8 @@ class VocalSketch:
 class VocalSketch_v1(VocalSketch):
     def __init__(self, train_ratio, val_ratio, test_ratio, shuffle=True, recalculate_spectrograms=False):
         super().__init__(train_ratio, val_ratio, test_ratio, "vs1.0", shuffle, recalculate_spectrograms)
+        logger = logging.getLogger('logger')
+        logger.info("Using Vocal Sketch 1.0")
 
     @staticmethod
     def calculate_spectrograms():
@@ -128,6 +130,8 @@ class VocalSketch_v1(VocalSketch):
 class VocalSketch_v2(VocalSketch):
     def __init__(self, train_ratio, val_ratio, test_ratio, shuffle=True, recalculate_spectrograms=False):
         super().__init__(train_ratio, val_ratio, test_ratio, "vs2.0", shuffle, recalculate_spectrograms)
+        logger = logging.getLogger('logger')
+        logger.info("Using Vocal Sketch 2.0")
 
     @staticmethod
     def calculate_spectrograms():
