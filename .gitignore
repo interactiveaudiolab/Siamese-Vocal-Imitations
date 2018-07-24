@@ -1,3 +1,4 @@
+*.csv
 config.yaml
 output/*
 */__pycache__/*
