@@ -18,13 +18,13 @@ def calculate_spectrograms(paths, file_labels, label_no, save_location, dataset_
         spectrograms.append(spectrogram)
 
         label = file_labels[path]
-        labels.append(label_no[label])
+        labels.append(label)
 
         bar.next()
 
     spectrograms = normalize_spectrograms(np.array(spectrograms))
     save_npy(spectrograms, '{0}.npy'.format(save_location), dataset_name, "float32")
-    save_npy(labels, '{0}_labels.npy'.format(save_location), dataset_name,"uint8")
+    save_npy(labels, '{0}_labels.npy'.format(save_location), dataset_name)
     bar.finish()
 
 
