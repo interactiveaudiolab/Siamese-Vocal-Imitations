@@ -5,14 +5,14 @@ import numpy as np
 import torch
 from torch.nn import BCELoss
 
-from datafiles.vocal_sketch import VocalSketch
-from datasets.vocal_sketch import FineTuned, AllPairs
 import experiments.random_selection
+from datafiles.generics import SiameseDatafile
+from datasets.siamese import FineTuned, AllPairs
 from models.siamese import Siamese
 from utils import utils as utilities, experimentation as experimentation, training as training, graphing as graphing
 
 
-def train(use_cuda, data: VocalSketch, use_dropout, use_normalization, use_cached_baseline=False, minimum_passes=0):
+def train(use_cuda, data: SiameseDatafile, use_dropout, use_normalization, use_cached_baseline=False, minimum_passes=0):
     logger = logging.getLogger('logger')
     # get the baseline network
     if use_cached_baseline:

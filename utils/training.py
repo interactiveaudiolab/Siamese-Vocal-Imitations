@@ -1,8 +1,8 @@
 import numpy as np
 from torch.utils.data import DataLoader
 
-from datasets.tower_data import TowerData
-from datasets.vocal_sketch import AllPositivesRandomNegatives
+from datasets.generics import TowerData
+from datasets.siamese import AllPositivesRandomNegatives
 from models.siamese import Siamese
 from models.transfer_learning import Tower
 from utils.progress_bar import Bar

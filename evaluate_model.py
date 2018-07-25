@@ -3,7 +3,7 @@ import logging
 
 import utils.utils as utilities
 from datafiles.vocal_sketch import VocalSketch_v2
-from datasets.vocal_sketch import AllPairs
+from datasets.siamese import AllPairs
 from models.siamese import Siamese
 from utils.experimentation import reciprocal_ranks
 

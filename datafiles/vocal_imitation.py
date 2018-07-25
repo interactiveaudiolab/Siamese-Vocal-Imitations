@@ -2,12 +2,17 @@ import csv
 import logging
 import os
 
+import numpy as np
+
+from datafiles.generics import SiamesePartition, SiameseDatafile
 from utils import preprocessing, utils
+from utils.progress_bar import Bar
 from utils.utils import get_dataset_dir, zip_shuffle
 
 
-class VocalImitation:
+class VocalImitation(SiameseDatafile):
     def __init__(self, train_ratio, val_ratio, test_ratio, shuffle=True, recalculate_spectrograms=False):
+        super().__init__()
         if recalculate_spectrograms:
             self.calculate_spectrograms()
         logger = logging.getLogger('logger')
@@ -34,6 +39,21 @@ class VocalImitation:
         if shuffle:
             references, reference_labels = zip_shuffle(references, reference_labels)
             imitations, imitation_labels = zip_shuffle(imitations, imitation_labels)
+
+        n_train = int(train_ratio * len(imitations))
+        n_val = int(val_ratio * len(imitations))
+
+        # Split references up into training/validation set and testing set
+        train_imit = imitations[:n_train]
+        train_imit_labels = imitation_labels[:n_train]
+        val_imit = imitations[n_train:n_train + n_val]
+        val_imit_labels = imitation_labels[n_train:n_train + n_val]
+        test_imit = imitations[n_train + n_val:]
+        test_imit_labels = imitation_labels[n_train + n_val:]
+
+        self.train = VocalImitationPartition(references, reference_labels, train_imit, train_imit_labels, "training")
+        self.val = VocalImitationPartition(references, reference_labels, val_imit, val_imit_labels, "validation")
+        self.test = VocalImitationPartition(references, reference_labels, test_imit, test_imit_labels, "testing")
 
     @staticmethod
     def calculate_spectrograms():
@@ -89,6 +109,18 @@ class VocalImitation:
         preprocessing.calculate_spectrograms(reference_paths, reference_labels, label_no, 'references', 'vocal_imitation', preprocessing.reference_spectrogram)
 
     @staticmethod
+    def filter_imitations(all_imitations, all_imitation_labels, reference_labels):
+        imitations = []
+        imitation_labels = []
+        reference_label_list = [v['label'] for v in reference_labels]
+        for i, l in zip(all_imitations, all_imitation_labels):
+            if l in reference_label_list:
+                imitations.append(i)
+                imitation_labels.append(l)
+
+        return imitations, imitation_labels
+
+    @staticmethod
     def generate_occurrences(imitation_labels, reference_labels):
         i_s = set(v for v in imitation_labels.values())
         r_s = set(v['label'] for v in reference_labels.values())
@@ -122,5 +154,41 @@ class VocalImitation:
                 writer.writerow([label, n_references[label], n_canonical[label], n_imitations[label]])
 
 
+class VocalImitationPartition(SiamesePartition):
+    def __init__(self, references, reference_labels, all_imitations, all_imitation_labels, dataset_type):
+        super().__init__()
+        self.references = references
+        self.reference_labels = reference_labels
+
+        reference_label_list = [v['label'] for v in reference_labels]
+
+        # filter out imitations of things that are not in this set at all
+        self.imitations = []
+        self.imitation_labels = []
+        for i, l in zip(all_imitations, all_imitation_labels):
+            if l in reference_label_list:
+                self.imitations.append(i)
+                self.imitation_labels.append(l)
+
+        bar = Bar("Creating pairs for {0}...".format(dataset_type), max=len(self.references) * len(self.imitations))
+        self.positive_pairs = []
+        self.negative_pairs = []
+        self.all_pairs = []
+        self.labels = np.zeros([len(self.imitations), len(self.references)])
+        for i, (imitation, imitation_label) in enumerate(zip(self.imitations, self.imitation_labels)):
+            for j, (reference, reference_label) in enumerate(zip(self.references, self.reference_labels)):
+                if reference_label['label'] == imitation_label:
+                    self.positive_pairs.append([imitation, reference, True])
+                    self.all_pairs.append([imitation, reference, True])
+                    self.labels[i, j] = 1
+                else:
+                    self.negative_pairs.append([imitation, reference, False])
+                    self.all_pairs.append([imitation, reference, False])
+                    self.labels[i, j] = 0
+
+                bar.next()
+        bar.finish()
+
+
 if __name__ == "__main__":
-    VocalImitation(.35, .15, .5, recalculate_spectrograms=True)
+    VocalImitation(.35, .15, .5, recalculate_spectrograms=False)

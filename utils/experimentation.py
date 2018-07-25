@@ -3,8 +3,8 @@ import torch
 from utils.progress_bar import Bar
 from torch.utils.data import dataloader, DataLoader
 
-from datasets.tower_data import TowerData
-from datasets.vocal_sketch import AllPairs
+from datasets.generics import TowerData
+from datasets.siamese import AllPairs
 from models.siamese import Siamese
 from models.transfer_learning import Tower
 from utils import utils

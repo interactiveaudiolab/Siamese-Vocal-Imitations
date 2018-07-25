@@ -9,6 +9,7 @@ import experiments.fine_tuning
 import experiments.random_selection
 import experiments.transfer_learning
 import utils.utils as utilities
+from datafiles.vocal_imitation import VocalImitation
 from datafiles.vocal_sketch import VocalSketch_v2, VocalSketch_v1
 
 
@@ -30,15 +31,17 @@ def main(cli_args=None):
         logger.debug("\t{0} = {1}".format(key, vars(cli_args)[key]))
 
     try:
-        if cli_args.vocal_sketch_version == 1:
-            vocal_sketch = VocalSketch_v1(*cli_args.partitions, recalculate_spectrograms=cli_args.spectrograms)
-        else:
-            vocal_sketch = VocalSketch_v2(*cli_args.partitions, recalculate_spectrograms=cli_args.spectrograms)
+        siamese_datafiles = VocalImitation(*cli_args.partitions, recalculate_spectrograms=cli_args.spectrograms)
+        #
+        # if cli_args.vocal_sketch_version == 1:
+        #     siamese_datafiles = VocalSketch_v1(*cli_args.partitions, recalculate_spectrograms=cli_args.spectrograms)
+        # else:
+        #     siamese_datafiles = VocalSketch_v2(*cli_args.partitions, recalculate_spectrograms=cli_args.spectrograms)
 
         if cli_args.random_only:
-            experiments.random_selection.train(cli_args.cuda, vocal_sketch, cli_args.dropout, cli_args.no_normalization)
+            experiments.random_selection.train(cli_args.cuda, siamese_datafiles, cli_args.dropout, cli_args.no_normalization)
         else:
-            experiments.fine_tuning.train(cli_args.cuda, vocal_sketch, cli_args.dropout, cli_args.no_normalization, use_cached_baseline=cli_args.cache_baseline,
+            experiments.fine_tuning.train(cli_args.cuda, siamese_datafiles, cli_args.dropout, cli_args.no_normalization, use_cached_baseline=cli_args.cache_baseline,
                                           minimum_passes=cli_args.fine_tuning_passes)
         cli_args.trials -= 1
         if cli_args.trials > 0:

@@ -3,6 +3,8 @@ import logging
 import os
 
 import numpy as np
+
+from datafiles.generics import SiamesePartition, SiameseDatafile
 from utils.progress_bar import Bar
 
 import utils.preprocessing as preprocessing
@@ -10,8 +12,9 @@ from utils import utils
 from utils.utils import zip_shuffle, get_dataset_dir
 
 
-class VocalSketch:
+class VocalSketch(SiameseDatafile):
     def __init__(self, train_ratio, val_ratio, test_ratio, version, shuffle=True, recalculate_spectrograms=False):
+        super().__init__()
         if recalculate_spectrograms:
             self.calculate_spectrograms()
 
@@ -181,8 +184,9 @@ class VocalSketch_v2(VocalSketch):
         preprocessing.calculate_spectrograms(reference_paths, reference_labels, label_no, 'references', 'vs2.0', preprocessing.reference_spectrogram)
 
 
-class VocalSketchPartition:
+class VocalSketchPartition(SiamesePartition):
     def __init__(self, references, reference_labels, all_imitations, all_imitation_labels, dataset_type):
+        super().__init__()
         self.references = references
         self.reference_labels = reference_labels
 

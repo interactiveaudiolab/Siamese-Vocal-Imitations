@@ -5,14 +5,13 @@ import numpy as np
 import torch
 from torch.nn import BCELoss
 
-from datafiles.vocal_sketch import VocalSketch
-from datasets.vocal_sketch import AllPositivesRandomNegatives, AllPairs
+from datafiles.generics import SiameseDatafile
+from datasets.siamese import AllPositivesRandomNegatives, AllPairs
 from models.siamese import Siamese
-from models.transfer_learning import LeftTower, RightTower
 from utils import utils as utilities, training as training, experimentation as experimentation, graphing as graphing
 
 
-def train(use_cuda, data: VocalSketch, use_dropout, use_normalization):
+def train(use_cuda, data: SiameseDatafile, use_dropout, use_normalization):
     logger = logging.getLogger('logger')
 
     n_epochs = 100
