@@ -17,7 +17,7 @@ def calculate_spectrograms(paths, file_labels, label_no, save_location, dataset_
     labels = []
     for path in paths:
         spectrogram = spectrogram_func(path)
-        if spectrogram:
+        if spectrogram is not None:
             spectrograms.append(spectrogram)
 
             label = file_labels[path]
