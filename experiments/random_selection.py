@@ -11,7 +11,7 @@ from models.siamese import Siamese
 from utils import utils as utilities, training as training, experimentation as experimentation, graphing as graphing
 
 
-def train(use_cuda, data: SiameseDatafile, use_dropout):
+def train(use_cuda, data: SiameseDatafile, use_dropout, validate_every):
     logger = logging.getLogger('logger')
 
     n_epochs = 100
@@ -43,24 +43,29 @@ def train(use_cuda, data: SiameseDatafile, use_dropout):
         for epoch, (model, training_batch_losses) in enumerate(models):
             utilities.save_model(model, model_path.format(epoch))
 
-            validation_batch_losses = experimentation.siamese_loss(model, validation_pairs, criterion, use_cuda)
-            training_loss = training_batch_losses.mean()
-            validation_loss = validation_batch_losses.mean()
-            logger.info("Loss at epoch {0}:\n\ttrn = {1}\n\tval = {2}".format(epoch, training_loss, validation_loss))
+            should_validate = validate_every != 0 and epoch % validate_every == 0
 
+            training_loss = training_batch_losses.mean()
             training_losses[epoch] = training_loss
             training_loss_var[epoch] = training_batch_losses.var()
-            validation_losses[epoch] = validation_loss
+            if should_validate:
+                validation_batch_losses = experimentation.siamese_loss(model, validation_pairs, criterion, use_cuda)
+                validation_loss = validation_batch_losses.mean()
+                validation_losses[epoch] = validation_loss
+                logger.info("Loss at epoch {0}:\n\ttrn = {1}\n\tval = {2}".format(epoch, training_loss, validation_loss))
+            else:
+                logger.info("Loss at epoch {0}:\n\ttrn = {1}".format(epoch, training_loss))
 
-            logger.debug("Calculating MRRs...")
-            training_mrr = experimentation.mean_reciprocal_ranks(model, training_pairs, use_cuda)
-            val_mrr = experimentation.mean_reciprocal_ranks(model, validation_pairs, use_cuda)
-            logger.info("MRRs at epoch {0}:\n\ttrn = {1}\n\tval = {2}".format(epoch, training_mrr, val_mrr))
+            if should_validate:
+                logger.debug("Calculating MRRs...")
+                training_mrr = experimentation.mean_reciprocal_ranks(model, training_pairs, use_cuda)
+                val_mrr = experimentation.mean_reciprocal_ranks(model, validation_pairs, use_cuda)
+                logger.info("MRRs at epoch {0}:\n\ttrn = {1}\n\tval = {2}".format(epoch, training_mrr, val_mrr))
 
-            training_mrrs[epoch] = training_mrr
-            validation_mrrs[epoch] = val_mrr
+                training_mrrs[epoch] = training_mrr
+                validation_mrrs[epoch] = val_mrr
 
-            graphing.mrr_per_epoch(training_mrrs, validation_mrrs, "Random Selection")
+                graphing.mrr_per_epoch(training_mrrs, validation_mrrs, "Random Selection")
             graphing.loss_per_epoch(training_losses, validation_losses, "Random Selection")
 
         # get and save best model TODO: should this be by training or by validation?

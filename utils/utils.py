@@ -102,6 +102,8 @@ def configure_parser(parser):
                         help='Whether to use drop-out in training the Siamese network. Defaults to false.')
     parser.add_argument('-v', '--vocal_sketch_version', default=2, type=int, choices=[1, 2],
                         help='Version of vocal sketch dataset to use. Defaults to vocal sketch 2.0.')
+    parser.add_argument('-ve', '--validate_every', default=1, type=int,
+                        help='How often to calculate loss and MRR (per epoch). Defaults to 1. 0 means do not calculate at all.')
 
 
 def update_trial_number():

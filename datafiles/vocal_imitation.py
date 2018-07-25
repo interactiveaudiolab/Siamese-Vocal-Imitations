@@ -10,7 +10,7 @@ from utils.progress_bar import Bar
 from utils.utils import get_dataset_dir, zip_shuffle
 
 
-class VocalImitation(SiameseDatafile):
+class VocalImitation(SiameseDatafile, SiamesePartition):
     def __init__(self, train_ratio, val_ratio, test_ratio, shuffle=True, recalculate_spectrograms=False):
         super().__init__()
         if recalculate_spectrograms:
