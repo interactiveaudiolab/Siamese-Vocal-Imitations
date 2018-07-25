@@ -11,7 +11,7 @@ from models.siamese import Siamese
 from utils import utils as utilities, training as training, experimentation as experimentation, graphing as graphing
 
 
-def train(use_cuda, data: SiameseDatafile, use_dropout, use_normalization):
+def train(use_cuda, data: SiameseDatafile, use_dropout):
     logger = logging.getLogger('logger')
 
     n_epochs = 100
@@ -23,7 +23,7 @@ def train(use_cuda, data: SiameseDatafile, use_dropout, use_normalization):
     testing_pairs = AllPairs(data.test)
 
     # get a siamese network, see Siamese class for architecture
-    siamese = Siamese(dropout=use_dropout, normalization=use_normalization)
+    siamese = Siamese(dropout=use_dropout)
     if use_cuda:
         siamese = siamese.cuda()
 

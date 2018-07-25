@@ -12,16 +12,16 @@ from models.siamese import Siamese
 from utils import utils as utilities, experimentation as experimentation, training as training, graphing as graphing
 
 
-def train(use_cuda, data: SiameseDatafile, use_dropout, use_normalization, use_cached_baseline=False, minimum_passes=0):
+def train(use_cuda, data: SiameseDatafile, use_dropout, use_cached_baseline=False, minimum_passes=0):
     logger = logging.getLogger('logger')
     # get the baseline network
     if use_cached_baseline:
-        siamese = Siamese(dropout=use_dropout, normalization=use_normalization)
+        siamese = Siamese(dropout=use_dropout)
         if use_cuda:
             siamese = siamese.cuda()
         utilities.load_model(siamese, './model_output/random_selection/model_best')
     else:
-        siamese = experiments.random_selection.train(use_cuda, data, use_dropout, use_normalization)
+        siamese = experiments.random_selection.train(use_cuda, data, use_dropout)
 
     model_path = './model_output/fine_tuned/model_{0}_{1}'
 
