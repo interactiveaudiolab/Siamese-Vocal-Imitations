@@ -1,3 +1,5 @@
+import audioop
+import logging
 import os
 
 import librosa
@@ -15,10 +17,11 @@ def calculate_spectrograms(paths, file_labels, label_no, save_location, dataset_
     labels = []
     for path in paths:
         spectrogram = spectrogram_func(path)
-        spectrograms.append(spectrogram)
+        if spectrogram:
+            spectrograms.append(spectrogram)
 
-        label = file_labels[path]
-        labels.append(label)
+            label = file_labels[path]
+            labels.append(label)
 
         bar.next()
 
@@ -54,7 +57,12 @@ def reference_spectrogram(path):
     :param path: absolute path to the audio file
     :return: power log spectrogram
     """
-    y, sr = librosa.load(path, sr=44100)
+    try:
+        y, sr = librosa.load(path, sr=44100)
+    except audioop.error as e:
+        logger = logging.getLogger('logger')
+        logger.warning("Could not load {0}\n{1}".format(path, e))
+        return None
     # zero-padding
     if y.shape[0] < 4 * sr:
         pad = np.zeros((4 * sr - y.shape[0]))
@@ -75,7 +83,12 @@ def imitation_spectrogram(path):
     :param path: absolute path to the audio file
     :return: power log spectrogram
     """
-    y, sr = librosa.load(path, sr=16000)
+    try:
+        y, sr = librosa.load(path, sr=44100)
+    except audioop.error as e:
+        logger = logging.getLogger('logger')
+        logger.warning("Could not load {0}\n{1}".format(path, e))
+        return None
     # zero-padding
     if y.shape[0] < 4 * sr:
         pad = np.zeros((4 * sr - y.shape[0]))
