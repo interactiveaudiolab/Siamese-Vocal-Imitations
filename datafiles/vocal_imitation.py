@@ -174,17 +174,20 @@ class VocalImitationPartition(SiamesePartition):
         self.positive_pairs = []
         self.negative_pairs = []
         self.all_pairs = []
-        self.labels = np.zeros([len(self.imitations), len(self.references)])
+        self.all_labels = np.zeros([len(self.imitations), len(self.references)])
+        self.canonical_labels = np.zeros([len(self.imitations), len(self.references)])
         for i, (imitation, imitation_label) in enumerate(zip(self.imitations, self.imitation_labels)):
             for j, (reference, reference_label) in enumerate(zip(self.references, self.reference_labels)):
                 if reference_label['label'] == imitation_label:
                     self.positive_pairs.append([imitation, reference, True])
                     self.all_pairs.append([imitation, reference, True])
-                    self.labels[i, j] = 1
+                    self.all_labels[i, j] = 1
+                    if reference_label['is_canonical']:
+                        self.canonical_labels[i, j] = 1
                 else:
                     self.negative_pairs.append([imitation, reference, False])
                     self.all_pairs.append([imitation, reference, False])
-                    self.labels[i, j] = 0
+                    self.all_labels[i, j] = 0
 
                 bar.next()
         bar.finish()

@@ -38,8 +38,8 @@ def reciprocal_ranks(model: Siamese, pairs: AllPairs, use_cuda):
     for i, imitation in enumerate(pairs.imitations):
         # get the column of the pairwise matrix corresponding to this imitation
         pairwise_col = pairwise[i, :]
-        # get the index of the correct reference for this imitation
-        reference_index = utils.np_index_of(pairs.labels[i, :], 1)
+        # get the index of the correct canonical reference for this imitation
+        reference_index = utils.np_index_of(pairs.canonical_labels[i, :], 1)
         # get the similarity of the correct reference
         similarity = pairwise_col[reference_index]
         # sort pairwise column descending
@@ -98,7 +98,7 @@ def hard_negative_selection(model: Siamese, pairs: AllPairs, use_cuda):
     pairwise = pairwise_inference_matrix(model, pairs, use_cuda)
 
     # zero out all positive examples
-    pairwise = pairwise * np.logical_not(pairs.labels)
+    pairwise = pairwise * np.logical_not(pairs.all_labels)
 
     # indexes of max in each column
     references = pairwise.argmax(axis=1)

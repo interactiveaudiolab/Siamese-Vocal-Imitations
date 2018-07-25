@@ -14,4 +14,5 @@ class SiamesePartition:
         self.positive_pairs = []
         self.negative_pairs = []
         self.all_pairs = []
-        self.labels = []
+        self.all_labels = []
+        self.canonical_labels = []
