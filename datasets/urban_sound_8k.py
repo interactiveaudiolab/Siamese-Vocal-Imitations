@@ -1,5 +1,5 @@
 from datafiles.urban_sound_8k import UrbanSound8K
-from datasets.tower_data import TowerData
+from datasets.generics import TowerData
 
 
 class UrbanSound10FCV(TowerData):

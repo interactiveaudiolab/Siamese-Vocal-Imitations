@@ -1,5 +1,5 @@
 from datafiles.voxforge import Voxforge
-from datasets.tower_data import TowerData
+from datasets.generics import TowerData
 from utils.utils import zip_shuffle
 
 
