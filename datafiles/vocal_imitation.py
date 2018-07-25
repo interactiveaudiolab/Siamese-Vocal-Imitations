@@ -147,7 +147,7 @@ class VocalImitation(SiameseDatafile):
             n_imitations[l] = found
         print(n_references)
         labels = set(list(i_s) + list(r_s))
-        with open("occurences.csv", 'w+') as f:
+        with open("occurrences.csv", 'w+') as f:
             writer = csv.writer(f)
             writer.writerow(['label', 'n_references', 'n_canonical_references', 'n_imitations'])
             for label in labels:
