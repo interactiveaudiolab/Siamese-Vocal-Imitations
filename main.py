@@ -7,7 +7,6 @@ import traceback
 import utils.matplotlib_backend_hack
 import experiments.fine_tuning
 import experiments.random_selection
-import experiments.transfer_learning
 import utils.utils as utilities
 from datafiles.vocal_imitation import VocalImitation
 from datafiles.vocal_sketch import VocalSketch_v2, VocalSketch_v1

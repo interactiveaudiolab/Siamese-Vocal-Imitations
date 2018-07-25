@@ -1,13 +1,10 @@
 import numpy as np
-import torch
-from utils.progress_bar import Bar
 from torch.utils.data import dataloader, DataLoader
 
-from datasets.generics import TowerData
 from datasets.siamese import AllPairs
 from models.siamese import Siamese
-from models.transfer_learning import Tower
 from utils import utils
+from utils.progress_bar import Bar
 
 
 def mean_reciprocal_ranks(model: Siamese, pairs: AllPairs, use_cuda):
@@ -146,58 +143,3 @@ def siamese_loss(model: Siamese, dataset, objective, use_cuda: bool, batch_size=
     bar.finish()
 
     return batch_losses
-
-
-def tower_loss(model: Tower, dataset: TowerData, objective, use_cuda: bool, batch_size=128):
-    """
-    Calculates the loss of model over dataset by objective. Optionally run on the GPU.
-    """
-    data = DataLoader(dataset, batch_size=batch_size, num_workers=1)
-    bar = Bar("Calculating loss", max=len(data))
-    batch_losses = np.zeros(len(data))
-    for i, (audio, labels) in enumerate(data):
-
-        # reshape tensors and push to GPU if necessary
-        audio = audio.unsqueeze(1)
-        if use_cuda:
-            audio = audio.cuda()
-            labels = labels.cuda()
-
-        # pass a batch through the network
-        outputs = model(audio.float())
-
-        # calculate loss and optimize weights
-        labels = labels.long()
-        batch_losses[i] = objective(outputs, labels).item()
-
-        bar.next()
-    bar.finish()
-
-    return batch_losses
-
-
-def tower_accuracy(model: Tower, dataset: TowerData, use_cuda: bool, batch_size=128):
-    data = DataLoader(dataset, batch_size=batch_size, num_workers=1)
-    bar = Bar("Calculating accuracy", max=len(data))
-    correct = 0
-    total = 0
-    for i, (audio, labels) in enumerate(data):
-
-        # reshape tensors and push to GPU if necessary
-        audio = audio.unsqueeze(1)
-        if use_cuda:
-            audio = audio.cuda()
-            labels = labels.cuda()
-
-        # pass a batch through the network
-        outputs = model(audio.float())
-
-        labels = labels.long()
-        _, predicted = torch.max(outputs.data, 1)
-        total += labels.size(0)
-        correct += (predicted == labels).sum().item()
-
-        bar.next()
-    bar.finish()
-
-    return correct / total
