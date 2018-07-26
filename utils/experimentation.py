@@ -1,7 +1,7 @@
 import numpy as np
 from torch.utils.data import dataloader, DataLoader
 
-from datasets.siamese import AllPairs
+from data_sets.siamese import AllPairs
 from models.siamese import Siamese
 from utils import utils
 from utils.progress_bar import Bar

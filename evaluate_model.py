@@ -2,10 +2,12 @@ import argparse
 import logging
 
 import utils.utils as utilities
-from datafiles.vocal_sketch import VocalSketch_v2
-from datasets.siamese import AllPairs
+from data_files.vocal_sketch import VocalSketch_v2
+from data_sets.siamese import AllPairs
 from models.siamese import Siamese
+from data_partitions.siamese import SiamesePartitions
 from utils.experimentation import reciprocal_ranks
+from utils.obj import DataSplit
 
 
 def main():
@@ -25,8 +27,11 @@ def main():
     utilities.load_model(model, cli_args.model_path, use_cuda=use_cuda)
 
     model = model.eval()
-    data = VocalSketch_v2(0, 0, 1)
-    dataset = AllPairs(data.test)
+    data = VocalSketch_v2()
+
+    partitions = SiamesePartitions(data, DataSplit(.35, .15, .5))
+
+    dataset = AllPairs(partitions.test)
     rrs = reciprocal_ranks(model, dataset, use_cuda)
     utilities.log_final_stats(rrs)
 

@@ -5,22 +5,24 @@ import numpy as np
 import torch
 from torch.nn import BCELoss
 
-from datafiles.generics import SiameseDatafile
-from datasets.siamese import AllPositivesRandomNegatives, AllPairs
+from data_files.generics import Datafiles
+from data_sets.siamese import AllPositivesRandomNegatives, AllPairs
 from models.siamese import Siamese
+from data_partitions.siamese import SiamesePartitions
 from utils import utils as utilities, training as training, experimentation as experimentation, graphing as graphing
 
 
-def train(use_cuda, data: SiameseDatafile, use_dropout, validate_every):
+def train(use_cuda, data: Datafiles, use_dropout, validate_every, data_split):
     logger = logging.getLogger('logger')
 
     n_epochs = 100
     model_path = "./model_output/random_selection/model_{0}"
 
-    training_data = AllPositivesRandomNegatives(data.train)
-    training_pairs = AllPairs(data.train)
-    validation_pairs = AllPairs(data.val)
-    testing_pairs = AllPairs(data.test)
+    partitions = SiamesePartitions(data, data_split)
+    training_data = AllPositivesRandomNegatives(partitions.train)
+    training_pairs = AllPairs(partitions.train)
+    validation_pairs = AllPairs(partitions.val)
+    testing_pairs = AllPairs(partitions.test)
 
     # get a siamese network, see Siamese class for architecture
     siamese = Siamese(dropout=use_dropout)

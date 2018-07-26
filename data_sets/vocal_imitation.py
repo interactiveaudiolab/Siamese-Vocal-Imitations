@@ -1,7 +1,7 @@
 import numpy as np
 import torch.utils.data.dataset as dataset
 
-from datafiles.generics import SiamesePartition
+from data_partitions.siamese import SiamesePartition
 
 
 class FineTuned(dataset.Dataset):
@@ -64,8 +64,7 @@ class AllPairs(dataset.Dataset):
 
         self.n_imitations = len(self.imitations)
         self.n_references = len(self.references)
-        self.canonical_labels = data.canonical_labels
-        self.all_labels = data.all_labels
+        self.labels = data.all_labels
 
         self.pairs = data.all_pairs
 

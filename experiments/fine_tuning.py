@@ -6,13 +6,14 @@ import torch
 from torch.nn import BCELoss
 
 import experiments.random_selection
-from datafiles.generics import SiameseDatafile
-from datasets.siamese import FineTuned, AllPairs
+from data_files.generics import Datafiles
+from data_sets.siamese import FineTuned, AllPairs
 from models.siamese import Siamese
+from data_partitions.siamese import SiamesePartitions
 from utils import utils as utilities, experimentation as experimentation, training as training, graphing as graphing
 
 
-def train(use_cuda, data: SiameseDatafile, use_dropout, validate_every, use_cached_baseline=False, minimum_passes=0):
+def train(use_cuda, data: Datafiles, use_dropout, validate_every, data_split, use_cached_baseline=False, minimum_passes=0):
     logger = logging.getLogger('logger')
     # get the baseline network
     if use_cached_baseline:
@@ -21,14 +22,15 @@ def train(use_cuda, data: SiameseDatafile, use_dropout, validate_every, use_cach
             siamese = siamese.cuda()
         utilities.load_model(siamese, './model_output/random_selection/model_best')
     else:
-        siamese = experiments.random_selection.train(use_cuda, data, use_dropout, validate_every)
+        siamese = experiments.random_selection.train(use_cuda, data, use_dropout, validate_every, data_split)
 
     model_path = './model_output/fine_tuned/model_{0}_{1}'
 
-    fine_tuning_data = FineTuned(data.train)
-    training_pairs = AllPairs(data.train)
-    validation_pairs = AllPairs(data.val)
-    testing_pairs = AllPairs(data.test)
+    partitions = SiamesePartitions(data, data_split)
+    fine_tuning_data = FineTuned(partitions.train)
+    training_pairs = AllPairs(partitions.train)
+    validation_pairs = AllPairs(partitions.val)
+    testing_pairs = AllPairs(partitions.test)
 
     criterion = BCELoss()
 

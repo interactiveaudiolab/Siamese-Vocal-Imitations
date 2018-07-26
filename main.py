@@ -8,8 +8,9 @@ import utils.matplotlib_backend_hack
 import experiments.fine_tuning
 import experiments.random_selection
 import utils.utils as utilities
-from datafiles.vocal_imitation import VocalImitation
-from datafiles.vocal_sketch import VocalSketch_v2, VocalSketch_v1
+from data_files.vocal_imitation import VocalImitation
+from data_files.vocal_sketch import VocalSketch_v2, VocalSketch_v1
+from utils.obj import DataSplit
 
 
 def main(cli_args=None):
@@ -26,21 +27,27 @@ def main(cli_args=None):
     logger.info('Beginning trial #{0}...'.format(utilities.get_trial_number()))
 
     # log all CLI args
+    logger.debug("\tCLI args:")
     for key in vars(cli_args):
         logger.debug("\t{0} = {1}".format(key, vars(cli_args)[key]))
 
     try:
-        siamese_datafiles = VocalImitation(*cli_args.partitions, recalculate_spectrograms=cli_args.spectrograms)
-        #
-        # if cli_args.vocal_sketch_version == 1:
-        #     siamese_datafiles = VocalSketch_v1(*cli_args.partitions, recalculate_spectrograms=cli_args.spectrograms)
-        # else:
-        #     siamese_datafiles = VocalSketch_v2(*cli_args.partitions, recalculate_spectrograms=cli_args.spectrograms)
-
-        if cli_args.random_only:
-            experiments.random_selection.train(cli_args.cuda, siamese_datafiles, cli_args.dropout, cli_args.validate_every)
+        if cli_args.siamese_dataset in ['vs1.0']:
+            dataset = VocalSketch_v1
+        elif cli_args.siamese_dataset in ['vs2.0']:
+            dataset = VocalSketch_v2
+        elif cli_args.siamese_dataset in ['vi']:
+            dataset = VocalImitation
         else:
-            experiments.fine_tuning.train(cli_args.cuda, siamese_datafiles, cli_args.dropout, cli_args.validate_every,
+            raise ValueError("Invalid dataset ({0}) chosen.".format(cli_args.siamese_dataset))
+
+        siamese_datafiles = dataset(recalculate_spectrograms=cli_args.spectrograms)
+
+        data_split = DataSplit(*cli_args.data_partitions)
+        if cli_args.random_only:
+            experiments.random_selection.train(cli_args.cuda, siamese_datafiles, cli_args.dropout, cli_args.validate_every, data_split)
+        else:
+            experiments.fine_tuning.train(cli_args.cuda, siamese_datafiles, cli_args.dropout, cli_args.validate_every, data_split,
                                           use_cached_baseline=cli_args.cache_baseline,
                                           minimum_passes=cli_args.fine_tuning_passes)
         cli_args.trials -= 1

@@ -1,11 +1,11 @@
 import numpy as np
 import torch.utils.data.dataset as dataset
 
-from datafiles.vocal_imitation import VocalImitationPartition
+from data_partitions.siamese import SiamesePartition
 
 
 class FineTuned(dataset.Dataset):
-    def __init__(self, data: VocalImitationPartition):
+    def __init__(self, data: SiamesePartition):
         self.all_positives = data.positive_pairs
         self.references = data.references
         self.imitations = data.imitations
@@ -31,7 +31,7 @@ class FineTuned(dataset.Dataset):
 
 
 class AllPositivesRandomNegatives(dataset.Dataset):
-    def __init__(self, data: VocalImitationPartition):
+    def __init__(self, data: SiamesePartition):
         self.positives = data.positive_pairs
         self.negatives = data.negative_pairs
         self.pairs = []
@@ -58,13 +58,14 @@ class AllPositivesRandomNegatives(dataset.Dataset):
 
 
 class AllPairs(dataset.Dataset):
-    def __init__(self, data: VocalImitationPartition):
+    def __init__(self, data: SiamesePartition):
         self.imitations = data.imitations
         self.references = data.references
 
         self.n_imitations = len(self.imitations)
         self.n_references = len(self.references)
-        self.labels = data.all_labels
+        self.canonical_labels = data.canonical_labels
+        self.all_labels = data.all_labels
 
         self.pairs = data.all_pairs
 

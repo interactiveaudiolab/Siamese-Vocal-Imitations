@@ -90,7 +90,7 @@ def configure_parser(parser):
                         help='Whether to re-calculate spectrograms from the audio files or not (in which case the pre-generated .npy files are used). Defaults to false.')
     parser.add_argument('-b', '--cache_baseline', action='store_const', const=True, default=False,
                         help='Whether to use a cached version of the baseline model or not. Defaults to false.')
-    parser.add_argument('-p', '--partitions', nargs=3, type=float, default=[.35, .15, .5],
+    parser.add_argument('-p', '--data_partitions', nargs=3, type=float, default=[.35, .15, .5],
                         help='Ratios by which to partition the data into training, validation, and testing sets (in that order). Defaults to [.35, .15, .5].')
     parser.add_argument('-f', '--fine_tuning_passes', type=int, default=0,
                         help='Minimum amount of fine tuning passes to perform, regardless of convergence. Defaults to 0.')
@@ -100,8 +100,8 @@ def configure_parser(parser):
                         help='Whether to only run the random selection phase of training and skip fine-tuning. Defaults fo false.')
     parser.add_argument('-d', '--dropout', action='store_const', const=True, default=False,
                         help='Whether to use drop-out in training the Siamese network. Defaults to false.')
-    parser.add_argument('-v', '--vocal_sketch_version', default=2, type=int, choices=[1, 2],
-                        help='Version of vocal sketch dataset to use. Defaults to vocal sketch 2.0.')
+    parser.add_argument('-sd', '--siamese_dataset', default='vs2.0', type=str, choices=['vs1.0', 'vs2.0', 'vi'],
+                        help='Siamese dataset to use for experiments. Defaults to vocal sketch 2.0.')
     parser.add_argument('-ve', '--validate_every', default=1, type=int,
                         help='How often to calculate loss and MRR (per epoch). Defaults to 1. 0 means do not calculate at all.')
 

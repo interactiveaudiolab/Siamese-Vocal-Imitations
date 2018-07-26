@@ -1,7 +1,7 @@
 import numpy as np
 from torch.utils.data import DataLoader
 
-from datasets.siamese import AllPositivesRandomNegatives
+from data_sets.siamese import AllPositivesRandomNegatives
 from models.siamese import Siamese
 from utils.progress_bar import Bar
 
