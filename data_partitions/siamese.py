@@ -17,25 +17,18 @@ class SiamesePartitions:
         references = dataset.references
         reference_labels = dataset.reference_labels
 
-        # sort the references so we're dividing over categories
-        # TODO: instead, shuffle by label
-        ind = np.argsort([v['label'] for v in reference_labels])
-        references = references[ind]
-        reference_labels = reference_labels[ind]
+        # Split categories across train/val and test
+        # i.e. test has test_ratio categories
+        unique_labels = list(set([v['label'] for v in reference_labels]))
+        np.random.shuffle(unique_labels)
+        n_train_val = int(split.train_ratio * len(unique_labels) + split.validation_ratio * len(unique_labels))
+        train_val_categories = unique_labels[:n_train_val]
+        test_categories = unique_labels[n_train_val:]
 
-        n_train = int(split.train_ratio * len(references))
-        n_val = int(split.validation_ratio * len(references))
-        n_train_val = n_train + n_val
-        n_test = int(split.test_ratio * len(references))
+        train_val_ref, train_val_ref_labels = self.filter_references(references, reference_labels, train_val_categories)
+        test_ref, test_ref_labels = self.filter_references(references, reference_labels, test_categories)
 
-        # Split references up into training/validation set and testing set
-        train_val_ref = references[:n_train_val]
-        train_val_ref_labels = reference_labels[:n_train_val]
-        test_ref = references[n_train_val:]
-        test_ref_labels = reference_labels[n_train_val:]
-
-        # Then, divide references over training and validation
-        train_val_imit, train_val_imit_lab = self.filter_imitations(imitations, imitation_labels, train_val_ref_labels)
+        train_val_imit, train_val_imit_labels = self.filter_imitations(imitations, imitation_labels, train_val_ref_labels)
         try:
             n_train_imit = int(split.train_ratio / (split.train_ratio + split.validation_ratio) * len(train_val_imit))
         except ZeroDivisionError:
@@ -43,12 +36,22 @@ class SiamesePartitions:
 
         train_imit = train_val_imit[:n_train_imit]
         val_imit = train_val_imit[n_train_imit:]
-        train_imit_labels = train_val_imit_lab[:n_train_imit]
-        val_imit_labels = train_val_imit_lab[n_train_imit:]
+        train_imit_labels = train_val_imit_labels[:n_train_imit]
+        val_imit_labels = train_val_imit_labels[n_train_imit:]
 
         self.train = SiamesePartition(train_val_ref, train_val_ref_labels, train_imit, train_imit_labels, "training")
         self.val = SiamesePartition(train_val_ref, train_val_ref_labels, val_imit, val_imit_labels, "validation")
         self.test = SiamesePartition(test_ref, test_ref_labels, imitations, imitation_labels, "testing")
+
+    @staticmethod
+    def filter_references(references, reference_labels, categories):
+        ref = []
+        ref_labels = []
+        for r, l in zip(references, reference_labels):
+            if l['label'] in categories:
+                ref.append(r)
+                ref_labels.append(l)
+        return ref, ref_labels
 
     @staticmethod
     def filter_imitations(all_imitations, all_imitation_labels, reference_labels):
@@ -86,10 +89,10 @@ class SiamesePartition:
         self.all_labels = np.zeros([len(self.imitations), len(self.references)])
         self.canonical_labels = np.zeros([len(self.imitations), len(self.references)])
         n = 0
-        update_bar_every = 25
+        update_bar_every = 1000
         for i, (imitation, imitation_label) in enumerate(zip(self.imitations, self.imitation_labels)):
             for j, (reference, reference_label) in enumerate(zip(self.references, self.reference_labels)):
-                if reference_label['label'] == imitation_label:
+                if reference_label['label'] == imitation_label and reference_label['is_canonical']:
                     self.positive_pairs.append([imitation, reference, True])
                     self.all_pairs.append([imitation, reference, True])
                     self.all_labels[i, j] = 1
