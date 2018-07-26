@@ -1,13 +1,20 @@
+# File types
 *.txt
 *.csv
-config.yaml
-output/*
-*/__pycache__/*
-__pycache__/*
-.ipynb_checkpoints/
-.idea/*
-model_output/*
-data/*
 *.log
 *.png
 *.pickle
+
+# Python
+*/__pycache__/*
+__pycache__/*
+.ipynb_checkpoints/
+
+# IDE
+.idea/*
+
+# Project
+model_output/*
+data/*
+output/*
+config.yaml
