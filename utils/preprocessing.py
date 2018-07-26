@@ -10,7 +10,7 @@ from utils.progress_bar import Bar
 from utils.utils import save_npy
 
 
-def calculate_spectrograms(paths, file_labels, label_no, save_location, dataset_name, spectrogram_func):
+def calculate_spectrograms(paths, file_labels, save_location, dataset_name, spectrogram_func):
     # calculate spectrograms and save
     bar = Bar('Calculating spectrograms and saving them at {0}/{1}.npy...'.format(dataset_name, save_location), max=len(paths))
     spectrograms = []
@@ -69,10 +69,10 @@ def reference_spectrogram(path):
         y_fix = np.append(y, pad)
     else:
         y_fix = y[0:int(4 * sr)]
-    S = librosa.feature.melspectrogram(y=y_fix, sr=sr, n_fft=1024, hop_length=1024, power=2)
-    S = librosa.power_to_db(S, ref=np.max)
-    S_fix = S[:, 0:128]
-    return S_fix
+    s = librosa.feature.melspectrogram(y=y_fix, sr=sr, n_fft=1024, hop_length=1024, power=2)
+    s = librosa.power_to_db(s, ref=np.max)
+    s_fix = s[:, 0:128]
+    return s_fix
 
 
 def imitation_spectrogram(path):
@@ -84,7 +84,7 @@ def imitation_spectrogram(path):
     :return: power log spectrogram
     """
     try:
-        y, sr = librosa.load(path, sr=44100)
+        y, sr = librosa.load(path, sr=16000)
     except audioop.error as e:
         logger = logging.getLogger('logger')
         logger.warning("Could not load {0}\n{1}".format(path, e))
@@ -95,12 +95,12 @@ def imitation_spectrogram(path):
         y_fix = np.append(y, pad)
     else:
         y_fix = y[0:int(4 * sr)]
-    S = librosa.feature.melspectrogram(y=y_fix, sr=sr, n_fft=133,
+    s = librosa.feature.melspectrogram(y=y_fix, sr=sr, n_fft=133,
                                        hop_length=133, power=2, n_mels=39,
                                        fmin=0.0, fmax=5000)
-    S = S[:, :482]
-    S_db = librosa.power_to_db(S, ref=np.max)
-    return S_db
+    s = s[:, :482]
+    s_db = librosa.power_to_db(s, ref=np.max)
+    return s_db
 
 
 def normalize_spectrograms(spectrograms):
