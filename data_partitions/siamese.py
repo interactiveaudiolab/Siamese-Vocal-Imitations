@@ -25,29 +25,22 @@ class SiamesePartitions:
 
             # Split categories across train/val and test
             # i.e. train/val share a set of categories and test uses the other ones
-            unique_labels = list(set([v['label'] for v in reference_labels]))
-            np.random.shuffle(unique_labels)
-            n_train_val = int(split.train_ratio * len(unique_labels) + split.validation_ratio * len(unique_labels))
-            train_val_categories = unique_labels[:n_train_val]
-            test_categories = unique_labels[n_train_val:]
+            categories = list(set([v['label'] for v in reference_labels]))
+            np.random.shuffle(categories)
 
-            train_val_ref, train_val_ref_labels = self.filter_references(references, reference_labels, train_val_categories)
-            test_ref, test_ref_labels = self.filter_references(references, reference_labels, test_categories)
+            n_train_val = int(split.train_ratio * len(categories) + split.validation_ratio * len(categories))
 
-            train_val_imit, train_val_imit_labels = self.filter_imitations(imitations, imitation_labels, train_val_ref_labels)
-            try:
-                n_train_imit = int(split.train_ratio / (split.train_ratio + split.validation_ratio) * len(train_val_imit))
-            except ZeroDivisionError:
-                n_train_imit = 0
+            train_val_ref, train_val_ref_labels = self.split_references(references, reference_labels, categories[:n_train_val])
+            test_ref, test_ref_labels = self.split_references(references, reference_labels, categories[n_train_val:])
 
-            train_imit = train_val_imit[:n_train_imit]
-            val_imit = train_val_imit[n_train_imit:]
-            train_imit_labels = train_val_imit_labels[:n_train_imit]
-            val_imit_labels = train_val_imit_labels[n_train_imit:]
+            train_val_imit, train_val_imit_lab = self.filter_imitations(imitations, imitation_labels, train_val_ref_labels)
 
-            self.train = SiamesePartition(train_val_ref, train_val_ref_labels, train_imit, train_imit_labels, "training")
-            self.val = SiamesePartition(train_val_ref, train_val_ref_labels, val_imit, val_imit_labels, "validation")
+            train_imit, train_imit_lab, val_imit, val_imit_lab = self.split_imitations(categories, imitations, split, train_val_imit, train_val_imit_lab)
+
+            self.train = SiamesePartition(train_val_ref, train_val_ref_labels, train_imit, train_imit_lab, "training")
+            self.val = SiamesePartition(train_val_ref, train_val_ref_labels, val_imit, val_imit_lab, "validation")
             self.test = SiamesePartition(test_ref, test_ref_labels, imitations, imitation_labels, "testing")
+
             logger.debug("Saving partitions at {0}...".format(pickle_name))
             with open(pickle_name, 'wb') as f:
                 pickle.dump(self.train, f, protocol=pickle.HIGHEST_PROTOCOL)
@@ -69,14 +62,36 @@ class SiamesePartitions:
                 sys.exit()
 
     @staticmethod
-    def filter_references(references, reference_labels, categories):
+    def split_imitations(categories, imitations, split, train_val_imit, train_val_imit_labels):
+        imitation_shape = list(imitations.shape)
+        imitation_shape[0] = 0
+        train_imit = np.empty(imitation_shape)
+        val_imit = np.empty(imitation_shape)
+        train_imit_labels = np.empty(0)
+        val_imit_labels = np.empty(0)
+        for category in categories:
+            ind = [i for i, v in enumerate(train_val_imit_labels) if v == category]
+            np.random.shuffle(ind)
+            n_train = int(split.train_ratio / (split.train_ratio + split.validation_ratio) * len(ind))
+
+            imit = train_val_imit[ind]
+            imit_labels = train_val_imit_labels[ind]
+
+            train_imit = np.concatenate([train_imit, imit[:n_train]])
+            train_imit_labels = np.concatenate([train_imit_labels, imit_labels[:n_train]])
+            val_imit = np.concatenate([val_imit, imit[n_train:]])
+            val_imit_labels = np.concatenate([val_imit_labels, imit_labels[n_train:]])
+        return train_imit, train_imit_labels, val_imit, val_imit_labels
+
+    @staticmethod
+    def split_references(references, reference_labels, categories):
         ref = []
         ref_labels = []
         for r, l in zip(references, reference_labels):
             if l['label'] in categories:
                 ref.append(r)
                 ref_labels.append(l)
-        return ref, ref_labels
+        return np.array(ref), np.array(ref_labels)
 
     @staticmethod
     def filter_imitations(all_imitations, all_imitation_labels, reference_labels):
@@ -88,7 +103,7 @@ class SiamesePartitions:
                 imitations.append(i)
                 imitation_labels.append(l)
 
-        return imitations, imitation_labels
+        return np.array(imitations), np.array(imitation_labels)
 
 
 class SiamesePartition:
