@@ -4,7 +4,7 @@ from utils import utils
 
 
 class Datafiles:
-    def __init__(self, version, shuffle, recalculate_spectrograms):
+    def __init__(self, version, recalculate_spectrograms):
         logger = logging.getLogger('logger')
         logger.info("Using dataset: {0}".format(version))
 
@@ -27,10 +27,6 @@ class Datafiles:
 
             self.imitations = utils.load_npy("imitations.npy", version)
             self.imitation_labels = utils.load_npy("imitations_labels.npy", version)
-
-        if shuffle:
-            self.references, self.reference_labels = utils.zip_shuffle(self.references, self.reference_labels)
-            self.imitations, self.imitation_labels = utils.zip_shuffle(self.imitations, self.imitation_labels)
 
     @staticmethod
     def calculate_spectrograms():

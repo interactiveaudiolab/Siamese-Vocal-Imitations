@@ -7,8 +7,8 @@ from utils.utils import get_dataset_dir
 
 
 class VocalSketch(Datafiles):
-    def __init__(self, version, shuffle=True, recalculate_spectrograms=False):
-        super().__init__(version, shuffle, recalculate_spectrograms)
+    def __init__(self, version, recalculate_spectrograms=False):
+        super().__init__(version, recalculate_spectrograms)
 
     @staticmethod
     def calculate_spectrograms():
@@ -16,8 +16,8 @@ class VocalSketch(Datafiles):
 
 
 class VocalSketchV1(VocalSketch):
-    def __init__(self, shuffle=True, recalculate_spectrograms=False):
-        super().__init__("vs1.0", shuffle, recalculate_spectrograms)
+    def __init__(self, recalculate_spectrograms=False):
+        super().__init__("vs1.0", recalculate_spectrograms)
 
     @staticmethod
     def calculate_spectrograms():
@@ -54,8 +54,8 @@ class VocalSketchV1(VocalSketch):
 
 
 class VocalSketchV2(VocalSketch):
-    def __init__(self, shuffle=True, recalculate_spectrograms=False):
-        super().__init__("vs2.0", shuffle, recalculate_spectrograms)
+    def __init__(self, recalculate_spectrograms=False):
+        super().__init__("vs2.0", recalculate_spectrograms)
 
     @staticmethod
     def calculate_spectrograms():
