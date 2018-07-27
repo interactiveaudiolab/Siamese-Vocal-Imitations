@@ -45,9 +45,11 @@ def main(cli_args=None):
 
         data_split = DataSplit(*cli_args.data_partitions)
         if cli_args.random_only:
-            experiments.random_selection.train(cli_args.cuda, siamese_datafiles, cli_args.dropout, cli_args.validate_every, data_split)
+            experiments.random_selection.train(cli_args.cuda, siamese_datafiles, cli_args.dropout, cli_args.validate_every, data_split,
+                                               cli_args.regenerate_splits, cli_args.regenerate_weights)
         else:
             experiments.fine_tuning.train(cli_args.cuda, siamese_datafiles, cli_args.dropout, cli_args.validate_every, data_split,
+                                          cli_args.regenerate_splits, cli_args.regenerate_weights,
                                           use_cached_baseline=cli_args.cache_baseline,
                                           minimum_passes=cli_args.fine_tuning_passes)
         cli_args.trials -= 1

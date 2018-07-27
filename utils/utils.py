@@ -104,6 +104,10 @@ def configure_parser(parser):
                         help='Siamese dataset to use for experiments. Defaults to vocal sketch 2.0.')
     parser.add_argument('-ve', '--validate_every', default=1, type=int,
                         help='How often to calculate loss and MRR (per epoch). Defaults to 1. 0 means do not calculate at all.')
+    parser.add_argument('-rs', '--regenerate_splits', action='store_const', const=True, default=False,
+                        help='Whether to regenerate data splits or not. Defaults to false.')
+    parser.add_argument('-rw', '--regenerate_weights', action='store_const', const=True, default=False,
+                        help='Whether to regenerate Siamese weights or not. Defaults to false.')
 
 
 def update_trial_number():

@@ -12,13 +12,13 @@ from data_partitions.siamese import SiamesePartitions
 from utils import utils as utilities, training as training, experimentation as experimentation, graphing as graphing
 
 
-def train(use_cuda, data: Datafiles, use_dropout, validate_every, data_split):
+def train(use_cuda, data: Datafiles, use_dropout, validate_every, data_split, regenerate_splits, regenerate_weights):
     logger = logging.getLogger('logger')
 
-    n_epochs = 100
+    n_epochs = 60
     model_path = "./model_output/random_selection/model_{0}"
 
-    partitions = SiamesePartitions(data, data_split)
+    partitions = SiamesePartitions(data, data_split, regenerate_splits=regenerate_splits)
     training_data = AllPositivesRandomNegatives(partitions.train)
     training_pairs = AllPairs(partitions.train)
     validation_pairs = AllPairs(partitions.val)
@@ -26,6 +26,18 @@ def train(use_cuda, data: Datafiles, use_dropout, validate_every, data_split):
 
     # get a siamese network, see Siamese class for architecture
     siamese = Siamese(dropout=use_dropout)
+    starting_weights_path = model_path.format("starting_weights")
+
+    if regenerate_weights:
+        logger.debug("Saving initial weights/biases at {0}...".format(starting_weights_path))
+        utilities.save_model(siamese, starting_weights_path)
+    else:
+        try:
+            logger.debug("Loading initial weights/biases from {0}...".format(starting_weights_path))
+            utilities.load_model(siamese, starting_weights_path, use_cuda)
+        except FileNotFoundError:
+            logger.debug("Saving initial weights/biases at {0}...".format(starting_weights_path))
+            utilities.save_model(siamese, starting_weights_path)
     if use_cuda:
         siamese = siamese.cuda()
 
@@ -36,11 +48,12 @@ def train(use_cuda, data: Datafiles, use_dropout, validate_every, data_split):
 
     try:
         logger.info("Training using random selection...")
-        training_mrrs = np.zeros(n_epochs)
-        validation_mrrs = np.zeros(n_epochs)
-        training_losses = np.zeros(n_epochs)
-        training_loss_var = np.zeros(n_epochs)
-        validation_losses = np.zeros(n_epochs)
+
+        training_mrrs = []
+        validation_mrrs = []
+        training_losses = []
+        validation_losses = []
+
         models = training.train_siamese_network(siamese, training_data, criterion, optimizer, n_epochs, use_cuda)
         for epoch, (model, training_batch_losses) in enumerate(models):
             utilities.save_model(model, model_path.format(epoch))
@@ -48,30 +61,35 @@ def train(use_cuda, data: Datafiles, use_dropout, validate_every, data_split):
             should_validate = validate_every != 0 and epoch % validate_every == 0
 
             training_loss = training_batch_losses.mean()
-            training_losses[epoch] = training_loss
-            training_loss_var[epoch] = training_batch_losses.var()
+            training_losses.append(training_loss)
             if should_validate:
                 validation_batch_losses = experimentation.siamese_loss(model, validation_pairs, criterion, use_cuda)
                 validation_loss = validation_batch_losses.mean()
-                validation_losses[epoch] = validation_loss
+                validation_losses.append(validation_loss)
                 logger.info("Loss at epoch {0}:\n\ttrn = {1}\n\tval = {2}".format(epoch, training_loss, validation_loss))
-            else:
-                logger.info("Loss at epoch {0}:\n\ttrn = {1}".format(epoch, training_loss))
 
-            if should_validate:
                 logger.debug("Calculating MRRs...")
                 training_mrr = experimentation.mean_reciprocal_ranks(model, training_pairs, use_cuda)
                 val_mrr = experimentation.mean_reciprocal_ranks(model, validation_pairs, use_cuda)
                 logger.info("MRRs at epoch {0}:\n\ttrn = {1}\n\tval = {2}".format(epoch, training_mrr, val_mrr))
 
-                training_mrrs[epoch] = training_mrr
-                validation_mrrs[epoch] = val_mrr
+                training_mrrs.append(training_mrr)
+                validation_mrrs.append(val_mrr)
 
                 graphing.mrr_per_epoch(training_mrrs, validation_mrrs, "Random Selection")
+            else:
+                logger.info("Loss at epoch {0}:\n\ttrn = {1}".format(epoch, training_loss))
+                validation_losses.append(np.nan)
+                training_mrrs.append(np.nan)
+                validation_mrrs.append(np.nan)
+
             graphing.loss_per_epoch(training_losses, validation_losses, "Random Selection")
 
-        # get and save best model TODO: should this be by training or by validation?
-        utilities.load_model(siamese, model_path.format(np.argmax(validation_mrrs)))
+        # load weights from best model if we validated throughout
+        if validate_every > 0:
+            siamese = siamese.train()
+            utilities.load_model(siamese, model_path.format(np.argmax(validation_mrrs)))
+        # otherwise just save most recent model
         utilities.save_model(siamese, model_path.format('best'))
         utilities.save_model(siamese, './output/{0}/random_selection'.format(utilities.get_trial_number()))
 

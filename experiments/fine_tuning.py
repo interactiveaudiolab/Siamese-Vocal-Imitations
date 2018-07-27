@@ -13,7 +13,8 @@ from data_partitions.siamese import SiamesePartitions
 from utils import utils as utilities, experimentation as experimentation, training as training, graphing as graphing
 
 
-def train(use_cuda, data: Datafiles, use_dropout, validate_every, data_split, use_cached_baseline=False, minimum_passes=0):
+def train(use_cuda, data: Datafiles, use_dropout, validate_every, data_split, regenerate_splits, regenerate_weights, use_cached_baseline=False,
+          minimum_passes=0):
     logger = logging.getLogger('logger')
     # get the baseline network
     if use_cached_baseline:
@@ -22,7 +23,7 @@ def train(use_cuda, data: Datafiles, use_dropout, validate_every, data_split, us
             siamese = siamese.cuda()
         utilities.load_model(siamese, './model_output/random_selection/model_best')
     else:
-        siamese = experiments.random_selection.train(use_cuda, data, use_dropout, validate_every, data_split)
+        siamese = experiments.random_selection.train(use_cuda, data, use_dropout, validate_every, data_split, regenerate_splits, regenerate_weights)
 
     model_path = './model_output/fine_tuned/model_{0}_{1}'
 

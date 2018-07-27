@@ -1,4 +1,6 @@
 import logging
+import pickle
+import sys
 
 import numpy as np
 
@@ -8,40 +10,63 @@ from utils.progress_bar import Bar
 
 
 class SiamesePartitions:
-    def __init__(self, dataset: Datafiles, split: DataSplit):
+    def __init__(self, dataset: Datafiles, split: DataSplit, regenerate_splits=False):
+        dataset_name = type(dataset).__name__
+        pickle_name = "./partition_pickles/{0}.pickle".format(dataset_name)
         logger = logging.getLogger('logger')
-        logger.info("train, validation, test ratios = {0}, {1}, {2}".format(split.train_ratio, split.validation_ratio, split.test_ratio))
 
-        imitations = dataset.imitations
-        imitation_labels = dataset.imitation_labels
-        references = dataset.references
-        reference_labels = dataset.reference_labels
+        if regenerate_splits:
+            logger.info("train, validation, test ratios = {0}, {1}, {2}".format(split.train_ratio, split.validation_ratio, split.test_ratio))
 
-        # Split categories across train/val and test
-        # i.e. test has test_ratio categories
-        unique_labels = list(set([v['label'] for v in reference_labels]))
-        np.random.shuffle(unique_labels)
-        n_train_val = int(split.train_ratio * len(unique_labels) + split.validation_ratio * len(unique_labels))
-        train_val_categories = unique_labels[:n_train_val]
-        test_categories = unique_labels[n_train_val:]
+            imitations = dataset.imitations
+            imitation_labels = dataset.imitation_labels
+            references = dataset.references
+            reference_labels = dataset.reference_labels
 
-        train_val_ref, train_val_ref_labels = self.filter_references(references, reference_labels, train_val_categories)
-        test_ref, test_ref_labels = self.filter_references(references, reference_labels, test_categories)
+            # Split categories across train/val and test
+            # i.e. test has test_ratio categories
+            unique_labels = list(set([v['label'] for v in reference_labels]))
+            np.random.shuffle(unique_labels)
+            n_train_val = int(split.train_ratio * len(unique_labels) + split.validation_ratio * len(unique_labels))
+            train_val_categories = unique_labels[:n_train_val]
+            test_categories = unique_labels[n_train_val:]
 
-        train_val_imit, train_val_imit_labels = self.filter_imitations(imitations, imitation_labels, train_val_ref_labels)
-        try:
-            n_train_imit = int(split.train_ratio / (split.train_ratio + split.validation_ratio) * len(train_val_imit))
-        except ZeroDivisionError:
-            n_train_imit = 0
+            train_val_ref, train_val_ref_labels = self.filter_references(references, reference_labels, train_val_categories)
+            test_ref, test_ref_labels = self.filter_references(references, reference_labels, test_categories)
 
-        train_imit = train_val_imit[:n_train_imit]
-        val_imit = train_val_imit[n_train_imit:]
-        train_imit_labels = train_val_imit_labels[:n_train_imit]
-        val_imit_labels = train_val_imit_labels[n_train_imit:]
+            train_val_imit, train_val_imit_labels = self.filter_imitations(imitations, imitation_labels, train_val_ref_labels)
+            try:
+                n_train_imit = int(split.train_ratio / (split.train_ratio + split.validation_ratio) * len(train_val_imit))
+            except ZeroDivisionError:
+                n_train_imit = 0
 
-        self.train = SiamesePartition(train_val_ref, train_val_ref_labels, train_imit, train_imit_labels, "training")
-        self.val = SiamesePartition(train_val_ref, train_val_ref_labels, val_imit, val_imit_labels, "validation")
-        self.test = SiamesePartition(test_ref, test_ref_labels, imitations, imitation_labels, "testing")
+            train_imit = train_val_imit[:n_train_imit]
+            val_imit = train_val_imit[n_train_imit:]
+            train_imit_labels = train_val_imit_labels[:n_train_imit]
+            val_imit_labels = train_val_imit_labels[n_train_imit:]
+
+            self.train = SiamesePartition(train_val_ref, train_val_ref_labels, train_imit, train_imit_labels, "training")
+            self.val = SiamesePartition(train_val_ref, train_val_ref_labels, val_imit, val_imit_labels, "validation")
+            self.test = SiamesePartition(test_ref, test_ref_labels, imitations, imitation_labels, "testing")
+            logger.debug("Saving partitions at {0}...".format(pickle_name))
+            with open(pickle_name, 'wb') as f:
+                pickle.dump(self.train, f, protocol=pickle.HIGHEST_PROTOCOL)
+                pickle.dump(self.val, f, protocol=pickle.HIGHEST_PROTOCOL)
+                pickle.dump(self.test, f, protocol=pickle.HIGHEST_PROTOCOL)
+        else:
+            try:
+                logger.debug("Loading partitions from {0}...".format(pickle_name))
+                with open(pickle_name, 'rb') as f:
+                    self.train = pickle.load(f)
+                    self.val = pickle.load(f)
+                    self.test = pickle.load(f)
+            except FileNotFoundError:
+                with open(pickle_name, 'w+b') as f:
+                    logger.critical("No pickled partition at {0}".format(pickle_name))
+                    sys.exit()
+            except EOFError:
+                logger.critical("Insufficient amount of data found in {0}".format(pickle_name))
+                sys.exit()
 
     @staticmethod
     def filter_references(references, reference_labels, categories):
