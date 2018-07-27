@@ -91,6 +91,10 @@ class Siamese(nn.Module):
                 nn.Sigmoid()
             )
 
+        self.left_backup = self.left_branch
+        self.right_backup = self.right_branch
+        self.fully_connected_backup = self.fully_connected
+
         # self.left_branch = nn.DataParallel(self.left_branch)
         # self.right_branch = nn.DataParallel(self.right_branch)
         # self.fully_connected = nn.DataParallel(self.fully_connected)
@@ -113,23 +117,24 @@ class Siamese(nn.Module):
     def use_parallel(self, parallel):
         self.parallel = parallel
 
-#
-# class ParallelSiamese(Siamese):
-#     def __init__(self):
-#         super().__init__()
-#         self.left_branch = nn.DataParallel(self.left_branch)
-#         self.right_branch = nn.DataParallel(self.right_branch)
-#         self.fully_connected = nn.DataParallel(self.fully_connected)
-#
-#     def forward(self, left, right):
-#         super().forward(left, right)
-#
-#     def copy_weights_from(self, siamese: Siamese):
-#         parallel = dict(self.state_dict())
-#         non_parallel = dict(siamese.state_dict())
-#
-#         for param in non_parallel:
-#             if param in parallel:
-#                 parallel[param].data.copy_(non_parallel[param])
-#
-#         self.load_state_dict(parallel)
+    def train(self, mode=True):
+        super().train(mode)
+
+        self.left_branch = self.left_backup
+        self.right_branch = self.right_backup
+        self.fully_connected = self.fully_connected_backup
+
+        return self
+
+    def eval(self):
+        super().eval()
+
+        self.left_backup = self.left_branch
+        self.right_backup = self.right_branch
+        self.fully_connected_backup = self.fully_connected
+
+        self.left_branch = nn.DataParallel(self.left_branch)
+        self.right_branch = nn.DataParallel(self.right_branch)
+        self.fully_connected = nn.DataParallel(self.fully_connected)
+
+        return self
