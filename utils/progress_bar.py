@@ -6,7 +6,7 @@ from progress.bar import Bar as BarInterface
 class Bar(BarInterface):
     message = 'Loading'
     fill = '*'
-    suffix = 'DONE: %(percent).1f%% - REMAINING: %(index)d of %(max)d - ETA: %(long_eta_td)s - ELAPSED: %(long_elapsed_td)s'
+    suffix = 'DONE: %(percent).1f%% (%(index)d of %(max)d) - ETA: %(long_eta_td)s - ELAPSED: %(long_elapsed_td)s'
     start_time = None
 
     def __init__(self, message, **kwargs):
