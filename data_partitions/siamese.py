@@ -24,7 +24,7 @@ class SiamesePartitions:
             reference_labels = dataset.reference_labels
 
             # Split categories across train/val and test
-            # i.e. test has test_ratio categories
+            # i.e. train/val share a set of categories and test uses the other ones
             unique_labels = list(set([v['label'] for v in reference_labels]))
             np.random.shuffle(unique_labels)
             n_train_val = int(split.train_ratio * len(unique_labels) + split.validation_ratio * len(unique_labels))
@@ -61,7 +61,7 @@ class SiamesePartitions:
                     self.val = pickle.load(f)
                     self.test = pickle.load(f)
             except FileNotFoundError:
-                with open(pickle_name, 'w+b') as f:
+                with open(pickle_name, 'w+b'):
                     logger.critical("No pickled partition at {0}".format(pickle_name))
                     sys.exit()
             except EOFError:

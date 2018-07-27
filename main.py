@@ -9,7 +9,7 @@ import experiments.fine_tuning
 import experiments.random_selection
 import utils.utils as utilities
 from data_files.vocal_imitation import VocalImitation
-from data_files.vocal_sketch import VocalSketch_v2, VocalSketch_v1
+from data_files.vocal_sketch import VocalSketchV2, VocalSketchV1
 from utils.obj import DataSplit
 
 
@@ -33,9 +33,9 @@ def main(cli_args=None):
 
     try:
         if cli_args.siamese_dataset in ['vs1.0']:
-            dataset = VocalSketch_v1
+            dataset = VocalSketchV1
         elif cli_args.siamese_dataset in ['vs2.0']:
-            dataset = VocalSketch_v2
+            dataset = VocalSketchV2
         elif cli_args.siamese_dataset in ['vi']:
             dataset = VocalImitation
         else:

@@ -15,7 +15,7 @@ class VocalSketch(Datafiles):
         raise NotImplementedError
 
 
-class VocalSketch_v1(VocalSketch):
+class VocalSketchV1(VocalSketch):
     def __init__(self, shuffle=True, recalculate_spectrograms=False):
         super().__init__("vs1.0", shuffle, recalculate_spectrograms)
 
@@ -53,7 +53,7 @@ class VocalSketch_v1(VocalSketch):
         preprocessing.calculate_spectrograms(reference_paths, reference_labels, 'references', 'vs1.0', preprocessing.reference_spectrogram)
 
 
-class VocalSketch_v2(VocalSketch):
+class VocalSketchV2(VocalSketch):
     def __init__(self, shuffle=True, recalculate_spectrograms=False):
         super().__init__("vs2.0", shuffle, recalculate_spectrograms)
 

@@ -2,7 +2,7 @@ import argparse
 import logging
 
 import utils.utils as utilities
-from data_files.vocal_sketch import VocalSketch_v2
+from data_files.vocal_sketch import VocalSketchV2
 from data_sets.siamese import AllPairs
 from models.siamese import Siamese
 from data_partitions.siamese import SiamesePartitions
@@ -27,7 +27,7 @@ def main():
     utilities.load_model(model, cli_args.model_path, use_cuda=use_cuda)
 
     model = model.eval()
-    data = VocalSketch_v2()
+    data = VocalSketchV2()
 
     partitions = SiamesePartitions(data, DataSplit(.35, .15, .5))
 
