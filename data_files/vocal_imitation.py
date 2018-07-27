@@ -7,7 +7,7 @@ from utils.utils import get_dataset_dir
 
 
 class VocalImitation(Datafiles):
-    def __init__(self, shuffle=True, recalculate_spectrograms=False):
+    def __init__(self, recalculate_spectrograms=False):
         super().__init__('vocal_imitation', recalculate_spectrograms)
 
     @staticmethod
