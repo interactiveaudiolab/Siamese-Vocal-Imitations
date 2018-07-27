@@ -20,8 +20,9 @@ def train_siamese_network(model: Siamese, data, objective, optimizer, n_epochs, 
             # clear out the gradients
             optimizer.zero_grad()
 
-            # TODO: make them floats at the source
             labels = labels.float()
+            left = left.float()
+            right = right.float()
 
             # reshape tensors and push to GPU if necessary
             left = left.unsqueeze(1)

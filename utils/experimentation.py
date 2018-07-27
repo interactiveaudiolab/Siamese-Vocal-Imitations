@@ -122,8 +122,9 @@ def siamese_loss(model: Siamese, dataset, objective, use_cuda: bool, batch_size=
     bar = Bar("Calculating loss", max=len(data))
     batch_losses = np.zeros(len(data))
     for i, (left, right, labels) in enumerate(data):
-        # TODO: make them floats at the source
         labels = labels.float()
+        left = left.float()
+        right = right.float()
 
         # reshape tensors and push to GPU if necessary
         left = left.unsqueeze(1)
