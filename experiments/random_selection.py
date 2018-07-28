@@ -12,10 +12,10 @@ from data_partitions.siamese import SiamesePartitions
 from utils import utils as utilities, training as training, experimentation as experimentation, graphing as graphing
 
 
-def train(use_cuda, data: Datafiles, use_dropout, validate_every, data_split, regenerate_splits, regenerate_weights, optimizer_name, lr, wd, momentum):
+def train(use_cuda, data: Datafiles, use_dropout, validate_every, data_split, regenerate_splits, regenerate_weights, optimizer_name, lr, wd, momentum,
+          n_epochs):
     logger = logging.getLogger('logger')
 
-    n_epochs = 10
     model_path = "./model_output/random_selection/model_{0}"
 
     partitions = SiamesePartitions(data, data_split, regenerate_splits=regenerate_splits)

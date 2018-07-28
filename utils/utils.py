@@ -118,6 +118,8 @@ def configure_parser(parser):
     parser.add_argument('-m', '--use_momentum', action='store_const', const=True, default=False,
                         help='Whether to use momentum. Only applies when using SGD. Defaults to false.')
 
+    parser.add_argument('-e', '--epochs', type=int, default=100, help="Amount of epochs to train for. Defaults to 100")
+
 
 def update_trial_number():
     trial_number = get_trial_number()
