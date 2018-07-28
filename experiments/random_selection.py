@@ -44,7 +44,7 @@ def train(use_cuda, data: Datafiles, use_dropout, validate_every, data_split, re
     criterion = BCELoss()
 
     if optimizer_name == 'sgd':
-        optimizer = torch.optim.SGD(siamese.parameters(), lr=lr, weight_decay=wd, momentum=.9, nesterov=momentum)
+        optimizer = torch.optim.SGD(siamese.parameters(), lr=lr, weight_decay=wd, momentum=.9 if momentum else 0, nesterov=momentum)
     elif optimizer_name == 'adam':
         optimizer = torch.optim.Adam(siamese.parameters(), lr=lr, weight_decay=wd)
     elif optimizer_name == 'rmsprop':
