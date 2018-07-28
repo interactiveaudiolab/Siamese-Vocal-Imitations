@@ -12,10 +12,10 @@ from data_partitions.siamese import SiamesePartitions
 from utils import utils as utilities, training as training, experimentation as experimentation, graphing as graphing
 
 
-def train(use_cuda, data: Datafiles, use_dropout, validate_every, data_split, regenerate_splits, regenerate_weights):
+def train(use_cuda, data: Datafiles, use_dropout, validate_every, data_split, regenerate_splits, regenerate_weights, optimizer_name, lr, wd, momentum):
     logger = logging.getLogger('logger')
 
-    n_epochs = 60
+    n_epochs = 10
     model_path = "./model_output/random_selection/model_{0}"
 
     partitions = SiamesePartitions(data, data_split, regenerate_splits=regenerate_splits)
@@ -43,8 +43,14 @@ def train(use_cuda, data: Datafiles, use_dropout, validate_every, data_split, re
 
     criterion = BCELoss()
 
-    # use stochastic gradient descent, same parameters as in paper
-    optimizer = torch.optim.SGD(siamese.parameters(), lr=.01, weight_decay=.0001, momentum=.9, nesterov=True)
+    if optimizer_name == 'sgd':
+        optimizer = torch.optim.SGD(siamese.parameters(), lr=lr, weight_decay=wd, momentum=.9, nesterov=momentum)
+    elif optimizer_name == 'adam':
+        optimizer = torch.optim.Adam(siamese.parameters(), lr=lr, weight_decay=wd)
+    elif optimizer_name == 'rmsprop':
+        optimizer = torch.optim.RMSprop(siamese.parameters(), lr=lr, weight_decay=wd)
+    else:
+        raise ValueError("No optimizer found with name {0}".format(optimizer_name))
 
     try:
         logger.info("Training using random selection...")
@@ -93,9 +99,9 @@ def train(use_cuda, data: Datafiles, use_dropout, validate_every, data_split, re
         utilities.save_model(siamese, model_path.format('best'))
         utilities.save_model(siamese, './output/{0}/random_selection'.format(utilities.get_trial_number()))
 
-        logger.info("Results from best model generated during random-selection training, evaluated on test data:")
-        rrs = experimentation.reciprocal_ranks(siamese, testing_pairs, use_cuda)
-        utilities.log_final_stats(rrs)
+        # logger.info("Results from best model generated during random-selection training, evaluated on test data:")
+        # rrs = experimentation.reciprocal_ranks(siamese, testing_pairs, use_cuda)
+        # utilities.log_final_stats(rrs)
         return siamese
     except Exception as e:
         utilities.save_model(siamese, model_path.format('crash_backup'))

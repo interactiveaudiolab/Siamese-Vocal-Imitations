@@ -109,6 +109,15 @@ def configure_parser(parser):
     parser.add_argument('-rw', '--regenerate_weights', action='store_const', const=True, default=False,
                         help='Whether to regenerate Siamese weights or not. Defaults to false.')
 
+    parser.add_argument('-o', '--optimizer', type=str, default='sgd', choices=['sgd', 'adam', 'rmsprop'],
+                        help='Optimizer to use. Defaults to SGD.')
+    parser.add_argument('-lr', '--learning_rate', type=float, default=.001,
+                        help='Learning rate. Defaults to .001')
+    parser.add_argument('-wd', '--weight_decay', type=float, default=0,
+                        help='Learning rate. Defaults to 0.')
+    parser.add_argument('-m', '--use_momentum', action='store_const', const=True, default=False,
+                        help='Whether to use momentum. Only applies when using SGD. Defaults to false.')
+
 
 def update_trial_number():
     trial_number = get_trial_number()
