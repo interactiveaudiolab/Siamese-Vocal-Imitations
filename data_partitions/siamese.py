@@ -37,22 +37,29 @@ class SiamesePartitions:
 
             train_imit, train_imit_lab, val_imit, val_imit_lab = self.split_imitations(categories, imitations, split, train_val_imit, train_val_imit_lab)
 
-            self.train = SiamesePartition(train_val_ref, train_val_ref_labels, train_imit, train_imit_lab, "training")
-            self.val = SiamesePartition(train_val_ref, train_val_ref_labels, val_imit, val_imit_lab, "validation")
-            self.test = SiamesePartition(test_ref, test_ref_labels, imitations, imitation_labels, "testing")
+            train_args = [train_val_ref, train_val_ref_labels, train_imit, train_imit_lab, "training"]
+            val_args = [train_val_ref, train_val_ref_labels, val_imit, val_imit_lab, "validation"]
+            test_args = [test_ref, test_ref_labels, imitations, imitation_labels, "testing"]
+
+            self.train = SiamesePartition(*train_args)
+            self.val = SiamesePartition(*val_args)
+            self.test = SiamesePartition(*test_args)
 
             logger.debug("Saving partitions at {0}...".format(pickle_name))
             with open(pickle_name, 'wb') as f:
-                pickle.dump(self.train, f, protocol=pickle.HIGHEST_PROTOCOL)
-                pickle.dump(self.val, f, protocol=pickle.HIGHEST_PROTOCOL)
-                pickle.dump(self.test, f, protocol=pickle.HIGHEST_PROTOCOL)
+                pickle.dump(train_args, f, protocol=pickle.HIGHEST_PROTOCOL)
+                pickle.dump(val_args, f, protocol=pickle.HIGHEST_PROTOCOL)
+                pickle.dump(test_args, f, protocol=pickle.HIGHEST_PROTOCOL)
         else:
             try:
                 logger.debug("Loading partitions from {0}...".format(pickle_name))
                 with open(pickle_name, 'rb') as f:
-                    self.train = pickle.load(f)
-                    self.val = pickle.load(f)
-                    self.test = pickle.load(f)
+                    train_args = pickle.load(f)
+                    val_args = pickle.load(f)
+                    test_args = pickle.load(f)
+                    self.train = SiamesePartition(*train_args)
+                    self.val = SiamesePartition(*val_args)
+                    self.test = SiamesePartition(*test_args)
             except FileNotFoundError:
                 with open(pickle_name, 'w+b'):
                     logger.critical("No pickled partition at {0}".format(pickle_name))
