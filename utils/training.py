@@ -44,9 +44,9 @@ def train_siamese_network(model: Siamese, data: SiameseDataset, objective, optim
 
             # calculate loss and optimize weights
             loss = objective(outputs, labels)
+            batch_losses[i] = loss.item()
             loss.backward()
             optimizer.step()
-            batch_losses[i] = loss.item()
 
             bar.next()
         bar.finish()
