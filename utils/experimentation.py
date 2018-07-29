@@ -63,6 +63,11 @@ def pairwise_inference_matrix(model: Siamese, pairs_dataset: AllPairs, use_cuda)
     model = model.eval()
     bar = Bar("Calculating pairwise inference matrix", max=len(pairs))
     for imitations, references, label in pairs:
+
+        label = label.float()
+        imitations = imitations.float()
+        references = references.float()
+
         # reshape tensors and push to GPU if necessary
         imitations = imitations.unsqueeze(1)
         references = references.unsqueeze(1)
