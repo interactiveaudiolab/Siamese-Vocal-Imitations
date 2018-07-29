@@ -12,31 +12,40 @@ def mrr_per_epoch(train_mrrs, val_mrrs, title_suffix, title="MRR vs. Epoch", xla
 
 def loss_per_epoch(train_loss, val_loss, title_suffix, title="Loss vs. Epoch"):
     y_max = max(2, max(train_loss) + .5, max(val_loss) + .5)
-    graph(train_loss, val_loss, title, y_max, 'loss', 'epoch', title_suffix)
+    graph(train_loss, val_loss, title, 2, 'loss', 'epoch', title_suffix, log=True)
 
 
 def accuracy_per_epoch(train, val, title_suffix, title="Accuracy vs. Epoch"):
     graph(train, val, title, 1, 'accuracy', 'epoch', title_suffix)
 
 
-def graph(train, val, title, y_max, y_label, x_label, title_suffix):
+def graph(train, val, title, y_max, y_label, x_label, title_suffix, log=False):
     plt.plot(train, color='blue', label='training')
     plt.plot(val, color='orange', label='validation')
     plt.legend()
 
     plt.ylabel(y_label)
-    y_tick_interval = .1
-    plt.yticks(np.arange(0, y_max + y_tick_interval, y_tick_interval))
-    plt.ylim(0, y_max)
+
+    if log:
+        plt.yscale('log', basey=10)
+        new_title = title + " (Log)"
+    else:
+        y_tick_interval = .1
+        plt.yticks(np.arange(0, y_max + y_tick_interval, y_tick_interval))
+        plt.ylim(0, y_max)
+        new_title = title
 
     plt.xlabel(x_label)
 
-    plt.suptitle(title + " ({0})".format(title_suffix))
+    plt.suptitle("{0} ({1})".format(title, title_suffix))
     plt.title("Trial #{0}".format(utilities.get_trial_number()))
 
-    filename = title_to_filename(title, title_suffix)
+    filename = title_to_filename(new_title, title_suffix)
     plt.savefig(filename)
     plt.close()
+
+    if log:
+        graph(train, val, title, y_max, y_label, x_label, title_suffix, log=False)
 
 
 def title_to_filename(title, suffix):
