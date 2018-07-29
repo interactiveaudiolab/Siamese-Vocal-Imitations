@@ -28,8 +28,11 @@ def main(cli_args=None):
 
     # log all CLI args
     logger.debug("\tCLI args:")
-    for key in vars(cli_args):
-        logger.debug("\t{0} = {1}".format(key, vars(cli_args)[key]))
+    cli_arg_dict = vars(cli_args)
+    keys = list(cli_arg_dict.keys())
+    keys.sort()
+    for key in keys:
+        logger.debug("\t{0} = {1}".format(key, cli_arg_dict[key]))
 
     try:
         if cli_args.siamese_dataset in ['vs1.0']:
