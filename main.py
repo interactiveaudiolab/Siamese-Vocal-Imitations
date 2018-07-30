@@ -45,10 +45,11 @@ def main(cli_args=None):
             experiments.triplet.train(cli_args.epochs, cli_args.cuda, datafiles, data_split, cli_args.regenerate_splits, cli_args.num_categories,
                                       cli_args.validation_frequency, cli_args.dropout, cli_args.regenerate_weights, cli_args.optimizer, cli_args.learning_rate,
                                       cli_args.weight_decay, cli_args.momentum)
-        elif cli_args.siamese:
-            experiments.random_selection.train(cli_args.cuda, datafiles, cli_args.dropout, cli_args.validate_every, data_split,
+
+        if cli_args.siamese:
+            experiments.random_selection.train(cli_args.cuda, datafiles, cli_args.dropout, cli_args.validation_frequency, data_split,
                                                cli_args.regenerate_splits, cli_args.regenerate_weights, cli_args.optimizer, cli_args.learning_rate,
-                                               cli_args.weight_decay, cli_args.use_momentum, cli_args.epochs)
+                                               cli_args.weight_decay, cli_args.momentum, cli_args.epochs)
         else:
             raise ValueError("No network type selected")
 

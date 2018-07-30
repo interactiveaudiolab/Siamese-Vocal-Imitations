@@ -17,8 +17,8 @@ def mean_reciprocal_ranks(model: Siamese, pairs: AllPairs, use_cuda):
     :param use_cuda: bool, whether to run on gpu
     :return: float, mean of reciprocal ranks
     """
-    rrs = reciprocal_ranks(model, pairs, use_cuda)
-    return rrs.mean()
+    rrs, ranks = reciprocal_ranks(model, pairs, use_cuda)
+    return rrs.mean(), ranks.mean()
 
 
 def reciprocal_ranks(model: Siamese, pairs: AllPairs, use_cuda):
@@ -33,6 +33,7 @@ def reciprocal_ranks(model: Siamese, pairs: AllPairs, use_cuda):
     pairwise = pairwise_inference_matrix(model, pairs, use_cuda)
 
     rrs = np.zeros([pairs.n_imitations])
+    ranks = np.zeros([pairs.n_imitations])
     for i, imitation in enumerate(pairs.imitations):
         # get the column of the pairwise matrix corresponding to this imitation
         pairwise_col = pairwise[i, :]
@@ -46,8 +47,9 @@ def reciprocal_ranks(model: Siamese, pairs: AllPairs, use_cuda):
         index = utils.np_index_of(pairwise_col, similarity)
         rank = index + 1
         rrs[i] = 1 / rank
+        ranks[i] = rank
 
-    return rrs
+    return rrs, ranks
 
 
 def pairwise_inference_matrix(model: Siamese, pairs_dataset: AllPairs, use_cuda):
