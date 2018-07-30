@@ -1,5 +1,6 @@
 import argparse
 import logging
+import sys
 import traceback
 
 # MUST COME FIRST
@@ -7,6 +8,7 @@ import traceback
 import utils.matplotlib_backend_hack
 import experiments.fine_tuning
 import experiments.random_selection
+import experiments.triplet
 import utils.utils as utilities
 from data_files.vocal_imitation import VocalImitation
 from data_files.vocal_sketch import VocalSketchV2, VocalSketchV1
@@ -25,44 +27,48 @@ def main(cli_args=None):
         cli_args = parser.parse_args()
 
     logger.info('Beginning trial #{0}...'.format(utilities.get_trial_number()))
-
-    # log all CLI args
-    logger.debug("\tCLI args:")
-    cli_arg_dict = vars(cli_args)
-    keys = list(cli_arg_dict.keys())
-    keys.sort()
-    for key in keys:
-        logger.debug("\t{0} = {1}".format(key, cli_arg_dict[key]))
-
+    log_cli_args(cli_args)
     try:
-        if cli_args.siamese_dataset in ['vs1.0']:
+        if cli_args.dataset in ['vs1.0']:
             dataset = VocalSketchV1
-        elif cli_args.siamese_dataset in ['vs2.0']:
+        elif cli_args.dataset in ['vs2.0']:
             dataset = VocalSketchV2
-        elif cli_args.siamese_dataset in ['vi']:
+        elif cli_args.dataset in ['vi']:
             dataset = VocalImitation
         else:
             raise ValueError("Invalid dataset ({0}) chosen.".format(cli_args.siamese_dataset))
 
-        siamese_datafiles = dataset(recalculate_spectrograms=cli_args.spectrograms)
+        datafiles = dataset(recalculate_spectrograms=cli_args.recalculate_spectrograms)
+        data_split = DataSplit(*cli_args.partitions)
 
-        data_split = DataSplit(*cli_args.data_partitions)
-        if cli_args.random_only:
-            experiments.random_selection.train(cli_args.cuda, siamese_datafiles, cli_args.dropout, cli_args.validate_every, data_split,
+        if cli_args.bisiamese:
+            experiments.triplet.train(cli_args.epochs, cli_args.cuda, datafiles, data_split, cli_args.regenerate_splits, cli_args.num_categories,
+                                      cli_args.validation_frequency, cli_args.dropout, cli_args.regenerate_weights, cli_args.optimizer, cli_args.learning_rate,
+                                      cli_args.weight_decay, cli_args.momentum)
+        elif cli_args.siamese:
+            experiments.random_selection.train(cli_args.cuda, datafiles, cli_args.dropout, cli_args.validate_every, data_split,
                                                cli_args.regenerate_splits, cli_args.regenerate_weights, cli_args.optimizer, cli_args.learning_rate,
                                                cli_args.weight_decay, cli_args.use_momentum, cli_args.epochs)
         else:
-            experiments.fine_tuning.train(cli_args.cuda, siamese_datafiles, cli_args.dropout, cli_args.validate_every, data_split,
-                                          cli_args.regenerate_splits, cli_args.regenerate_weights,
-                                          use_cached_baseline=cli_args.cache_baseline,
-                                          minimum_passes=cli_args.fine_tuning_passes)
+            raise ValueError("No network type selected")
+
         cli_args.trials -= 1
         if cli_args.trials > 0:
             main(cli_args)
     except Exception as e:
         logger.critical("Unhandled exception: {0}".format(str(e)))
         logger.critical(traceback.print_exc())
-        exit(1)
+        sys.exit()
+
+
+def log_cli_args(cli_args):
+    logger = logging.getLogger('logger')
+    logger.debug("\tCLI args:")
+    cli_arg_dict = vars(cli_args)
+    keys = list(cli_arg_dict.keys())
+    keys.sort()
+    for key in keys:
+        logger.debug("\t{0} = {1}".format(key, cli_arg_dict[key]))
 
 
 if __name__ == "__main__":

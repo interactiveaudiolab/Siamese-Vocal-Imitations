@@ -84,41 +84,47 @@ def configure_logger(logger, console_only=False):
 
 
 def configure_parser(parser):
-    parser.add_argument('-c', '--cuda', action='store_const', const=True, default=False,
-                        help='Whether to enable calculation on the GPU through CUDA or not. Defaults to false.')
-    parser.add_argument('-s', '--spectrograms', action='store_const', const=True, default=False,
-                        help='Whether to re-calculate spectrograms from the audio files or not (in which case the pre-generated .npy files are used). Defaults to false.')
-    parser.add_argument('-b', '--cache_baseline', action='store_const', const=True, default=False,
-                        help='Whether to use a cached version of the baseline model or not. Defaults to false.')
-    parser.add_argument('-p', '--data_partitions', nargs=3, type=float, default=[.35, .15, .5],
-                        help='Ratios by which to partition the data into training, validation, and testing sets (in that order). Defaults to [.35, .15, .5].')
-    parser.add_argument('-f', '--fine_tuning_passes', type=int, default=0,
-                        help='Minimum amount of fine tuning passes to perform, regardless of convergence. Defaults to 0.')
-    parser.add_argument('-t', '--trials', default=1, type=int,
-                        help='Amount of trials to run. Defaults to 1.')
-    parser.add_argument('-r', '--random_only', action='store_const', const=True, default=False,
-                        help='Whether to only run the random selection phase of training and skip fine-tuning. Defaults fo false.')
-    parser.add_argument('-d', '--dropout', action='store_const', const=True, default=False,
-                        help='Whether to use drop-out in training the Siamese network. Defaults to false.')
-    parser.add_argument('-sd', '--siamese_dataset', default='vs2.0', type=str, choices=['vs1.0', 'vs2.0', 'vi'],
-                        help='Siamese dataset to use for experiments. Defaults to vocal sketch 2.0.')
-    parser.add_argument('-ve', '--validate_every', default=1, type=int,
-                        help='How often to calculate loss and MRR (per epoch). Defaults to 1. 0 means do not calculate at all.')
-    parser.add_argument('-rs', '--regenerate_splits', action='store_const', const=True, default=False,
-                        help='Whether to regenerate data splits or not. Defaults to false.')
-    parser.add_argument('-rw', '--regenerate_weights', action='store_const', const=True, default=False,
-                        help='Whether to regenerate Siamese weights or not. Defaults to false.')
+    general = parser.add_argument_group(title="General options")
+    general.add_argument('-c', '--cuda', action='store_const', const=True, default=False,
+                         help='Whether to enable calculation on the GPU through CUDA or not. Defaults to false.')
+    general.add_argument('-t', '--trials', default=1, type=int,
+                         help='Amount of trials to run. Defaults to 1.')
+    general.add_argument('-vf', '--validation_frequency', default=1, type=int,
+                         help='Frequency of MRR and validation loss calculations (per epoch). Defaults to 1. 0 means do not calculate at all.')
+    general.add_argument('-e', '--epochs', type=int, default=100, help="Amount of epochs to train for. Defaults to 100")
 
-    parser.add_argument('-o', '--optimizer', type=str, default='sgd', choices=['sgd', 'adam', 'rmsprop'],
-                        help='Optimizer to use. Defaults to SGD.')
-    parser.add_argument('-lr', '--learning_rate', type=float, default=.001,
-                        help='Learning rate. Defaults to .001')
-    parser.add_argument('-wd', '--weight_decay', type=float, default=0,
-                        help='Learning rate. Defaults to 0.')
-    parser.add_argument('-m', '--use_momentum', action='store_const', const=True, default=False,
-                        help='Whether to use momentum. Only applies when using SGD. Defaults to false.')
+    network = parser.add_argument_group(title="Network options")
+    network.add_argument('-s', '--siamese', action='store_const', const=True, default=False,
+                         help='Use a siamese network.')
+    network.add_argument('-b', '--bisiamese', action='store_const', const=True, default=False,
+                         help='Use a bisiamese network.')
+    network.add_argument('-dr', '--dropout', action='store_const', const=True, default=False,
+                         help='Whether to use drop-out in training the network. Defaults to false.')
+    network.add_argument('-rw', '--regenerate_weights', action='store_const', const=True, default=False,
+                         help='Whether to regenerate the initial network weights or not. Defaults to false.')
 
-    parser.add_argument('-e', '--epochs', type=int, default=100, help="Amount of epochs to train for. Defaults to 100")
+    optimizer = parser.add_argument_group(title="Optimizer options")
+    optimizer.add_argument('-o', '--optimizer', type=str, default='adam', choices=['sgd', 'adam', 'rmsprop'],
+                           help='Optimizer to use. Defaults to adam.')
+    optimizer.add_argument('-lr', '--learning_rate', type=float, default=.001,
+                           help='Learning rate. Defaults to .001')
+    optimizer.add_argument('-wd', '--weight_decay', type=float, default=0,
+                           help='Weight decay. Defaults to 0.')
+    optimizer.add_argument('-m', '--momentum', action='store_const', const=True, default=False,
+                           help='Whether to use momentum. Only applies when using SGD or RMSProp. Defaults to false.')
+
+    data = parser.add_argument_group(title="Data options:")
+    data.add_argument('-p', '--partitions', nargs=3, type=float, default=[.35, .15, .5],
+                      help='Ratios by which to partition the data into training, validation, and testing sets (in that order). Defaults to [.35, .15, .5].')
+    data.add_argument('-d', '--dataset', default='vi', type=str, choices=['vs1.0', 'vs2.0', 'vi'],
+                      help='Dataset to use for experiments. Defaults to vocal imitation.')
+    data.add_argument('-rs', '--regenerate_splits', action='store_const', const=True, default=False,
+                      help='Whether to regenerate data splits or not. Defaults to false.')
+    data.add_argument('--recalculate_spectrograms', action='store_const', const=True, default=False,
+                      help='Whether to re-calculate spectrograms from the audio files or not (in which case the pre-generated .npy files are used). Defaults to false.')
+    data.add_argument('-nc', '--num_categories', default=None, type=int,
+                      help='Fixed number of categories to use in the training/validation set. Defaults to none, in which case the amount of categories will '
+                           'be determined based on the partitions.')
 
 
 def update_trial_number():

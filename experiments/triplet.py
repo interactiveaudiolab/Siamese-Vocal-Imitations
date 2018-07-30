@@ -16,13 +16,14 @@ from utils import utils as utilities, training as training, experimentation as e
 from utils.obj import DataSplit
 
 
-def train(use_cuda, data: Datafiles, use_dropout: bool, validate_every: int, data_split: DataSplit, regenerate_splits: bool, regenerate_weights: bool,
-          optimizer_name: str, lr: float, wd: float, momentum: bool, n_epochs: int):
+def train(n_epochs: int, use_cuda,
+          data: Datafiles, data_split: DataSplit, regenerate_splits: bool, n_categories: int, validate_every: int,
+          use_dropout: bool, regenerate_weights: bool,
+          optimizer_name: str, lr: float, wd: float, momentum: bool):
     logger = logging.getLogger('logger')
 
     model_path = "./model_output/triplet/model_{0}"
 
-    n_categories = 5
     triplet_partitions = Partitions(data, data_split, TripletPartition, n_train_val_categories=n_categories, no_test=True, regenerate_splits=regenerate_splits)
     training_data = AllPositivesRandomNegatives(triplet_partitions.train)
     validation_data = AllPositivesRandomNegatives(triplet_partitions.val)
