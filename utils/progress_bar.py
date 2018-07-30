@@ -19,6 +19,9 @@ class Bar(BarInterface):
         super(Bar, self).next(**kwargs)
         self.update_average()
 
+    def finish(self):
+        self.next(n=self.remaining)
+
     def update_average(self):
         avg = self.elapsed / self.index
         self.long_term_avg_eta = int(avg * self.remaining)
