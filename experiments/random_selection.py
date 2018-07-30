@@ -6,9 +6,10 @@ import torch
 from torch.nn import BCELoss
 
 from data_files.generics import Datafiles
-from data_sets.siamese import AllPositivesRandomNegatives, AllPairs
+from data_partitions.siamese import PairPartition
+from data_sets.pair import AllPositivesRandomNegatives, AllPairs
 from models.siamese import Siamese
-from data_partitions.siamese import SiamesePartitions
+from data_partitions.generics import Partitions
 from utils import utils as utilities, training as training, experimentation as experimentation, graphing as graphing
 
 
@@ -18,11 +19,11 @@ def train(use_cuda, data: Datafiles, use_dropout, validate_every, data_split, re
 
     model_path = "./model_output/random_selection/model_{0}"
 
-    partitions = SiamesePartitions(data, data_split, regenerate_splits=regenerate_splits)
+    partitions = Partitions(data, data_split, PairPartition, regenerate_splits=regenerate_splits)
     training_data = AllPositivesRandomNegatives(partitions.train)
     training_pairs = AllPairs(partitions.train)
     validation_pairs = AllPairs(partitions.val)
-    testing_pairs = AllPairs(partitions.test)
+    # testing_pairs = AllPairs(partitions.test)
 
     # get a siamese network, see Siamese class for architecture
     siamese = Siamese(dropout=use_dropout)
@@ -44,11 +45,11 @@ def train(use_cuda, data: Datafiles, use_dropout, validate_every, data_split, re
     criterion = BCELoss()
 
     if optimizer_name == 'sgd':
-        optimizer = torch.optim.SGD(siamese.parameters(), lr=lr, weight_decay=wd, momentum=.9 if momentum else 0, nesterov=momentum)
+        optimizer = torch.optim.SGD(siamese.parameters(), lr=lr, weight_decay=wd, momentum=.9 if momentum else 0, nesterov=momentum)  # TODO: separate params
     elif optimizer_name == 'adam':
         optimizer = torch.optim.Adam(siamese.parameters(), lr=lr, weight_decay=wd)
     elif optimizer_name == 'rmsprop':
-        optimizer = torch.optim.RMSprop(siamese.parameters(), lr=lr, weight_decay=wd)
+        optimizer = torch.optim.RMSprop(siamese.parameters(), lr=lr, weight_decay=wd, momentum=.9 if momentum else 0)
     else:
         raise ValueError("No optimizer found with name {0}".format(optimizer_name))
 
@@ -61,6 +62,15 @@ def train(use_cuda, data: Datafiles, use_dropout, validate_every, data_split, re
         validation_losses = []
 
         models = training.train_siamese_network(siamese, training_data, criterion, optimizer, n_epochs, use_cuda)
+
+        logger.debug("Calculating MRRs...")
+        training_mrr = experimentation.mean_reciprocal_ranks(siamese, training_pairs, use_cuda)
+        val_mrr = experimentation.mean_reciprocal_ranks(siamese, validation_pairs, use_cuda)
+        logger.info("MRRs at epoch {0}:\n\ttrn = {1}\n\tval = {2}".format(-1, training_mrr, val_mrr))
+
+        training_mrrs.append(training_mrr)
+        validation_mrrs.append(val_mrr)
+
         for epoch, (model, training_batch_losses) in enumerate(models):
             utilities.save_model(model, model_path.format(epoch))
 

@@ -1,11 +1,12 @@
 import numpy as np
-import torch.utils.data.dataset as dataset
 
-from data_partitions.siamese import SiamesePartition
+from data_partitions.siamese import PairPartition
+from data_sets.generics import PairedDataset
 
 
-class FineTuned(dataset.Dataset):
-    def __init__(self, data: SiamesePartition):
+class FineTuned(PairedDataset):
+    def __init__(self, data: PairPartition):
+        super().__init__(data)
         self.all_positives = data.positive_pairs
         self.references = data.references
         self.imitations = data.imitations
@@ -23,18 +24,16 @@ class FineTuned(dataset.Dataset):
         for i, r, l in self.all_positives:
             self.pairs.append([i, r, l])
 
-    def __getitem__(self, index):
-        return self.pairs[index]
 
-    def __len__(self):
-        return len(self.pairs)
-
-
-class AllPositivesRandomNegatives(dataset.Dataset):
-    def __init__(self, data: SiamesePartition):
+class AllPositivesRandomNegatives(PairedDataset):
+    def __init__(self, data: PairPartition):
+        super().__init__(data)
         self.positives = data.positive_pairs
         self.negatives = data.negative_pairs
         self.pairs = []
+        self.reselect_negatives()
+
+    def epoch_handler(self):
         self.reselect_negatives()
 
     def reselect_negatives(self):
@@ -43,6 +42,7 @@ class AllPositivesRandomNegatives(dataset.Dataset):
         indices = np.random.choice(np.arange(len(self.negatives)), len(self.positives))
         for i in indices:
             imitation, reference, label = self.negatives[i]
+            b = self.negatives[i]
             self.pairs.append([imitation, reference, label])
 
         for imitation, reference, label in self.positives:
@@ -50,26 +50,16 @@ class AllPositivesRandomNegatives(dataset.Dataset):
 
         np.random.shuffle(self.pairs)
 
-    def __getitem__(self, index):
-        return self.pairs[index]
 
-    def __len__(self):
-        return len(self.pairs)
-
-
-class AllPairs(dataset.Dataset):
-    def __init__(self, data: SiamesePartition):
+class AllPairs(PairedDataset):
+    def __init__(self, data: PairPartition):
+        super().__init__(data)
         self.imitations = data.imitations
         self.references = data.references
 
         self.n_imitations = len(self.imitations)
         self.n_references = len(self.references)
-        self.labels = data.all_labels
+        self.canonical_labels = data.canonical_labels
+        self.all_labels = data.all_labels
 
         self.pairs = data.all_pairs
-
-    def __getitem__(self, index):
-        return self.pairs[index]
-
-    def __len__(self):
-        return len(self.pairs)

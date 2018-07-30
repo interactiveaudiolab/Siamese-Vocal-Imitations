@@ -4,12 +4,14 @@ import numpy as np
 from torch.utils.data import DataLoader
 from torch.utils.data.sampler import BatchSampler
 
-from data_sets.siamese import BalancedSampler, SiameseDataset
+from data_sets.samplers import BalancedPairSampler, BalancedTripletSampler
+from data_sets.generics import PairedDataset, TripletDataset
+from models.bisiamese import Bisiamese
 from models.siamese import Siamese
 from utils.progress_bar import Bar
 
 
-def train_siamese_network(model: Siamese, data: SiameseDataset, objective, optimizer, n_epochs, use_cuda, batch_size=128):
+def train_siamese_network(model: Siamese, data: PairedDataset, objective, optimizer, n_epochs, use_cuda, batch_size=128):
     for epoch in range(n_epochs):
         # because the model is passed by reference and this is a generator, ensure that we're back in training mode
         model = model.train()
@@ -17,7 +19,7 @@ def train_siamese_network(model: Siamese, data: SiameseDataset, objective, optim
         # notify the dataset that an epoch has passed
         data.epoch_handler()
 
-        batch_sampler = BatchSampler(BalancedSampler(data, batch_size), batch_size=batch_size, drop_last=False)
+        batch_sampler = BatchSampler(BalancedPairSampler(data, batch_size), batch_size=batch_size, drop_last=False)
         train_data = DataLoader(data, batch_sampler=batch_sampler, num_workers=1)
 
         train_data_len = math.ceil(train_data.dataset.__len__() / batch_size)
@@ -44,6 +46,45 @@ def train_siamese_network(model: Siamese, data: SiameseDataset, objective, optim
 
             # calculate loss and optimize weights
             loss = objective(outputs, labels)
+            batch_losses[i] = loss.item()
+            loss.backward()
+            optimizer.step()
+
+            bar.next()
+        bar.finish()
+
+        yield model, batch_losses
+
+
+def train_bisiamese_network(model: Bisiamese, data: TripletDataset, objective, optimizer, n_epochs, use_cuda, batch_size=128):
+    for epoch in range(n_epochs):
+        # because the model is passed by reference and this is a generator, ensure that we're back in training mode
+        model = model.train()
+        # notify the dataset that an epoch has passed
+        data.epoch_handler()
+
+        # batch_sampler = BatchSampler(BalancedTripletSampler(data, batch_size), batch_size=batch_size, drop_last=False)
+        train_data = DataLoader(data, batch_size=batch_size, num_workers=1)
+
+        train_data_len = math.ceil(train_data.dataset.__len__() / batch_size)
+        batch_losses = np.zeros(train_data_len)
+        bar = Bar("Training siamese, epoch {0}".format(epoch), max=train_data_len)
+        for i, triplet in enumerate(train_data):
+            # clear out the gradients
+            optimizer.zero_grad()
+
+            triplet = [tensor.float() for tensor in triplet]
+
+            # reshape tensors and push to GPU if necessary
+            triplet = [tensor.unsqueeze(1) for tensor in triplet[:3]] + [triplet[3]]
+            if use_cuda:
+                triplet = [tensor.cuda() for tensor in triplet]
+
+            # pass a batch through the network
+            outputs = model(*triplet[:3])
+
+            # calculate loss and optimize weights
+            loss = objective(outputs, triplet[3])
             batch_losses[i] = loss.item()
             loss.backward()
             optimizer.step()

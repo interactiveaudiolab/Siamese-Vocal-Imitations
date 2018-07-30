@@ -3,9 +3,9 @@ import logging
 
 import utils.utils as utilities
 from data_files.vocal_sketch import VocalSketchV2
-from data_sets.siamese import AllPairs
+from data_sets.pair import AllPairs
 from models.siamese import Siamese
-from data_partitions.siamese import SiamesePartitions
+from data_partitions.generics import Partitions
 from utils.experimentation import reciprocal_ranks
 from utils.obj import DataSplit
 
@@ -29,7 +29,7 @@ def main():
     model = model.eval()
     data = VocalSketchV2()
 
-    partitions = SiamesePartitions(data, DataSplit(.35, .15, .5))
+    partitions = Partitions(data, DataSplit(.35, .15, .5))
 
     dataset = AllPairs(partitions.test)
     rrs = reciprocal_ranks(model, dataset, use_cuda)

@@ -1,7 +1,8 @@
 import numpy as np
 from torch.utils.data import dataloader, DataLoader
 
-from data_sets.siamese import AllPairs
+from data_sets.pair import AllPairs
+from models.bisiamese import Bisiamese
 from models.siamese import Siamese
 from utils import utils
 from utils.progress_bar import Bar
@@ -144,6 +145,42 @@ def siamese_loss(model: Siamese, dataset, objective, use_cuda: bool, batch_size=
 
         # calculate loss and optimize weights
         batch_losses[i] = objective(outputs, labels).item()
+
+        bar.next()
+    bar.finish()
+
+    return batch_losses
+
+
+def bisiamese_loss(model: Bisiamese, dataset, objective, use_cuda: bool, batch_size=128):
+    """
+    Calculates the loss of model over dataset by objective. Optionally run on the GPU.
+    :param model: a siamese network
+    :param dataset: a dataset of imitation/reference pairs
+    :param objective: loss function
+    :param use_cuda: whether to run on GPU or not.
+    :param batch_size: optional param to set batch_size. Defaults to 128.
+    :return:
+    """
+    model = model.eval()
+
+    data = DataLoader(dataset, batch_size=batch_size, num_workers=1)
+    bar = Bar("Calculating loss", max=len(data))
+    batch_losses = np.zeros(len(data))
+    for i, triplet in enumerate(data):
+        # clear out the gradients
+        triplet = [tensor.float() for tensor in triplet]
+
+        # reshape tensors and push to GPU if necessary
+        triplet = [tensor.unsqueeze(1) for tensor in triplet[:3]] + [triplet[3]]
+        if use_cuda:
+            triplet = [tensor.cuda() for tensor in triplet]
+
+        # pass a batch through the network
+        outputs = model(*triplet[:3])
+
+        # calculate loss and optimize weights
+        batch_losses[i] = objective(outputs, triplet[3]).item()
 
         bar.next()
     bar.finish()

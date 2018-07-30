@@ -6,7 +6,6 @@ class Siamese(nn.Module):
     def __init__(self, dropout=True, normalization=True):
         super(Siamese, self).__init__()
 
-        self.parallel = False
         if normalization:
             # left branch: vocal imitations
             self.left_branch = nn.Sequential(
@@ -113,9 +112,6 @@ class Siamese(nn.Module):
         # Calculate the FCN and flatten it
         output = self.fully_connected(concatenated)
         return output.view(-1)
-
-    def use_parallel(self, parallel):
-        self.parallel = parallel
 
     def train(self, mode=True):
         super().train(mode)

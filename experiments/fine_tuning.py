@@ -7,9 +7,9 @@ from torch.nn import BCELoss
 
 import experiments.random_selection
 from data_files.generics import Datafiles
-from data_sets.siamese import FineTuned, AllPairs
+from data_sets.pair import FineTuned, AllPairs
 from models.siamese import Siamese
-from data_partitions.siamese import SiamesePartitions
+from data_partitions.generics import Partitions
 from utils import utils as utilities, experimentation as experimentation, training as training, graphing as graphing
 
 
@@ -27,7 +27,7 @@ def train(use_cuda, data: Datafiles, use_dropout, validate_every, data_split, re
 
     model_path = './model_output/fine_tuned/model_{0}_{1}'
 
-    partitions = SiamesePartitions(data, data_split)
+    partitions = Partitions(data, data_split)
     fine_tuning_data = FineTuned(partitions.train)
     training_pairs = AllPairs(partitions.train)
     validation_pairs = AllPairs(partitions.val)
