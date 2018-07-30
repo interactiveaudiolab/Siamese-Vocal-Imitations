@@ -75,5 +75,4 @@ def chance_by_category():
 
 
 def random_chance(n_categories):
-    print(n_categories)
     return np.mean([1 / n for n in np.random.randint(low=1, high=n_categories + 1, size=99999)])

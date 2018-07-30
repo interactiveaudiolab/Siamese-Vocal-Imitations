@@ -10,7 +10,8 @@ from utils.progress_bar import Bar
 
 
 class Partitions:
-    def __init__(self, dataset: Datafiles, split: DataSplit, partition: type, n_train_val_categories=None, train_only=False, no_test=False, regenerate_splits=False):
+    def __init__(self, dataset: Datafiles, split: DataSplit, partition: type, n_train_val_categories=None, train_only=False, no_test=False,
+                 regenerate_splits=False):
         dataset_name = type(dataset).__name__
         pickle_name = "./partition_pickles/{0}.pickle".format(dataset_name)
         logger = logging.getLogger('logger')
@@ -34,13 +35,11 @@ class Partitions:
                 n_train_val = n_train_val_categories
 
             train_val_ref, train_val_ref_labels = self.split_references(references, reference_labels, categories[:n_train_val])
-            logger.debug("train_val_ref has length {0}".format(len(train_val_ref)))
             test_ref, test_ref_labels = self.split_references(references, reference_labels, categories[n_train_val:])
 
             train_val_imit, train_val_imit_lab = self.filter_imitations(imitations, imitation_labels, train_val_ref_labels)
 
             train_imit, train_imit_lab, val_imit, val_imit_lab = self.split_imitations(categories, imitations, split, train_val_imit, train_val_imit_lab)
-            logger.debug("train_imit has length {0}".format(len(train_imit)))
 
             train_args = [train_val_ref, train_val_ref_labels, train_imit, train_imit_lab, "training"]
             val_args = [train_val_ref, train_val_ref_labels, val_imit, val_imit_lab, "validation"]

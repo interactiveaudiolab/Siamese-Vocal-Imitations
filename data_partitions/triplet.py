@@ -26,7 +26,6 @@ class TripletPartition(Partition):
         self.negative_coarse = []
         self.all_pairs = []
         shape = [len(self.imitations), len(self.references), len(self.references)]
-        print(shape)
         self.all_labels = np.zeros(shape)
         n = 0
         update_bar_every = 1000

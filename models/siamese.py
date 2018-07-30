@@ -94,10 +94,6 @@ class Siamese(nn.Module):
         self.right_backup = self.right_branch
         self.fully_connected_backup = self.fully_connected
 
-        # self.left_branch = nn.DataParallel(self.left_branch)
-        # self.right_branch = nn.DataParallel(self.right_branch)
-        # self.fully_connected = nn.DataParallel(self.fully_connected)
-
     def forward(self, left, right):
         # Calculate both CNN branches
         left_output = self.left_branch(left)
