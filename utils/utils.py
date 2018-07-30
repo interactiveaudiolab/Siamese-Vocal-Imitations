@@ -113,7 +113,7 @@ def configure_parser(parser):
     optimizer.add_argument('-m', '--momentum', action='store_const', const=True, default=False,
                            help='Whether to use momentum. Only applies when using SGD or RMSProp. Defaults to false.')
 
-    data = parser.add_argument_group(title="Data options:")
+    data = parser.add_argument_group(title="Data options")
     data.add_argument('-p', '--partitions', nargs=3, type=float, default=[.35, .15, .5],
                       help='Ratios by which to partition the data into training, validation, and testing sets (in that order). Defaults to [.35, .15, .5].')
     data.add_argument('-d', '--dataset', default='vi', type=str, choices=['vs1.0', 'vs2.0', 'vi'],
