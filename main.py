@@ -6,7 +6,6 @@ import traceback
 # MUST COME FIRST
 # noinspection PyUnresolvedReferences
 import utils.matplotlib_backend_hack
-import experiments.fine_tuning
 import experiments.siamese
 import experiments.triplet
 import utils.utils as utilities

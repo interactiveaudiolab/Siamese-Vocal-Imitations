@@ -91,29 +91,6 @@ def pairwise_inference_matrix(model: Siamese, pairs_dataset: AllPairs, use_cuda)
     return rrs
 
 
-def hard_negative_selection(model: Siamese, pairs: AllPairs, use_cuda):
-    """
-    Perform hard negative selection to determine negative pairings for fine tuning the network
-
-    :param model: siamese network
-    :param pairs: all pairs
-    :param use_cuda: bool, whether to run on GPU
-    :return: ndarray of reference indexes, indexed by imitation number
-    """
-    pairwise = pairwise_inference_matrix(model, pairs, use_cuda)
-
-    # zero out all positive examples
-    pairwise = pairwise * np.logical_not(pairs.all_labels)
-
-    # indexes of max in each column
-    references = pairwise.argmax(axis=1)
-    return references
-
-
-def convergence(best_mrrs, convergence_threshold):
-    return not (len(best_mrrs) <= 2) and np.abs(best_mrrs[len(best_mrrs) - 1] - best_mrrs[len(best_mrrs) - 2]) < convergence_threshold
-
-
 def siamese_loss(model: Siamese, dataset, objective, use_cuda: bool, batch_size=128):
     """
     Calculates the loss of model over dataset by objective. Optionally run on the GPU.
