@@ -12,8 +12,8 @@ class Triplet(nn.Module):
 
         linear_layer = nn.Linear(2, 1)
 
-        init_weights = torch.tensor([[50, -50]])
-        init_bias = torch.tensor([[0]])
+        init_weights = torch.Tensor([[50, -50]])
+        init_bias = torch.Tensor([[0]])
 
         init_weights = init_weights.float()
         init_bias = init_bias.float()
