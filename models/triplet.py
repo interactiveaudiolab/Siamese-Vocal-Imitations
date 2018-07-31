@@ -9,8 +9,23 @@ class Triplet(nn.Module):
     def __init__(self, dropout=True, normalization=True):
         super(Triplet, self).__init__()
         self.siamese = Siamese(dropout=dropout, normalization=normalization)
+
+        linear_layer = nn.Linear(2, 1)
+
+        init_weights = torch.tensor([[50, -50]])
+        init_bias = torch.tensor([[0]])
+
+        init_weights = init_weights.float()
+        init_bias = init_bias.float()
+
+        init_weights.requires_grad = False
+        init_bias.requires_grad = False
+
+        linear_layer.weight = torch.nn.Parameter(init_weights)
+        linear_layer.bias = torch.nn.Parameter(init_bias)
+
         self.final_layer = nn.Sequential(
-            nn.Linear(2, 1),
+            linear_layer,
             nn.Sigmoid()
         )
 
