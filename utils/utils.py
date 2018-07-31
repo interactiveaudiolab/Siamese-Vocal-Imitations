@@ -174,11 +174,11 @@ def get_dataset_dir():
         sys.exit()
 
 
-def regenerate_siamese_weights():
+def regenerate_siamese_weights(dropout):
     logger = logging.getLogger('logger')
     starting_weights_path = "./model_output/siamese_init/{0}".format("starting_weights")
     logger.debug("Saving initial weights/biases at {0}...".format(starting_weights_path))
-    save_model(Siamese(), starting_weights_path)
+    save_model(Siamese(dropout=dropout), starting_weights_path)
 
 
 def initialize_weights(siamese, use_cuda):

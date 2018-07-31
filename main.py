@@ -42,7 +42,7 @@ def main(cli_args=None):
         data_split = DataSplit(*cli_args.partitions)
         partitions = Partitions(datafiles, data_split, cli_args.num_categories, regenerate_splits=cli_args.regenerate_splits)
         if cli_args.regenerate_weights:
-            utilities.regenerate_siamese_weights()
+            utilities.regenerate_siamese_weights(cli_args.dropout)
 
         if cli_args.triplet:
             experiments.triplet.train(cli_args.cuda, cli_args.epochs, cli_args.validation_frequency, cli_args.dropout, partitions, cli_args.optimizer,
