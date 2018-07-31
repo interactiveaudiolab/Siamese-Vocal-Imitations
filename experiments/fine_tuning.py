@@ -81,14 +81,14 @@ def train(use_cuda, data: Datafiles, use_dropout, validate_every, data_split, re
                 training_mrrs.append(training_mrr)
                 validation_mrrs.append(val_mrr)
 
-                graphing.mrr_per_epoch(training_mrrs, validation_mrrs, 'Fine Tuning')
-                graphing.loss_per_epoch(training_losses, validation_losses, 'Fine Tuning')
+                graphing.mrr_per_epoch(training_mrrs, validation_mrrs)
+                graphing.loss_per_epoch(training_losses, validation_losses)
 
             utilities.load_model(siamese, model_path.format(fine_tuning_pass, np.argmax(validation_mrrs[fine_tuning_pass * n_epochs:])))
             utilities.save_model(siamese, model_path.format(fine_tuning_pass, 'best'))
             best_validation_mrrs.append(np.max(validation_mrrs[fine_tuning_pass * n_epochs:]))
             best_training_mrrs.append(np.max(training_mrrs[fine_tuning_pass * n_epochs:]))
-            graphing.mrr_per_epoch(best_training_mrrs, best_validation_mrrs, 'Fine Tuning', title='Best MRR vs. Fine Tuning Pass', xlabel="fine tuning pass")
+            graphing.mrr_per_epoch(best_training_mrrs, best_validation_mrrs, title='Best MRR vs. Fine Tuning Pass', xlabel="fine tuning pass")
 
             fine_tuning_pass += 1
 

@@ -15,7 +15,7 @@ from data_sets.triplet import AllPositivesRandomNegatives
 from models.triplet import Triplet
 from models.siamese import Siamese
 from utils import utils as utilities, training as training, experimentation as experimentation, graphing as graphing
-from utils.obj import DataSplit, TrainingResult
+from utils.obj import DataSplit, TrainingProgress
 from utils.utils import initialize_weights
 
 
@@ -36,9 +36,9 @@ def train(n_epochs: int, use_cuda,
     if validate_every > 0:
         pair_partitions = Partitions(data, data_split, PairPartition, regenerate_splits=False, no_test=no_test)
         training_pairs = AllPairs(pair_partitions.train)
+        search_length = training_pairs.n_references
         validation_pairs = AllPairs(pair_partitions.val)
         testing_pairs = AllPairs(pair_partitions.test) if not no_test else None
-        search_length = training_pairs.n_references
     else:
         training_pairs = None
         validation_pairs = None
@@ -65,36 +65,17 @@ def train(n_epochs: int, use_cuda,
 
     try:
         logger.info("Training triplet network...")
-
-        training_mrrs = []
-        validation_mrrs = []
-        training_losses = []
-        validation_losses = []
-        training_ranks = []
-        validation_ranks = []
-
+        progress = TrainingProgress()
         models = training.train_triplet_network(network, training_data, criterion, optimizer, n_epochs, use_cuda)
-
-        # if validate_every > 0:
-        #     logger.debug("Calculating initial MRRs...")
-        #     training_mrr, training_rank = experimentation.mean_reciprocal_ranks(network.siamese, training_pairs, use_cuda)
-        #     val_mrr, val_rank = experimentation.mean_reciprocal_ranks(network.siamese, validation_pairs, use_cuda)
-        #     logger.info("MRRs at epoch {0}:\n\ttrn = {1}\n\tval = {2}".format(-1, training_mrr, val_mrr))
-        #
-        #     training_mrrs.append(training_mrr)
-        #     validation_mrrs.append(val_mrr)
-
         for epoch, (model, training_batch_losses) in enumerate(models):
             utilities.save_model(model, model_path.format(epoch))
 
             should_validate = validate_every != 0 and epoch % validate_every == 0
 
             training_loss = training_batch_losses.mean()
-            training_losses.append(training_loss)
             if should_validate:
                 validation_batch_losses = experimentation.triplet_loss(model, validation_data, criterion, use_cuda, batch_size=64)
                 validation_loss = validation_batch_losses.mean()
-                validation_losses.append(validation_loss)
                 logger.info("Loss at epoch {0}:\n\ttrn = {1}\n\tval = {2}".format(epoch, training_loss, validation_loss))
 
                 logger.debug("Calculating MRRs...")
@@ -103,26 +84,21 @@ def train(n_epochs: int, use_cuda,
                 logger.info("MRRs at epoch {0}:\n\ttrn = {1}\n\tval = {2}".format(epoch, training_mrr, val_mrr))
                 logger.info("Mean ranks at epoch {0}:\n\ttrn = {1}\n\tval = {2}".format(epoch, training_rank, val_rank))
 
-                training_mrrs.append(training_mrr)
-                validation_mrrs.append(val_mrr)
-
-                training_ranks.append(training_rank)
-                validation_ranks.append(val_rank)
-
-                graphing.mrr_per_epoch(training_mrrs, validation_mrrs, "Triplet", n_categories=search_length)
-                graphing.mean_rank_per_epoch(training_ranks, validation_ranks, "Triplet", n_categories=search_length)
+                progress.add_mrr(train=training_mrr, val=val_mrr)
+                progress.add_rank(train=training_rank, val=val_rank)
+                progress.add_loss(train=training_loss, val=validation_loss)
             else:
                 logger.info("Loss at epoch {0}:\n\ttrn = {1}".format(epoch, training_loss))
-                validation_losses.append(np.nan)
-                training_mrrs.append(np.nan)
-                validation_mrrs.append(np.nan)
+                progress.add_mrr(train=np.nan, val=np.nan)
+                progress.add_rank(train=np.nan, val=np.nan)
+                progress.add_loss(train=training_loss, val=np.nan)
 
-            graphing.loss_per_epoch(training_losses, validation_losses, "Triplet")
+            progress.graph("Triplet", search_length)
 
         # load weights from best model if we validated throughout
         if validate_every > 0:
             network = network.train()
-            utilities.load_model(network, model_path.format(np.argmax(validation_mrrs)))
+            utilities.load_model(network, model_path.format(np.argmax(progress.val_mrr)))
         # otherwise just save most recent model
         utilities.save_model(network, model_path.format('best'))
         utilities.save_model(network, './output/{0}/triplet'.format(utilities.get_trial_number()))
@@ -131,7 +107,7 @@ def train(n_epochs: int, use_cuda,
             rrs = experimentation.reciprocal_ranks(network, testing_pairs, use_cuda)
             utilities.log_final_stats(rrs)
 
-        training_result = TrainingResult(training_mrrs, training_ranks, training_losses, validation_mrrs, validation_ranks, validation_losses)
+        training_result = TrainingProgress()
         train_correlation, val_correlation = training_result.pearson()
         logger.info("Correlations between loss and MRR:\n\ttrn = {0}\n\tval = {1}".format(train_correlation, val_correlation))
         with open("./output/{0}/triplet.pickle".format(utilities.get_trial_number()), 'w+b') as f:
