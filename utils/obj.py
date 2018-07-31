@@ -1,4 +1,4 @@
-from scipy.stats import pearsonr, np
+from scipy.stats import pearsonr
 
 
 class DataSplit:
