@@ -1,4 +1,4 @@
-from scipy.stats import pearsonr
+from scipy.stats import pearsonr, np
 
 
 class DataSplit:
@@ -21,6 +21,7 @@ class TrainingResult:
         self.val_loss = val_loss
 
     def pearson(self):
-        train = pearsonr(self.train_loss, self.train_mrr)
-        val = pearsonr(self.val_loss, self.val_loss)
+        train = pearsonr(self.train_loss, self.train_rank)[0]
+        val = pearsonr(self.val_loss, self.val_rank)[0]
+
         return train, val
