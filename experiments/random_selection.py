@@ -13,6 +13,7 @@ from models.siamese import Siamese
 from data_partitions.generics import Partitions
 from utils import utils as utilities, training as training, experimentation as experimentation, graphing as graphing
 from utils.obj import TrainingResult
+from utils.utils import initialize_weights
 
 
 def train(use_cuda, data: Datafiles, use_dropout, validate_every, data_split, regenerate_splits, regenerate_weights, optimizer_name, lr, wd, momentum,
@@ -30,18 +31,8 @@ def train(use_cuda, data: Datafiles, use_dropout, validate_every, data_split, re
 
     # get a siamese network, see Siamese class for architecture
     siamese = Siamese(dropout=use_dropout)
-    starting_weights_path = model_path.format("starting_weights")
+    siamese = initialize_weights(siamese, regenerate_weights, use_cuda)
 
-    if regenerate_weights:
-        logger.debug("Saving initial weights/biases at {0}...".format(starting_weights_path))
-        utilities.save_model(siamese, starting_weights_path)
-    else:
-        try:
-            logger.debug("Loading initial weights/biases from {0}...".format(starting_weights_path))
-            utilities.load_model(siamese, starting_weights_path, use_cuda)
-        except FileNotFoundError:
-            logger.debug("Saving initial weights/biases at {0}...".format(starting_weights_path))
-            utilities.save_model(siamese, starting_weights_path)
     if use_cuda:
         siamese = siamese.cuda()
 

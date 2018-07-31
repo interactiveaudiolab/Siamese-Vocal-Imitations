@@ -13,8 +13,10 @@ from data_partitions.triplet import TripletPartition
 from data_sets.pair import AllPairs
 from data_sets.triplet import AllPositivesRandomNegatives
 from models.bisiamese import Bisiamese
+from models.siamese import Siamese
 from utils import utils as utilities, training as training, experimentation as experimentation, graphing as graphing
 from utils.obj import DataSplit, TrainingResult
+from utils.utils import initialize_weights
 
 
 def train(n_epochs: int, use_cuda,
@@ -43,20 +45,10 @@ def train(n_epochs: int, use_cuda,
         testing_pairs = None
         search_length = None
 
-    # get a bisiamese network, see Siamese class for architecture
+    siamese = initialize_weights(Siamese(dropout=use_dropout), regenerate_weights, use_cuda)
     network = Bisiamese(dropout=use_dropout)
-    starting_weights_path = model_path.format("starting_weights")
+    network.load_siamese(siamese)
 
-    if regenerate_weights:
-        logger.debug("Saving initial weights/biases at {0}...".format(starting_weights_path))
-        utilities.save_model(network, starting_weights_path)
-    else:
-        try:
-            logger.debug("Loading initial weights/biases from {0}...".format(starting_weights_path))
-            utilities.load_model(network, starting_weights_path, use_cuda)
-        except FileNotFoundError:
-            logger.debug("Saving initial weights/biases at {0}...".format(starting_weights_path))
-            utilities.save_model(network, starting_weights_path)
     if use_cuda:
         network = network.cuda()
 

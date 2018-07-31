@@ -3,7 +3,6 @@ import torch
 from torch import nn
 
 from models.siamese import Siamese
-from utils.utils import load_model
 
 
 class Bisiamese(nn.Module):
@@ -27,5 +26,5 @@ class Bisiamese(nn.Module):
         output = self.final_layer(concatenated)
         return output.view(-1)
 
-    def load_siamese(self, path, use_cuda):
-        load_model(self.siamese, path, use_cuda)
+    def load_siamese(self, model: nn.Module):
+        self.siamese.load_state_dict(model.state_dict())

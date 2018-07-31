@@ -46,6 +46,10 @@ def main(cli_args=None):
                                       cli_args.validation_frequency, cli_args.dropout, cli_args.regenerate_weights, cli_args.optimizer, cli_args.learning_rate,
                                       cli_args.weight_decay, cli_args.momentum)
 
+            # don't regenerate them twice
+            cli_args.regenerate_weights = False
+            cli_args.regenerate_splits = False
+
         if cli_args.siamese:
             experiments.random_selection.train(cli_args.cuda, datafiles, cli_args.dropout, cli_args.validation_frequency, data_split,
                                                cli_args.regenerate_splits, cli_args.regenerate_weights, cli_args.optimizer, cli_args.learning_rate,
