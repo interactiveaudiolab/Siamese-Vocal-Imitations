@@ -11,6 +11,7 @@ import experiments.triplet
 import utils.utils as utilities
 from data_files.vocal_imitation import VocalImitation
 from data_files.vocal_sketch import VocalSketchV2, VocalSketchV1
+from data_partitions.generics import Partitions
 from utils.obj import DataSplit
 
 
@@ -39,22 +40,17 @@ def main(cli_args=None):
 
         datafiles = dataset(recalculate_spectrograms=cli_args.recalculate_spectrograms)
         data_split = DataSplit(*cli_args.partitions)
+        partitions = Partitions(datafiles, data_split, cli_args.num_categories, regenerate_splits=cli_args.regenerate_splits)
+        if cli_args.regenerate_weights:
+            utilities.regenerate_siamese_weights()
 
         if cli_args.triplet:
-            experiments.triplet.train(cli_args.epochs, cli_args.cuda, datafiles, data_split, cli_args.regenerate_splits, cli_args.num_categories,
-                                      cli_args.validation_frequency, cli_args.dropout, cli_args.regenerate_weights, cli_args.optimizer, cli_args.learning_rate,
-                                      cli_args.weight_decay, cli_args.momentum)
-
-            # don't regenerate them twice
-            cli_args.regenerate_weights = False
-            cli_args.regenerate_splits = False
+            experiments.triplet.train(cli_args.cuda, cli_args.epochs, cli_args.validation_frequency, cli_args.dropout, partitions, cli_args.optimizer,
+                                      cli_args.learning_rate, cli_args.weight_decay, cli_args.momentum)
 
         if cli_args.siamese:
-            experiments.siamese.train(cli_args.cuda, datafiles, cli_args.dropout, cli_args.validation_frequency, data_split,
-                                      cli_args.regenerate_splits, cli_args.regenerate_weights, cli_args.optimizer, cli_args.learning_rate,
-                                      cli_args.weight_decay, cli_args.momentum, cli_args.epochs)
-        else:
-            raise ValueError("No network type selected")
+            experiments.siamese.train(cli_args.cuda, cli_args.epochs, cli_args.validation_frequency, cli_args.dropout, partitions, cli_args.optimizer,
+                                      cli_args.learning_rate, cli_args.weight_decay, cli_args.momentum)
 
         cli_args.trials -= 1
         if cli_args.trials > 0:

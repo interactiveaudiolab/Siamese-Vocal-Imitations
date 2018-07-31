@@ -3,49 +3,44 @@ import pickle
 import traceback
 
 import numpy as np
-import torch
 from torch.nn import BCELoss
 
-from data_files.generics import Datafiles
 from data_partitions.generics import Partitions
 from data_partitions.pair import PairPartition
 from data_partitions.triplet import TripletPartition
 from data_sets.pair import AllPairs
 from data_sets.triplet import AllPositivesRandomNegatives
-from models.triplet import Triplet
 from models.siamese import Siamese
-from utils import utils as utilities, training as training, experimentation as experimentation, graphing as graphing
-from utils.obj import DataSplit, TrainingProgress
-from utils.utils import initialize_weights
+from models.triplet import Triplet
+from utils import utils as utilities, training as training, experimentation as experimentation
+from utils.obj import TrainingProgress
+from utils.utils import initialize_weights, get_optimizer
 
 
-def train(n_epochs: int, use_cuda,
-          data: Datafiles, data_split: DataSplit, regenerate_splits: bool, n_categories: int, validate_every: int,
-          use_dropout: bool, regenerate_weights: bool,
-          optimizer_name: str, lr: float, wd: float, momentum: bool):
+def train(use_cuda: bool, n_epochs: int, validate_every: int, use_dropout: bool, partitions: Partitions, optimizer_name: str, lr: float, wd: float,
+          momentum: bool):
     logger = logging.getLogger('logger')
 
     model_path = "./model_output/triplet/model_{0}"
     no_test = True
 
-    triplet_partitions = Partitions(data, data_split, TripletPartition, n_train_val_categories=n_categories, no_test=no_test,
-                                    regenerate_splits=regenerate_splits)
-    training_data = AllPositivesRandomNegatives(triplet_partitions.train)
-    validation_data = AllPositivesRandomNegatives(triplet_partitions.val)
+    partitions.generate_partitions(TripletPartition, no_test=no_test)
+    training_data = AllPositivesRandomNegatives(partitions.train)
+    validation_data = AllPositivesRandomNegatives(partitions.val)
 
     if validate_every > 0:
-        pair_partitions = Partitions(data, data_split, PairPartition, regenerate_splits=False, no_test=no_test)
-        training_pairs = AllPairs(pair_partitions.train)
+        partitions.generate_partitions(PairPartition, no_test=no_test)
+        training_pairs = AllPairs(partitions.train)
         search_length = training_pairs.n_references
-        validation_pairs = AllPairs(pair_partitions.val)
-        testing_pairs = AllPairs(pair_partitions.test) if not no_test else None
+        validation_pairs = AllPairs(partitions.val)
+        testing_pairs = AllPairs(partitions.test) if not no_test else None
     else:
         training_pairs = None
         validation_pairs = None
         testing_pairs = None
         search_length = None
 
-    siamese = initialize_weights(Siamese(dropout=use_dropout), regenerate_weights, use_cuda)
+    siamese = initialize_weights(Siamese(dropout=use_dropout), use_cuda)
     network = Triplet(dropout=use_dropout)
     network.load_siamese(siamese)
 
@@ -53,15 +48,7 @@ def train(n_epochs: int, use_cuda,
         network = network.cuda()
 
     criterion = BCELoss()
-
-    if optimizer_name == 'sgd':
-        optimizer = torch.optim.SGD(network.parameters(), lr=lr, weight_decay=wd, momentum=.9 if momentum else 0, nesterov=momentum)  # TODO: separate params
-    elif optimizer_name == 'adam':
-        optimizer = torch.optim.Adam(network.parameters(), lr=lr, weight_decay=wd)
-    elif optimizer_name == 'rmsprop':
-        optimizer = torch.optim.RMSprop(network.parameters(), lr=lr, weight_decay=wd, momentum=.9 if momentum else 0)
-    else:
-        raise ValueError("No optimizer found with name {0}".format(optimizer_name))
+    optimizer = get_optimizer(network, optimizer_name, lr, wd, momentum)
 
     try:
         logger.info("Training triplet network...")

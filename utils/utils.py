@@ -8,6 +8,8 @@ import numpy as np
 import torch
 import yaml
 
+from models.siamese import Siamese
+
 
 def load_model(model, path, use_cuda=True):
     if use_cuda:
@@ -172,19 +174,35 @@ def get_dataset_dir():
         sys.exit()
 
 
-def initialize_weights(siamese, regenerate_weights, use_cuda):
+def regenerate_siamese_weights():
+    logger = logging.getLogger('logger')
+    starting_weights_path = "./model_output/siamese_init/{0}".format("starting_weights")
+    logger.debug("Saving initial weights/biases at {0}...".format(starting_weights_path))
+    save_model(Siamese(), starting_weights_path)
+
+
+def initialize_weights(siamese, use_cuda):
     logger = logging.getLogger('logger')
 
     starting_weights_path = "./model_output/siamese_init/{0}".format("starting_weights")
-    if regenerate_weights:
+
+    try:
+        logger.debug("Loading initial weights/biases from {0}...".format(starting_weights_path))
+        load_model(siamese, starting_weights_path, use_cuda)
+    except FileNotFoundError:
         logger.debug("Saving initial weights/biases at {0}...".format(starting_weights_path))
         save_model(siamese, starting_weights_path)
-    else:
-        try:
-            logger.debug("Loading initial weights/biases from {0}...".format(starting_weights_path))
-            load_model(siamese, starting_weights_path, use_cuda)
-        except FileNotFoundError:
-            logger.debug("Saving initial weights/biases at {0}...".format(starting_weights_path))
-            save_model(siamese, starting_weights_path)
 
     return siamese
+
+
+def get_optimizer(network, optimizer_name, lr, wd, momentum):
+    if optimizer_name == 'sgd':
+        optimizer = torch.optim.SGD(network.parameters(), lr=lr, weight_decay=wd, momentum=.9 if momentum else 0, nesterov=momentum)  # TODO: separate params
+    elif optimizer_name == 'adam':
+        optimizer = torch.optim.Adam(network.parameters(), lr=lr, weight_decay=wd)
+    elif optimizer_name == 'rmsprop':
+        optimizer = torch.optim.RMSprop(network.parameters(), lr=lr, weight_decay=wd, momentum=.9 if momentum else 0)
+    else:
+        raise ValueError("No optimizer found with name {0}".format(optimizer_name))
+    return optimizer

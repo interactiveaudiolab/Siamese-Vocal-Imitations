@@ -3,27 +3,25 @@ import pickle
 import traceback
 
 import numpy as np
-import torch
 from torch.nn import BCELoss
 
-from data_files.generics import Datafiles
 from data_partitions.generics import Partitions
 from data_partitions.pair import PairPartition
 from data_sets.pair import AllPositivesRandomNegatives, AllPairs
 from models.siamese import Siamese
 from utils import utils as utilities, training, experimentation
 from utils.obj import TrainingProgress
-from utils.utils import initialize_weights
+from utils.utils import initialize_weights, get_optimizer
 
 
-def train(use_cuda, data: Datafiles, use_dropout, validate_every, data_split, regenerate_splits, regenerate_weights, optimizer_name, lr, wd, momentum,
-          n_epochs):
+def train(use_cuda: bool, n_epochs: int, validate_every: int, use_dropout: bool, partitions: Partitions, optimizer_name: str, lr: float, wd: float,
+          momentum: bool):
     logger = logging.getLogger('logger')
 
     model_path = "./model_output/siamese/model_{0}"
     no_test = True
 
-    partitions = Partitions(data, data_split, PairPartition, regenerate_splits=regenerate_splits, no_test=no_test)
+    partitions.generate_partitions(PairPartition, no_test=no_test)
     training_data = AllPositivesRandomNegatives(partitions.train)
     if validate_every > 0:
         training_pairs = AllPairs(partitions.train)
@@ -38,21 +36,13 @@ def train(use_cuda, data: Datafiles, use_dropout, validate_every, data_split, re
 
     # get a siamese network, see Siamese class for architecture
     siamese = Siamese(dropout=use_dropout)
-    siamese = initialize_weights(siamese, regenerate_weights, use_cuda)
+    siamese = initialize_weights(siamese, use_cuda)
 
     if use_cuda:
         siamese = siamese.cuda()
 
     criterion = BCELoss()
-
-    if optimizer_name == 'sgd':
-        optimizer = torch.optim.SGD(siamese.parameters(), lr=lr, weight_decay=wd, momentum=.9 if momentum else 0, nesterov=momentum)  # TODO: separate params
-    elif optimizer_name == 'adam':
-        optimizer = torch.optim.Adam(siamese.parameters(), lr=lr, weight_decay=wd)
-    elif optimizer_name == 'rmsprop':
-        optimizer = torch.optim.RMSprop(siamese.parameters(), lr=lr, weight_decay=wd, momentum=.9 if momentum else 0)
-    else:
-        raise ValueError("No optimizer found with name {0}".format(optimizer_name))
+    optimizer = get_optimizer(siamese, optimizer_name, lr, wd, momentum)
 
     try:
         logger.info("Training using random selection...")
