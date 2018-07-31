@@ -5,9 +5,9 @@ from torch import nn
 from models.siamese import Siamese
 
 
-class Bisiamese(nn.Module):
+class Triplet(nn.Module):
     def __init__(self, dropout=True, normalization=True):
-        super(Bisiamese, self).__init__()
+        super(Triplet, self).__init__()
         self.siamese = Siamese(dropout=dropout, normalization=normalization)
         self.final_layer = nn.Sequential(
             nn.Linear(2, 1),

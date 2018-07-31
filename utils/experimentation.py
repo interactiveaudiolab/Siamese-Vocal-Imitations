@@ -2,7 +2,7 @@ import numpy as np
 from torch.utils.data import dataloader, DataLoader
 
 from data_sets.pair import AllPairs
-from models.bisiamese import Bisiamese
+from models.triplet import Triplet
 from models.siamese import Siamese
 from utils import utils
 from utils.progress_bar import Bar
@@ -154,7 +154,7 @@ def siamese_loss(model: Siamese, dataset, objective, use_cuda: bool, batch_size=
     return batch_losses
 
 
-def bisiamese_loss(model: Bisiamese, dataset, objective, use_cuda: bool, batch_size=128):
+def triplet_loss(model: Triplet, dataset, objective, use_cuda: bool, batch_size=128):
     """
     Calculates the loss of model over dataset by objective. Optionally run on the GPU.
     :param model: a siamese network

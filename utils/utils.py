@@ -87,7 +87,7 @@ def configure_parser(parser):
     general = parser.add_argument_group(title="General options")
     general.add_argument('-c', '--cuda', action='store_const', const=True, default=False,
                          help='Whether to enable calculation on the GPU through CUDA or not. Defaults to false.')
-    general.add_argument('-t', '--trials', default=1, type=int,
+    general.add_argument('-tr', '--trials', default=1, type=int,
                          help='Amount of trials to run. Defaults to 1.')
     general.add_argument('-vf', '--validation_frequency', default=1, type=int,
                          help='Frequency of MRR and validation loss calculations (per epoch). Defaults to 1. 0 means do not calculate at all.')
@@ -96,8 +96,8 @@ def configure_parser(parser):
     network = parser.add_argument_group(title="Network options")
     network.add_argument('-s', '--siamese', action='store_const', const=True, default=False,
                          help='Use a siamese network.')
-    network.add_argument('-b', '--bisiamese', action='store_const', const=True, default=False,
-                         help='Use a bisiamese network.')
+    network.add_argument('-t', '--triplet', action='store_const', const=True, default=False,
+                         help='Use a triplet network.')
     network.add_argument('-dr', '--dropout', action='store_const', const=True, default=False,
                          help='Whether to use drop-out in training the network. Defaults to false.')
     network.add_argument('-rw', '--regenerate_weights', action='store_const', const=True, default=False,

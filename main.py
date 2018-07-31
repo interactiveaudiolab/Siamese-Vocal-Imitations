@@ -7,7 +7,7 @@ import traceback
 # noinspection PyUnresolvedReferences
 import utils.matplotlib_backend_hack
 import experiments.fine_tuning
-import experiments.random_selection
+import experiments.siamese
 import experiments.triplet
 import utils.utils as utilities
 from data_files.vocal_imitation import VocalImitation
@@ -41,7 +41,7 @@ def main(cli_args=None):
         datafiles = dataset(recalculate_spectrograms=cli_args.recalculate_spectrograms)
         data_split = DataSplit(*cli_args.partitions)
 
-        if cli_args.bisiamese:
+        if cli_args.triplet:
             experiments.triplet.train(cli_args.epochs, cli_args.cuda, datafiles, data_split, cli_args.regenerate_splits, cli_args.num_categories,
                                       cli_args.validation_frequency, cli_args.dropout, cli_args.regenerate_weights, cli_args.optimizer, cli_args.learning_rate,
                                       cli_args.weight_decay, cli_args.momentum)
@@ -51,9 +51,9 @@ def main(cli_args=None):
             cli_args.regenerate_splits = False
 
         if cli_args.siamese:
-            experiments.random_selection.train(cli_args.cuda, datafiles, cli_args.dropout, cli_args.validation_frequency, data_split,
-                                               cli_args.regenerate_splits, cli_args.regenerate_weights, cli_args.optimizer, cli_args.learning_rate,
-                                               cli_args.weight_decay, cli_args.momentum, cli_args.epochs)
+            experiments.siamese.train(cli_args.cuda, datafiles, cli_args.dropout, cli_args.validation_frequency, data_split,
+                                      cli_args.regenerate_splits, cli_args.regenerate_weights, cli_args.optimizer, cli_args.learning_rate,
+                                      cli_args.weight_decay, cli_args.momentum, cli_args.epochs)
         else:
             raise ValueError("No network type selected")
 

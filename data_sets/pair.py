@@ -1,6 +1,6 @@
 import numpy as np
 
-from data_partitions.siamese import PairPartition
+from data_partitions.pair import PairPartition
 from data_sets.generics import PairedDataset
 
 

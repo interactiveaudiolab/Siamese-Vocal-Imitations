@@ -8,11 +8,11 @@ from torch.nn import BCELoss
 
 from data_files.generics import Datafiles
 from data_partitions.generics import Partitions
-from data_partitions.siamese import PairPartition
+from data_partitions.pair import PairPartition
 from data_partitions.triplet import TripletPartition
 from data_sets.pair import AllPairs
 from data_sets.triplet import AllPositivesRandomNegatives
-from models.bisiamese import Bisiamese
+from models.triplet import Triplet
 from models.siamese import Siamese
 from utils import utils as utilities, training as training, experimentation as experimentation, graphing as graphing
 from utils.obj import DataSplit, TrainingResult
@@ -46,7 +46,7 @@ def train(n_epochs: int, use_cuda,
         search_length = None
 
     siamese = initialize_weights(Siamese(dropout=use_dropout), regenerate_weights, use_cuda)
-    network = Bisiamese(dropout=use_dropout)
+    network = Triplet(dropout=use_dropout)
     network.load_siamese(siamese)
 
     if use_cuda:
@@ -73,7 +73,7 @@ def train(n_epochs: int, use_cuda,
         training_ranks = []
         validation_ranks = []
 
-        models = training.train_bisiamese_network(network, training_data, criterion, optimizer, n_epochs, use_cuda)
+        models = training.train_triplet_network(network, training_data, criterion, optimizer, n_epochs, use_cuda)
 
         # if validate_every > 0:
         #     logger.debug("Calculating initial MRRs...")
@@ -92,7 +92,7 @@ def train(n_epochs: int, use_cuda,
             training_loss = training_batch_losses.mean()
             training_losses.append(training_loss)
             if should_validate:
-                validation_batch_losses = experimentation.bisiamese_loss(model, validation_data, criterion, use_cuda, batch_size=64)
+                validation_batch_losses = experimentation.triplet_loss(model, validation_data, criterion, use_cuda, batch_size=64)
                 validation_loss = validation_batch_losses.mean()
                 validation_losses.append(validation_loss)
                 logger.info("Loss at epoch {0}:\n\ttrn = {1}\n\tval = {2}".format(epoch, training_loss, validation_loss))
@@ -109,15 +109,15 @@ def train(n_epochs: int, use_cuda,
                 training_ranks.append(training_rank)
                 validation_ranks.append(val_rank)
 
-                graphing.mrr_per_epoch(training_mrrs, validation_mrrs, "Bisiamese", n_categories=search_length)
-                graphing.mean_rank_per_epoch(training_ranks, validation_ranks, "Bisiamese", n_categories=search_length)
+                graphing.mrr_per_epoch(training_mrrs, validation_mrrs, "Triplet", n_categories=search_length)
+                graphing.mean_rank_per_epoch(training_ranks, validation_ranks, "Triplet", n_categories=search_length)
             else:
                 logger.info("Loss at epoch {0}:\n\ttrn = {1}".format(epoch, training_loss))
                 validation_losses.append(np.nan)
                 training_mrrs.append(np.nan)
                 validation_mrrs.append(np.nan)
 
-            graphing.loss_per_epoch(training_losses, validation_losses, "Bisiamese")
+            graphing.loss_per_epoch(training_losses, validation_losses, "Triplet")
 
         # load weights from best model if we validated throughout
         if validate_every > 0:
@@ -125,7 +125,7 @@ def train(n_epochs: int, use_cuda,
             utilities.load_model(network, model_path.format(np.argmax(validation_mrrs)))
         # otherwise just save most recent model
         utilities.save_model(network, model_path.format('best'))
-        utilities.save_model(network, './output/{0}/bisiamese'.format(utilities.get_trial_number()))
+        utilities.save_model(network, './output/{0}/triplet'.format(utilities.get_trial_number()))
         if not no_test:
             logger.info("Results from best model generated during random-selection training, evaluated on test data:")
             rrs = experimentation.reciprocal_ranks(network, testing_pairs, use_cuda)
@@ -134,7 +134,7 @@ def train(n_epochs: int, use_cuda,
         training_result = TrainingResult(training_mrrs, training_ranks, training_losses, validation_mrrs, validation_ranks, validation_losses)
         train_correlation, val_correlation = training_result.pearson()
         logger.info("Correlations between loss and MRR:\n\ttrn = {0}\n\tval = {1}".format(train_correlation, val_correlation))
-        with open("./output/{0}/bisiamese.pickle".format(utilities.get_trial_number()), 'w+b') as f:
+        with open("./output/{0}/triplet.pickle".format(utilities.get_trial_number()), 'w+b') as f:
             pickle.dump(training_result, f, protocol=pickle.HIGHEST_PROTOCOL)
         return network
     except Exception as e:

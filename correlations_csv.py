@@ -37,19 +37,19 @@ def main():
         siamese_path = os.path.join(current_dir, 'siamese.pickle')
         siamese_result = get_result(siamese_path)
 
-        bisiamese_path = os.path.join(current_dir, 'bisiamese.pickle')
-        bisiamese_result = get_result(bisiamese_path)
+        triplet_path = os.path.join(current_dir, 'triplet.pickle')
+        triplet_result = get_result(triplet_path)
 
         siamese_tr, siamese_vl = siamese_result.pearson()
-        bisiamese_tr, bisiamese_vl = bisiamese_result.pearson()
-        a.append([trial, siamese_tr, siamese_vl, bisiamese_tr, bisiamese_vl])
+        triplet_tr, triplet_vl = triplet_result.pearson()
+        a.append([trial, siamese_tr, siamese_vl, triplet_tr, triplet_vl])
 
         print(siamese_result)
-        print(bisiamese_result)
+        print(triplet_result)
 
     with open("correlations.csv", 'w+') as f:
         writer = csv.writer(f)
-        writer.writerow(['trial_no', 'siamese_tr', 'siamese_vl', 'bisiamese_tr', 'bisiamese_vl'])
+        writer.writerow(['trial_no', 'siamese_tr', 'siamese_vl', 'triplet_tr', 'triplet_vl'])
         for b in a:
             writer.writerow(b)
 

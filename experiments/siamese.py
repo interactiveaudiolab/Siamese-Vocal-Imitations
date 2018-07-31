@@ -7,7 +7,7 @@ import torch
 from torch.nn import BCELoss
 
 from data_files.generics import Datafiles
-from data_partitions.siamese import PairPartition
+from data_partitions.pair import PairPartition
 from data_sets.pair import AllPositivesRandomNegatives, AllPairs
 from models.siamese import Siamese
 from data_partitions.generics import Partitions

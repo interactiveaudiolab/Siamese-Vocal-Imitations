@@ -5,7 +5,7 @@ import numpy as np
 import torch
 from torch.nn import BCELoss
 
-import experiments.random_selection
+import experiments.siamese
 from data_files.generics import Datafiles
 from data_sets.pair import FineTuned, AllPairs
 from models.siamese import Siamese
@@ -23,7 +23,7 @@ def train(use_cuda, data: Datafiles, use_dropout, validate_every, data_split, re
             siamese = siamese.cuda()
         utilities.load_model(siamese, './model_output/random_selection/model_best')
     else:
-        siamese = experiments.random_selection.train(use_cuda, data, use_dropout, validate_every, data_split, regenerate_splits, regenerate_weights)
+        siamese = experiments.siamese.train(use_cuda, data, use_dropout, validate_every, data_split, regenerate_splits, regenerate_weights)
 
     model_path = './model_output/fine_tuned/model_{0}_{1}'
 

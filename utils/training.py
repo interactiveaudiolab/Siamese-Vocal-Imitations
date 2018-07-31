@@ -6,7 +6,7 @@ from torch.utils.data.sampler import BatchSampler
 
 from data_sets.samplers import BalancedPairSampler, BalancedTripletSampler
 from data_sets.generics import PairedDataset, TripletDataset
-from models.bisiamese import Bisiamese
+from models.triplet import Triplet
 from models.siamese import Siamese
 from utils.progress_bar import Bar
 
@@ -56,7 +56,7 @@ def train_siamese_network(model: Siamese, data: PairedDataset, objective, optimi
         yield model, batch_losses
 
 
-def train_bisiamese_network(model: Bisiamese, data: TripletDataset, objective, optimizer, n_epochs, use_cuda, batch_size=128):
+def train_triplet_network(model: Triplet, data: TripletDataset, objective, optimizer, n_epochs, use_cuda, batch_size=128):
     for epoch in range(n_epochs):
         # because the model is passed by reference and this is a generator, ensure that we're back in training mode
         model = model.train()
