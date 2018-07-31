@@ -24,6 +24,7 @@ def train(use_cuda, data: Datafiles, use_dropout, validate_every, data_split, re
     partitions = Partitions(data, data_split, PairPartition, regenerate_splits=regenerate_splits)
     training_data = AllPositivesRandomNegatives(partitions.train)
     training_pairs = AllPairs(partitions.train)
+    search_length = training_pairs.n_references
     validation_pairs = AllPairs(partitions.val)
     testing_pairs = AllPairs(partitions.test)
 
@@ -99,7 +100,7 @@ def train(use_cuda, data: Datafiles, use_dropout, validate_every, data_split, re
                 training_ranks.append(training_rank)
                 validation_ranks.append(val_rank)
 
-                graphing.mrr_per_epoch(training_mrrs, validation_mrrs, "Siamese")
+                graphing.mrr_per_epoch(training_mrrs, validation_mrrs, "Siamese", n_categories=search_length)
             else:
                 logger.info("Loss at epoch {0}:\n\ttrn = {1}".format(epoch, training_loss))
                 validation_losses.append(np.nan)
