@@ -9,7 +9,7 @@ from data_partitions.generics import Partitions
 from data_partitions.pair import PairPartition
 from data_partitions.triplet import TripletPartition
 from data_sets.pair import AllPairs
-from data_sets.triplet import AllPositivesRandomNegatives
+from data_sets.triplet import Balanced
 from models.siamese import Siamese
 from models.triplet import Triplet
 from utils import utils as utilities, training as training, experimentation as experimentation
@@ -24,8 +24,8 @@ def train(use_cuda: bool, n_epochs: int, validate_every: int, use_dropout: bool,
     model_path = "./model_output/triplet/model_{0}"
 
     partitions.generate_partitions(TripletPartition, no_test=True)
-    training_data = AllPositivesRandomNegatives(partitions.train)
-    validation_data = AllPositivesRandomNegatives(partitions.val)
+    training_data = Balanced(partitions.train)
+    validation_data = Balanced(partitions.val)
 
     if validate_every > 0:
         partitions.generate_partitions(PairPartition, no_test=no_test)

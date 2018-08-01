@@ -7,7 +7,7 @@ from torch.nn import BCELoss
 
 from data_partitions.generics import Partitions
 from data_partitions.pair import PairPartition
-from data_sets.pair import AllPositivesRandomNegatives, AllPairs
+from data_sets.pair import Balanced, AllPairs
 from models.siamese import Siamese
 from utils import utils as utilities, training, experimentation
 from utils.obj import TrainingProgress
@@ -21,7 +21,7 @@ def train(use_cuda: bool, n_epochs: int, validate_every: int, use_dropout: bool,
     model_path = "./model_output/siamese/model_{0}"
 
     partitions.generate_partitions(PairPartition, no_test=no_test)
-    training_data = AllPositivesRandomNegatives(partitions.train)
+    training_data = Balanced(partitions.train)
     if validate_every > 0:
         training_pairs = AllPairs(partitions.train)
         search_length = training_pairs.n_references

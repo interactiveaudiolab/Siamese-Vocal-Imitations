@@ -21,25 +21,28 @@ class PairPartition(Partition):
                 self.imitation_labels.append(l)
 
         bar = Bar("Creating pairs for {0}...".format(dataset_type), max=len(self.references) * len(self.imitations))
-        self.positive_pairs = []
-        self.negative_pairs = []
+
+        self.negative_fine = []
+        self.negative_coarse = []
+        self.positive = []
+
         self.all_pairs = []
-        self.all_labels = np.zeros([len(self.imitations), len(self.references)])
         self.canonical_labels = np.zeros([len(self.imitations), len(self.references)])
         n = 0
         update_bar_every = 1000
         for i, (imitation, imitation_label) in enumerate(zip(self.imitations, self.imitation_labels)):
             for j, (reference, reference_label) in enumerate(zip(self.references, self.reference_labels)):
-                if reference_label['label'] == imitation_label and reference_label['is_canonical']:
-                    self.positive_pairs.append([imitation, reference, True])
-                    self.all_pairs.append([imitation, reference, True])
-                    self.all_labels[i, j] = 1
+                if reference_label['label'] == imitation_label:
                     if reference_label['is_canonical']:
                         self.canonical_labels[i, j] = 1
+                        self.positive.append([imitation, reference, True])
+                        self.all_pairs.append([imitation, reference, True])
+                    else:
+                        self.negative_fine.append([imitation, reference, False])
+                        self.all_pairs.append([imitation, reference, False])
                 else:
-                    self.negative_pairs.append([imitation, reference, False])
+                    self.negative_coarse.append([imitation, reference, False])
                     self.all_pairs.append([imitation, reference, False])
-                    self.all_labels[i, j] = 0
 
                 n += 1
                 if n % update_bar_every == 0:

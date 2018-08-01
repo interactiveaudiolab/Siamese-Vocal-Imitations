@@ -4,7 +4,7 @@ from data_partitions.triplet import TripletPartition
 from data_sets.generics import TripletDataset
 
 
-class AllPositivesRandomNegatives(TripletDataset):
+class Balanced(TripletDataset):
     def __init__(self, data: TripletPartition):
         super().__init__(data)
         self.positive_fine = data.positive_fine

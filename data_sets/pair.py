@@ -4,11 +4,19 @@ from data_partitions.pair import PairPartition
 from data_sets.generics import PairedDataset
 
 
-class AllPositivesRandomNegatives(PairedDataset):
+class Balanced(PairedDataset):
     def __init__(self, data: PairPartition):
+        """
+        Create a dataset that has an equal number of positive and negative examples and an equal number of negative fine grain examples and negative coarse
+        grain examples. Reselects the negative examples on each epoch.
+
+        :param data:
+        """
         super().__init__(data)
-        self.positives = data.positive_pairs
-        self.negatives = data.negative_pairs
+        self.positives = data.positive
+        self.negative_fine = data.negative_fine
+        self.negative_coarse = data.negative_coarse
+
         self.pairs = []
         self.reselect_negatives()
 
@@ -18,10 +26,16 @@ class AllPositivesRandomNegatives(PairedDataset):
     def reselect_negatives(self):
         # clear out selected negatives
         self.pairs = []
-        indices = np.random.choice(np.arange(len(self.negatives)), len(self.positives))
-        for i in indices:
-            imitation, reference, label = self.negatives[i]
-            b = self.negatives[i]
+
+        negative_size = int(len(self.positives) / 2)
+        fine_indices = np.random.choice(np.arange(len(self.negative_fine)), negative_size)
+        for i in fine_indices:
+            imitation, reference, label = self.negative_fine[i]
+            self.pairs.append([imitation, reference, label])
+
+        coarse_indices = np.random.choice(np.arange(len(self.negative_coarse)), negative_size)
+        for i in coarse_indices:
+            imitation, reference, label = self.negative_coarse[i]
             self.pairs.append([imitation, reference, label])
 
         for imitation, reference, label in self.positives:
@@ -39,6 +53,5 @@ class AllPairs(PairedDataset):
         self.n_imitations = len(self.imitations)
         self.n_references = len(self.references)
         self.canonical_labels = data.canonical_labels
-        self.all_labels = data.all_labels
 
         self.pairs = data.all_pairs
