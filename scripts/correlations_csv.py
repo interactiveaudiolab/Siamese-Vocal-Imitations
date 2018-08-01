@@ -2,6 +2,7 @@ import csv
 import os
 import pickle
 import sys
+from glob import glob
 
 
 def get_result(path):
@@ -15,29 +16,18 @@ def get_result(path):
 
 def main():
     print(os.getcwd())
-    if len(sys.argv) < 2:
-        raise ValueError("python correlations_csv.py start_trial end_trial")
+    if len(sys.argv) <= 1:
+        raise ValueError("python correlations_csv.py output_dir")
 
-    try:
-        start_trial = int(sys.argv[1])
-        end_trial = int(sys.argv[2])
-    except ValueError:
-        start_trial = sys.argv[1]
-        end_trial = sys.argv[2]
-        raise ValueError("{0} or {1} is not an integer".format(start_trial, end_trial))
-
-    if end_trial < start_trial:
-        raise ValueError("End trial must be >= start trial")
-
-    output_dir = './output/{0}'
+    output_dir = sys.argv[1]
     a = []
-    for trial in range(start_trial, end_trial + 1):
+    for folder in glob(output_dir + "*/"):
+        trial = int(os.path.basename(os.path.dirname(folder)))
         print("{0}\n".format(str(trial)))
-        current_dir = output_dir.format(trial)
-        siamese_path = os.path.join(current_dir, 'siamese.pickle')
+        siamese_path = os.path.join(folder, 'siamese.pickle')
         siamese_result = get_result(siamese_path)
 
-        triplet_path = os.path.join(current_dir, 'triplet.pickle')
+        triplet_path = os.path.join(folder, 'triplet.pickle')
         triplet_result = get_result(triplet_path)
 
         siamese_tr, siamese_vl = siamese_result.pearson()
