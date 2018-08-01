@@ -13,60 +13,86 @@ class Partitions:
     def __init__(self, dataset: Datafiles, split: DataSplit, n_train_val_categories=None, regenerate_splits=False):
         dataset_name = type(dataset).__name__
         pickle_name = "./partition_pickles/{0}.pickle".format(dataset_name)
-        logger = logging.getLogger('logger')
+
+        self.train_args = None
+        self.val_args = None
+        self.test_args = None
 
         self.train = None
         self.val = None
         self.test = None
 
+        self.n_train_val_categories = n_train_val_categories
+        self.split = split
+
+        self.dataset = dataset
+
         if regenerate_splits:
-            logger.info("train, validation, test ratios = {0}, {1}, {2}".format(split.train_ratio, split.validation_ratio, split.test_ratio))
+            self.shuffled_imitation_indices = np.random.permutation(len(dataset.imitations))
 
-            imitations = dataset.imitations
-            imitation_labels = dataset.imitation_labels
-            references = dataset.references
-            reference_labels = dataset.reference_labels
+            categories = np.array(list(set([v['label'] for v in dataset.reference_labels])))
+            self.shuffled_category_indices = np.random.permutation(len(categories))
 
-            # Split categories across train/val and test
-            # i.e. train/val share a set of categories and test uses the other ones
-            categories = list(set([v['label'] for v in reference_labels]))
-            np.random.shuffle(categories)
+            self.save(pickle_name)
+            self.construct_partition_arguments()
 
-            if not n_train_val_categories:
-                n_train_val = int(split.train_ratio * len(categories) + split.validation_ratio * len(categories))
-            else:
-                n_train_val = n_train_val_categories
-
-            train_val_ref, train_val_ref_labels = self.split_references(references, reference_labels, categories[:n_train_val])
-            test_ref, test_ref_labels = self.split_references(references, reference_labels, categories[n_train_val:])
-
-            train_val_imit, train_val_imit_lab = self.filter_imitations(imitations, imitation_labels, train_val_ref_labels)
-
-            train_imit, train_imit_lab, val_imit, val_imit_lab = self.split_imitations(categories, imitations, split, train_val_imit, train_val_imit_lab)
-
-            self.train_args = [train_val_ref, train_val_ref_labels, train_imit, train_imit_lab, "training"]
-            self.val_args = [train_val_ref, train_val_ref_labels, val_imit, val_imit_lab, "validation"]
-            self.test_args = [test_ref, test_ref_labels, imitations, imitation_labels, "testing"]
-
-            logger.debug("Saving partitions at {0}...".format(pickle_name))
-            with open(pickle_name, 'wb') as f:
-                pickle.dump(self.train_args, f, protocol=pickle.HIGHEST_PROTOCOL)
-                pickle.dump(self.val_args, f, protocol=pickle.HIGHEST_PROTOCOL)
-                pickle.dump(self.test_args, f, protocol=pickle.HIGHEST_PROTOCOL)
         else:
-            try:
-                logger.debug("Loading partitions from {0}...".format(pickle_name))
-                with open(pickle_name, 'rb') as f:
-                    self.train_args = pickle.load(f)
-                    self.val_args = pickle.load(f)
-                    self.test_args = pickle.load(f)
-            except FileNotFoundError:
-                with open(pickle_name, 'w+b'):
-                    logger.critical("No pickled partition at {0}".format(pickle_name))
-                    sys.exit()
-            except EOFError:
-                logger.critical("Insufficient amount of data found in {0}".format(pickle_name))
+            self.shuffled_category_indices, self.shuffled_imitation_indices = self.load(pickle_name)
+            self.construct_partition_arguments()
+
+    @staticmethod
+    def load(location):
+        logger = logging.getLogger('logger')
+
+        try:
+            logger.debug("Loading partitions from {0}...".format(location))
+            with open(location, 'rb') as f:
+                shuffled_imitation_indices = pickle.load(f)
+                shuffled_category_indices = pickle.load(f)
+
+        except FileNotFoundError:
+            with open(location, 'w+b'):
+                logger.critical("No pickled partition at {0}".format(location))
                 sys.exit()
+        except EOFError:
+            logger.critical("Insufficient amount of data found in {0}".format(location))
+            sys.exit()
+        return shuffled_category_indices, shuffled_imitation_indices
+
+    def save(self, location):
+        logger = logging.getLogger('logger')
+
+        logger.debug("Saving partitions at {0}...".format(location))
+        with open(location, 'wb') as f:
+            pickle.dump(self.shuffled_imitation_indices, f, protocol=pickle.HIGHEST_PROTOCOL)
+            pickle.dump(self.shuffled_category_indices, f, protocol=pickle.HIGHEST_PROTOCOL)
+
+    def construct_partition_arguments(self):
+        imitations = self.dataset.imitations
+        imitation_labels = self.dataset.imitation_labels
+        references = self.dataset.references
+        reference_labels = self.dataset.reference_labels
+
+        # Split categories across train/val and test
+        # i.e. train/val share a set of categories and test uses the other ones
+        categories = np.array(list(set([v['label'] for v in reference_labels])))
+        categories = categories[self.shuffled_category_indices]
+        if not self.n_train_val_categories:
+            n_train_val = int(self.split.train_ratio * len(categories) + self.split.validation_ratio * len(categories))
+        else:
+            n_train_val = self.n_train_val_categories
+
+        train_val_ref, train_val_ref_labels = self.split_references(references, reference_labels, categories[:n_train_val])
+        test_ref, test_ref_labels = self.split_references(references, reference_labels, categories[n_train_val:])
+
+        imitations = imitations[self.shuffled_imitation_indices]
+        imitation_labels = imitation_labels[self.shuffled_imitation_indices]
+        train_val_imit, train_val_imit_lab = self.filter_imitations(imitations, imitation_labels, train_val_ref_labels)
+        train_imit, train_imit_lab, val_imit, val_imit_lab = self.split_imitations(categories, imitations, self.split, train_val_imit, train_val_imit_lab)
+
+        self.train_args = [train_val_ref, train_val_ref_labels, train_imit, train_imit_lab, "training"]
+        self.val_args = [train_val_ref, train_val_ref_labels, val_imit, val_imit_lab, "validation"]
+        self.test_args = [test_ref, test_ref_labels, imitations, imitation_labels, "testing"]
 
     def generate_partitions(self, partition, no_test=False, train_only=False):
         self.train = partition(*self.train_args)
@@ -86,7 +112,6 @@ class Partitions:
         bar = Bar("Splitting imitations by category...", max=len(categories))
         for category in categories:
             ind = [i for i, v in enumerate(train_val_imit_labels) if v == category]
-            np.random.shuffle(ind)
             n_train = int(split.train_ratio / (split.train_ratio + split.validation_ratio) * len(ind))
 
             imit = train_val_imit[ind]
