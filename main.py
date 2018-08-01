@@ -47,11 +47,11 @@ def main(cli_args=None):
 
         if cli_args.triplet:
             experiments.triplet.train(cli_args.cuda, cli_args.epochs, cli_args.validation_frequency, cli_args.dropout, partitions, cli_args.optimizer,
-                                      cli_args.learning_rate, cli_args.weight_decay, cli_args.momentum)
+                                      cli_args.learning_rate, cli_args.weight_decay, cli_args.momentum, cli_args.no_test)
 
         if cli_args.siamese:
             experiments.siamese.train(cli_args.cuda, cli_args.epochs, cli_args.validation_frequency, cli_args.dropout, partitions, cli_args.optimizer,
-                                      cli_args.learning_rate, cli_args.weight_decay, cli_args.momentum)
+                                      cli_args.learning_rate, cli_args.weight_decay, cli_args.momentum, cli_args.no_test)
 
         cli_args.trials -= 1
         if cli_args.trials > 0:

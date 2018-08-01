@@ -94,6 +94,8 @@ def configure_parser(parser):
     general.add_argument('-vf', '--validation_frequency', default=1, type=int,
                          help='Frequency of MRR and validation loss calculations (per epoch). Defaults to 1. 0 means do not calculate at all.')
     general.add_argument('-e', '--epochs', type=int, default=100, help="Amount of epochs to train for. Defaults to 100")
+    general.add_argument('--no_test', action='store_const', const=True, default=False,
+                         help="Whether to skip calculating MRR on the testing set at the end of training. Defaults to false.")
 
     network = parser.add_argument_group(title="Network options")
     network.add_argument('-s', '--siamese', action='store_const', const=True, default=False,
