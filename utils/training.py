@@ -4,10 +4,10 @@ import numpy as np
 from torch.utils.data import DataLoader
 from torch.utils.data.sampler import BatchSampler
 
-from data_sets.samplers import BalancedPairSampler, BalancedTripletSampler
 from data_sets.generics import PairedDataset, TripletDataset
-from models.triplet import Triplet
+from data_sets.samplers import BalancedPairSampler
 from models.siamese import Siamese
+from models.triplet import Triplet
 from utils.progress_bar import Bar
 
 
@@ -20,7 +20,7 @@ def train_siamese_network(model: Siamese, data: PairedDataset, objective, optimi
         data.epoch_handler()
 
         batch_sampler = BatchSampler(BalancedPairSampler(data, batch_size), batch_size=batch_size, drop_last=False)
-        train_data = DataLoader(data, batch_sampler=batch_sampler, num_workers=1)
+        train_data = DataLoader(data, batch_sampler=batch_sampler, num_workers=2)
 
         train_data_len = math.ceil(train_data.dataset.__len__() / batch_size)
         batch_losses = np.zeros(train_data_len)
@@ -64,7 +64,7 @@ def train_triplet_network(model: Triplet, data: TripletDataset, objective, optim
         data.epoch_handler()
 
         # batch_sampler = BatchSampler(BalancedTripletSampler(data, batch_size), batch_size=batch_size, drop_last=False)
-        train_data = DataLoader(data, batch_size=batch_size, num_workers=1)
+        train_data = DataLoader(data, batch_size=batch_size, num_workers=2)
 
         train_data_len = math.ceil(train_data.dataset.__len__() / batch_size)
         batch_losses = np.zeros(train_data_len)

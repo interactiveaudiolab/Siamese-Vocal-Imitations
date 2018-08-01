@@ -62,7 +62,7 @@ def pairwise_inference_matrix(model: Siamese, pairs_dataset: AllPairs, use_cuda)
     :return: pairwise matrix
     """
     rrs = np.array([])
-    pairs = dataloader.DataLoader(pairs_dataset, batch_size=128, num_workers=1)
+    pairs = dataloader.DataLoader(pairs_dataset, batch_size=128, num_workers=2)
     model = model.eval()
     bar = Bar("Calculating pairwise inference matrix", max=len(pairs))
     for imitations, references, label in pairs:
@@ -103,7 +103,7 @@ def siamese_loss(model: Siamese, dataset, objective, use_cuda: bool, batch_size=
     """
     model = model.eval()
 
-    data = DataLoader(dataset, batch_size=batch_size, num_workers=1)
+    data = DataLoader(dataset, batch_size=batch_size, num_workers=2)
     bar = Bar("Calculating loss", max=len(data))
     batch_losses = np.zeros(len(data))
     for i, (left, right, labels) in enumerate(data):
@@ -143,7 +143,7 @@ def triplet_loss(model: Triplet, dataset, objective, use_cuda: bool, batch_size=
     """
     model = model.eval()
 
-    data = DataLoader(dataset, batch_size=batch_size, num_workers=1)
+    data = DataLoader(dataset, batch_size=batch_size, num_workers=2)
     bar = Bar("Calculating loss", max=len(data))
     batch_losses = np.zeros(len(data))
     for i, triplet in enumerate(data):
