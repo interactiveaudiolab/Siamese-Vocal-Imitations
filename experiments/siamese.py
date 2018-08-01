@@ -88,11 +88,10 @@ def train(use_cuda: bool, n_epochs: int, validate_every: int, use_dropout: bool,
             rrs = experimentation.reciprocal_ranks(siamese, testing_pairs, use_cuda)
             utilities.log_final_stats(rrs)
 
-        training_result = TrainingProgress()
-        train_correlation, val_correlation = training_result.pearson()
+        train_correlation, val_correlation = progress.pearson()
         logger.info("Correlations between loss and MRR:\n\ttrn = {0}\n\tval = {1}".format(train_correlation, val_correlation))
         with open("./output/{0}/siamese.pickle".format(utilities.get_trial_number()), 'w+b') as f:
-            pickle.dump(training_result, f, protocol=pickle.HIGHEST_PROTOCOL)
+            pickle.dump(progress, f, protocol=pickle.HIGHEST_PROTOCOL)
         return siamese
     except Exception as e:
         utilities.save_model(siamese, model_path.format('crash_backup'))
