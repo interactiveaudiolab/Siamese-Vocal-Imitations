@@ -56,8 +56,8 @@ class TrainingProgress:
         fig.set_size_inches(16, 10)
         mean_rank_per_epoch(self.train_rank, self.val_rank, search_length, ax1)
         mrr_per_epoch(self.train_mrr, self.val_mrr, ax2, n_categories=search_length)
-        loss_per_epoch(self.train_loss, self.val_mrr, ax3, log=True)
-        loss_per_epoch(self.train_loss, self.val_mrr, ax4, log=False)
+        loss_per_epoch(self.train_loss, self.val_loss, ax3, log=True)
+        loss_per_epoch(self.train_loss, self.val_loss, ax4, log=False)
 
         fig.suptitle("{0}, Trial #{1}".format(trial_name, get_trial_number()))
         fig.savefig(self.filename(trial_name), dpi=200)
