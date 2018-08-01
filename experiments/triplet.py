@@ -18,10 +18,11 @@ from utils.utils import initialize_weights, get_optimizer
 
 
 def train(use_cuda: bool, n_epochs: int, validate_every: int, use_dropout: bool, partitions: Partitions, optimizer_name: str, lr: float, wd: float,
-          momentum: bool, no_test: bool):
+          momentum: bool):
     logger = logging.getLogger('logger')
 
     model_path = "./model_output/triplet/model_{0}"
+    no_test = True
 
     partitions.generate_partitions(TripletPartition, no_test=True)
     training_data = Balanced(partitions.train)
