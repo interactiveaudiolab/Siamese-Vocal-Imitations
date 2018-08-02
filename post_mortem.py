@@ -8,12 +8,10 @@ import utils.post_mortem
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("output_directory", type=str, help="Output directory where the trial output folders can be found")
-    parser.add_argument("-d", '--download', action="store_const", default=False, const=True, help="Download latest results from Cortex (run "
-                                                                                                  "./download_output). Defaults to false.")
+    parser.add_argument("-d", '--download', action="store_const", default=False, const=True,
+                        help="Download latest results from Cortex (run ./download_output). Defaults to false.")
 
     cli_args = parser.parse_args()
-    print(vars(cli_args))
-
     download = cli_args.download
 
     if download:
