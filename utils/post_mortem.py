@@ -3,6 +3,8 @@ import os
 import pickle
 import shutil
 from glob import glob
+import matplotlib.pyplot as plt
+import numpy as np
 
 
 def load_training_result(path):
@@ -14,7 +16,7 @@ def load_training_result(path):
         print("{0} not found, skipping".format(path))
 
 
-def generate_correlation_csv(output_dir):
+def get_correlations(output_dir):
     correlations = []
     join = os.path.join(output_dir, "*/")
     for folder in glob(join):
@@ -30,12 +32,36 @@ def generate_correlation_csv(output_dir):
             triplet_tr, triplet_vl = triplet_result.pearson()
             correlations.append([trial_no, siamese_tr, siamese_vl, triplet_tr, triplet_vl])
 
+    # sort by trial number
+    correlations.sort(key=lambda c: c[0])
+    return correlations
+
+
+def generate_correlation_csv(output_dir, correlations):
     csv_path = os.path.join(output_dir, "correlations.csv")
     with open(csv_path, 'w+') as f:
         writer = csv.writer(f)
         writer.writerow(['trial_no', 'siamese_tr', 'siamese_vl', 'triplet_tr', 'triplet_vl'])
         for b in correlations:
             writer.writerow(b)
+
+
+def generate_boxplot(output_dir, correlations):
+    correlations = np.array(correlations)
+    # first and third columns are the training correlations for siamese and triplet nets respectively
+    correlations = correlations[:, [1, 3]]
+
+    # Multiple box plots on one Axes
+    fig, ax = plt.subplots()
+    ax.boxplot(correlations)
+    ax.set_xticklabels(["Siamese", "Triplet"])
+    ax.set_ylim(-1, 1)
+    ax.set_title("Correlations")
+    ax.set_ylabel("Pearson's correlation coefficient")
+    ax.set_xlabel("Architecture")
+    # plt.show()
+    plt.savefig(os.path.join(output_dir, "correlation_boxplot.png"))
+    plt.close()
 
 
 def condense_graphs(directory):
