@@ -1,5 +1,4 @@
 import logging
-import pickle
 import traceback
 
 import numpy as np
@@ -45,31 +44,24 @@ def train(use_cuda: bool, n_epochs: int, validate_every: int, use_dropout: bool,
     optimizer = get_optimizer(siamese, optimizer_name, lr, wd, momentum)
 
     try:
-        logger.info("Training using random selection...")
+        logger.info("Training siamese network...")
         progress = TrainingProgress()
         models = training.train_siamese_network(siamese, training_data, criterion, optimizer, n_epochs, use_cuda)
         for epoch, (model, training_batch_losses) in enumerate(models):
             utilities.save_model(model, model_path.format(epoch))
 
-            should_validate = validate_every != 0 and epoch % validate_every == 0
-
             training_loss = training_batch_losses.mean()
-            if should_validate:
+            if validate_every != 0 and epoch % validate_every == 0:
                 validation_batch_losses = experimentation.siamese_loss(model, validation_pairs, criterion, use_cuda)
                 validation_loss = validation_batch_losses.mean()
-                logger.info("Loss at epoch {0}:\n\ttrn = {1}\n\tval = {2}".format(epoch, training_loss, validation_loss))
 
-                logger.debug("Calculating MRRs...")
                 training_mrr, training_rank = experimentation.mean_reciprocal_ranks(model, training_pairs, use_cuda)
                 val_mrr, val_rank = experimentation.mean_reciprocal_ranks(model, validation_pairs, use_cuda)
-                logger.info("MRRs at epoch {0}:\n\ttrn = {1}\n\tval = {2}".format(epoch, training_mrr, val_mrr))
-                logger.info("Mean ranks at epoch {0}:\n\ttrn = {1}\n\tval = {2}".format(epoch, training_rank, val_rank))
 
                 progress.add_mrr(train=training_mrr, val=val_mrr)
                 progress.add_rank(train=training_rank, val=val_rank)
                 progress.add_loss(train=training_loss, val=validation_loss)
             else:
-                logger.info("Loss at epoch {0}:\n\ttrn = {1}".format(epoch, training_loss))
                 progress.add_mrr(train=np.nan, val=np.nan)
                 progress.add_rank(train=np.nan, val=np.nan)
                 progress.add_loss(train=training_loss, val=np.nan)
@@ -90,8 +82,7 @@ def train(use_cuda: bool, n_epochs: int, validate_every: int, use_dropout: bool,
 
         train_correlation, val_correlation = progress.pearson()
         logger.info("Correlations between loss and MRR:\n\ttrn = {0}\n\tval = {1}".format(train_correlation, val_correlation))
-        with open("./output/{0}/siamese.pickle".format(utilities.get_trial_number()), 'w+b') as f:
-            pickle.dump(progress, f, protocol=pickle.HIGHEST_PROTOCOL)
+        progress.save("./output/{0}/siamese.pickle".format(utilities.get_trial_number()))
         return siamese
     except Exception as e:
         utilities.save_model(siamese, model_path.format('crash_backup'))

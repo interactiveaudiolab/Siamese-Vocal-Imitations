@@ -1,4 +1,6 @@
+import logging
 import os
+import pickle
 
 import matplotlib.pyplot as plt
 from scipy.stats import pearsonr
@@ -25,24 +27,26 @@ class TrainingProgress:
         self.val_mrr = []
         self.val_rank = []
         self.val_loss = []
+        self.logger = logging.getLogger('logger')
 
-    def add_mrr(self, train=None, val=None):
-        if train:
-            self.train_mrr.append(train)
-        if val:
-            self.val_mrr.append(val)
+    def add_mrr(self, train, val):
+        self.train_mrr.append(train)
+        self.val_mrr.append(val)
+        self.logger.info("MRR at epoch {0}:\n\ttrn = {1}\n\tval = {2}".format(len(self.train_mrr), train, val))
 
-    def add_rank(self, train=None, val=None):
+    def add_rank(self, train, val):
         if train:
             self.train_rank.append(train)
         if val:
             self.val_rank.append(val)
+        self.logger.info("Mean rank at epoch {0}:\n\ttrn = {1}\n\tval = {2}".format(len(self.train_rank), train, val))
 
-    def add_loss(self, train=None, val=None):
+    def add_loss(self, train, val):
         if train:
             self.train_loss.append(train)
         if val:
             self.val_loss.append(val)
+        self.logger.info("Loss at epoch {0}:\n\ttrn = {1}\n\tval = {2}".format(len(self.train_loss), train, val))
 
     def pearson(self):
         train = pearsonr(self.train_loss, self.train_rank)[0]
@@ -69,3 +73,7 @@ class TrainingProgress:
         file += '.png'
         file = file.lower()
         return os.path.join('./output', str(get_trial_number()), file)
+
+    def save(self, path):
+        with open(path, 'w+b') as f:
+            pickle.dump(self, f, protocol=pickle.HIGHEST_PROTOCOL)

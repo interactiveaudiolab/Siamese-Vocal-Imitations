@@ -1,3 +1,5 @@
+import logging
+
 import numpy as np
 from torch.utils.data import dataloader, DataLoader
 
@@ -17,6 +19,9 @@ def mean_reciprocal_ranks(model: Siamese, pairs: AllPairs, use_cuda):
     :param use_cuda: bool, whether to run on gpu
     :return: float, mean of reciprocal ranks
     """
+    logger = logging.getLogger('logger')
+    logger.debug("Calculating MRRs...")
+
     rrs, ranks = reciprocal_ranks(model, pairs, use_cuda)
     return rrs.mean(), ranks.mean()
 
