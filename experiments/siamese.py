@@ -1,4 +1,5 @@
 import logging
+import sys
 import traceback
 
 import numpy as np
@@ -67,25 +68,26 @@ def train(use_cuda: bool, n_epochs: int, validate_every: int, use_dropout: bool,
                 progress.add_loss(train=training_loss, val=np.nan)
 
             progress.graph("Siamese", search_length)
+
         # load weights from best model if we validated throughout
         if validate_every > 0:
             siamese = siamese.train()
             utilities.load_model(siamese, model_path.format(np.argmax(progress.val_mrr)))
+
         # otherwise just save most recent model
         utilities.save_model(siamese, model_path.format('best'))
         utilities.save_model(siamese, './output/{0}/siamese'.format(utilities.get_trial_number()))
 
         if not no_test:
-            logger.info("Results from best model generated during random-selection training, evaluated on test data:")
+            logger.info("Results from best model generated during training, evaluated on test data:")
             rrs = experimentation.reciprocal_ranks(siamese, testing_pairs, use_cuda)
             utilities.log_final_stats(rrs)
 
-        train_correlation, val_correlation = progress.pearson()
-        logger.info("Correlations between loss and MRR:\n\ttrn = {0}\n\tval = {1}".format(train_correlation, val_correlation))
+        progress.pearson(log=True)
         progress.save("./output/{0}/siamese.pickle".format(utilities.get_trial_number()))
         return siamese
     except Exception as e:
         utilities.save_model(siamese, model_path.format('crash_backup'))
         logger.critical("Exception occurred while training: {0}".format(str(e)))
         logger.critical(traceback.print_exc())
-        exit(1)
+        sys.exit()

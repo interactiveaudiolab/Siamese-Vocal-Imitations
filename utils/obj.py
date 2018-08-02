@@ -48,9 +48,12 @@ class TrainingProgress:
             self.val_loss.append(val)
         self.logger.info("Loss at epoch {0}:\n\ttrn = {1}\n\tval = {2}".format(len(self.train_loss), train, val))
 
-    def pearson(self):
+    def pearson(self, log=False):
         train = pearsonr(self.train_loss, self.train_rank)[0]
         val = pearsonr(self.val_loss, self.val_rank)[0]
+
+        if log:
+            self.logger.info("Correlations between loss and rank:\n\ttrn = {0}\n\tval = {1}".format(train, val))
 
         return train, val
 
