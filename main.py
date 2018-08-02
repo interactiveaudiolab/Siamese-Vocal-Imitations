@@ -40,7 +40,8 @@ def main(cli_args=None):
 
         datafiles = dataset(recalculate_spectrograms=cli_args.recalculate_spectrograms)
         data_split = DataSplit(*cli_args.partitions)
-        partitions = Partitions(datafiles, data_split, cli_args.num_categories, regenerate_splits=cli_args.regenerate_splits)
+        partitions = Partitions(datafiles, data_split, cli_args.num_categories, regenerate_splits=cli_args.regenerate_splits or
+                                                                                                  cli_args.recalculate_spectrograms)
         partitions.save("./output/{0}/partition.pickle".format(utilities.get_trial_number()))
 
         utilities.initialize_siamese_params(cli_args.regenerate_weights, cli_args.dropout)
