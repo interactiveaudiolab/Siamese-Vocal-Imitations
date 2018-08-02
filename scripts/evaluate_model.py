@@ -1,13 +1,14 @@
 import argparse
 import logging
 
+import utils.network
 import utils.utils as utilities
 from data_files.vocal_sketch import VocalSketchV2
 from data_sets.pair import AllPairs
 from models.siamese import Siamese
-from data_partitions.generics import Partitions
-from utils.experimentation import reciprocal_ranks
-from utils.obj import DataSplit
+from data_partitions.partitions import Partitions
+from utils.inference import reciprocal_ranks
+from data_partitions.generics import DataSplit
 
 
 def main():
@@ -24,7 +25,7 @@ def main():
     model = Siamese(dropout=False)
     if use_cuda:
         model.cuda()
-    utilities.load_model(model, cli_args.model_path, use_cuda=use_cuda)
+    utils.network.load_model(model, cli_args.model_path, use_cuda=use_cuda)
 
     model = model.eval()
     data = VocalSketchV2()

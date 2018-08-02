@@ -1,6 +1,6 @@
 import numpy as np
 
-from data_partitions.triplet import TripletPartition
+from data_partitions.triplet_partition import TripletPartition
 from data_sets.generics import TripletDataset
 
 

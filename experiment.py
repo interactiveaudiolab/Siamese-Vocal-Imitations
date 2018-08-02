@@ -8,11 +8,12 @@ import traceback
 import utils.matplotlib_backend_hack
 import experiments.siamese
 import experiments.triplet
+import utils.network
 import utils.utils as utilities
 from data_files.vocal_imitation import VocalImitation
 from data_files.vocal_sketch import VocalSketchV2, VocalSketchV1
-from data_partitions.generics import Partitions
-from utils.obj import DataSplit
+from data_partitions.partitions import Partitions
+from data_partitions.generics import DataSplit
 
 
 def main(cli_args=None):
@@ -44,7 +45,7 @@ def main(cli_args=None):
                                                                                                   cli_args.recalculate_spectrograms)
         partitions.save("./output/{0}/partition.pickle".format(utilities.get_trial_number()))
 
-        utilities.initialize_siamese_params(cli_args.regenerate_weights, cli_args.dropout)
+        utils.network.initialize_siamese_params(cli_args.regenerate_weights, cli_args.dropout)
 
         if cli_args.triplet:
             experiments.triplet.train(cli_args.cuda, cli_args.epochs, cli_args.validation_frequency, cli_args.dropout, partitions, cli_args.optimizer,
