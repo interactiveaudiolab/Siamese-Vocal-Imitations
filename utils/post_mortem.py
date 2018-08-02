@@ -8,6 +8,8 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 
+from utils.graphing import loss_rank_overlay
+
 
 def load_training_result(path):
     try:
@@ -36,7 +38,7 @@ def get_correlations(directory):
 
     # sort by trial number
     correlations.sort(key=lambda c: c[0])
-    return correlations
+    return np.array(correlations)
 
 
 def generate_correlation_csv(directory, correlations):
@@ -46,10 +48,13 @@ def generate_correlation_csv(directory, correlations):
         writer.writerow(['trial_no', 'siamese_tr', 'siamese_vl', 'triplet_tr', 'triplet_vl'])
         for b in correlations:
             writer.writerow(b)
+        averages = np.mean(correlations[:, 1:], axis=0)
+        writer.writerow(np.concatenate((["AVERAGE"], averages)))
+        std_devs = np.std(correlations[:, 1:], axis=0)
+        writer.writerow(np.concatenate((["STD_DEV"], std_devs)))
 
 
 def generate_boxplot(directory, correlations):
-    correlations = np.array(correlations)
     # first and third columns are the training correlations for siamese and triplet nets respectively
     correlations = correlations[:, [1, 3]]
 
@@ -74,3 +79,25 @@ def condense_graphs(directory):
             p = os.path.join(path.parents[1], dest_name)
             print("{0} --> {1}".format(path, p))
             shutil.copyfile(path, p)
+
+
+def overlay_loss_rank(directory, trial_no):
+    path = os.path.join(directory, str(trial_no))
+    siamese = load_training_result(os.path.join(path, "siamese.pickle"))
+    triplet = load_training_result(os.path.join(path, "triplet.pickle"))
+
+    fig, (ax1, ax2) = plt.subplots(1, 2)
+
+    fig.set_size_inches(10, 4)
+
+    loss_max = max(np.max(siamese.train_loss), np.max(triplet.train_loss))
+    rank_max = max(np.max(siamese.train_rank), np.max(triplet.train_rank))
+
+    loss_rank_overlay(siamese.train_loss, siamese.train_rank, ax1, "Siamese", loss_max, rank_max, siamese.pearson()[0])
+    loss_rank_overlay(triplet.train_loss, triplet.train_rank, ax2, "Triplet", loss_max, rank_max, triplet.pearson()[0])
+
+    fig.suptitle("Loss vs. Rank, Trial #{0}".format(trial_no))
+    fig.tight_layout()
+    fig.savefig(os.path.join(directory, "loss_rank_overlay.png"), dpi=180)
+    fig.show()
+    plt.close()
