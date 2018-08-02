@@ -7,6 +7,7 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy.stats import wilcoxon
 
 from utils.graphing import loss_rank_overlay
 
@@ -17,7 +18,7 @@ def load_training_result(path):
             result = pickle.load(f)
             return result
     except FileNotFoundError:
-        print("{0} not found, skipping".format(path))
+        pass
 
 
 def get_correlations(directory):
@@ -71,13 +72,14 @@ def generate_boxplot(directory, correlations):
     plt.close()
 
 
-def condense_graphs(directory):
+def condense_graphs(directory, verbose=False):
     for file in glob(os.path.join(directory, "*/*")):
         if file.endswith("png"):
             path = Path(file)
             dest_name = path.parents[0].name + "_" + path.name
             p = os.path.join(path.parents[1], dest_name)
-            print("{0} --> {1}".format(path, p))
+            if verbose:
+                print("{0} --> {1}".format(path, p))
             shutil.copyfile(path, p)
 
 
@@ -99,5 +101,10 @@ def overlay_loss_rank(directory, trial_no):
     fig.suptitle("Loss vs. Rank, Trial #{0}".format(trial_no))
     fig.tight_layout()
     fig.savefig(os.path.join(directory, "loss_rank_overlay.png"), dpi=180)
-    fig.show()
     plt.close()
+
+
+def wilcox_test(correlations):
+    diff, p = wilcoxon(correlations[:, 1], correlations[:, 3])
+    average_diff = diff / len(correlations)
+    return average_diff, p
