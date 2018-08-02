@@ -11,7 +11,7 @@ from data_partitions.pair_partition import PairPartition
 from data_sets.pair import Balanced, AllPairs
 from models.siamese import Siamese
 from utils import utils as utilities, training, inference
-from utils.training import TrainingProgress
+from utils.obj import TrainingProgress
 from utils.utils import get_optimizer
 from utils.network import initialize_weights
 

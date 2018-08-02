@@ -14,7 +14,7 @@ from data_sets.triplet import Balanced
 from models.siamese import Siamese
 from models.triplet import Triplet
 from utils import utils as utilities, training as training, inference as experimentation
-from utils.training import TrainingProgress
+from utils.obj import TrainingProgress
 from utils.utils import get_optimizer, get_trial_number
 from utils.network import initialize_weights
 
