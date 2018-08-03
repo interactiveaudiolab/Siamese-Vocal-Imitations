@@ -20,6 +20,7 @@ class Bar(BarInterface):
         self.update_average()
 
     def finish(self):
+        super(Bar, self).finish()
         self.next(n=self.remaining)
 
     def update_average(self):
