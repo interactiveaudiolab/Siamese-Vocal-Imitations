@@ -1,27 +1,58 @@
 import os
+import re
 
 import numpy as np
+from matplotlib.ticker import Formatter
 
 import utils.utils as utilities
 
 
-def loss_rank_overlay(loss, rank, left_ax, title, loss_max, rank_max, correlation):
-    correlation_message = "correlation = {0}".format(np.round(correlation, 2))
+class ConciseScientificNotationFormatter(Formatter):
+    def __call__(self, x, pos=None):
+        # if exponent is 0, don't bother with scientific notation
+        if 1 <= x < 10:
+            return str(x).rstrip('0').rstrip('.')
+        else:
+            # get python's string formatter version of scientific notation
+            verbose = '%E' % x
 
-    l1 = left_ax.plot(loss, color='blue', label='loss')
-    left_ax.set_title(title + " ({0})".format(correlation_message))
-    left_ax.set_ylabel("loss", color='blue')
-    left_ax.tick_params('y', colors='blue')
-    left_ax.set_ylim(0, loss_max)
-    # left_ax.text(len(loss) / 2, .5 * loss_max, correlation_message, bbox=dict(facecolor='black', alpha=0.2))
+            # strip off trailing zeros that might be on the mantissa, and if it's an integer, the decimal point too
+            mantissa = verbose.split('E')[0]
+            mantissa = mantissa.rstrip('0').rstrip('.')
+
+            # omit the exponent's sign if it's positive and strip leading zeros off
+            exponent = verbose.split('E')[1]
+            exponent_sign = '-' if '-' in exponent else ''
+            exponent = exponent[1:].lstrip('0')
+            return mantissa + 'e' + exponent_sign + exponent
+
+
+def loss_rank_overlay(loss, rank, left_ax, title, correlation, font_size=18):
+    correlation_message = "correlation = {0}".format(np.round(correlation, 2))
+    color1 = 'blue'
+    color2 = 'orange'
+
+    l1 = left_ax.plot(loss, color=color1, label='loss')
+    left_ax.set_title(title, fontsize=font_size)
+    left_ax.set_yscale('log', basey=10)
+    left_ax.set_ylabel("loss", color=color1, fontsize=font_size)
+    left_ax.tick_params('y', colors=color1, which='both', labelsize=font_size)
+    left_ax.tick_params('x', labelsize=font_size)
+
+    left_ax.text(.5, .85, correlation_message, bbox=dict(facecolor='black', alpha=0.2), horizontalalignment='center',
+                 fontsize=font_size, transform=left_ax.transAxes)
+    left_ax.yaxis.set_major_formatter(ConciseScientificNotationFormatter())
+    left_ax.minorticks_off()
 
     right_ax = left_ax.twinx()
-    l2 = right_ax.plot(rank, color='orange', label='rank')
-    right_ax.set_ylabel("rank", color="orange")
-    right_ax.tick_params('y', colors='orange')
-    right_ax.set_ylim(0, rank_max)
+    l2 = right_ax.plot(rank, color=color2, label='rank')
+    right_ax.set_yscale('log', basey=10)
+    right_ax.set_ylabel("rank", color=color2, fontsize=font_size)
+    right_ax.tick_params('y', colors=color2, which='both', labelsize=font_size)
+    right_ax.yaxis.set_major_formatter(ConciseScientificNotationFormatter())
+    right_ax.yaxis.set_minor_formatter(ConciseScientificNotationFormatter())
 
-    left_ax.legend(l1 + l2, [l.get_label() for l in (l1 + l2)], loc=0)
+    left_ax.legend(l1 + l2, [l.get_label() for l in (l1 + l2)], loc=0, fontsize=font_size)
 
 
 def mean_rank_per_epoch(train, val, n_categories, ax, title="Mean Rank vs. Epoch", xlabel='epoch'):

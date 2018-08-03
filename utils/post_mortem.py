@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.stats import wilcoxon
 
-from utils.graphing import loss_rank_overlay
+import utils.graphing
 
 
 def load_training_result(path):
@@ -42,7 +42,7 @@ def get_correlations(directory):
     return np.array(correlations)
 
 
-def generate_correlation_csv(directory, correlations):
+def correlation_csv(directory, correlations):
     csv_path = os.path.join(directory, "correlations.csv")
     with open(csv_path, 'w+') as f:
         writer = csv.writer(f)
@@ -55,7 +55,7 @@ def generate_correlation_csv(directory, correlations):
         writer.writerow(np.concatenate((["STD_DEV"], std_devs)))
 
 
-def generate_boxplot(directory, correlations):
+def boxplot(directory, correlations, p_valpythue):
     # first and third columns are the training correlations for siamese and triplet nets respectively
     correlations = correlations[:, [1, 3]]
 
@@ -67,7 +67,6 @@ def generate_boxplot(directory, correlations):
     ax.set_title("Correlations")
     ax.set_ylabel("Pearson's correlation coefficient")
     ax.set_xlabel("Architecture")
-    # plt.show()
     plt.savefig(os.path.join(directory, "correlation_boxplot.png"))
     plt.close()
 
@@ -83,24 +82,23 @@ def condense_graphs(directory, verbose=False):
             shutil.copyfile(path, p)
 
 
-def overlay_loss_rank(directory, trial_no):
+def loss_rank_overlay(directory, trial_no):
     path = os.path.join(directory, str(trial_no))
     siamese = load_training_result(os.path.join(path, "siamese.pickle"))
     triplet = load_training_result(os.path.join(path, "triplet.pickle"))
 
-    fig, (ax1, ax2) = plt.subplots(1, 2)
+    fig, (ax1, ax2) = plt.subplots(2, 1)
 
-    fig.set_size_inches(10, 4)
+    fig.set_size_inches(10, 8)
 
     loss_max = max(np.max(siamese.train_loss), np.max(triplet.train_loss))
     rank_max = max(np.max(siamese.train_rank), np.max(triplet.train_rank))
+    utils.graphing.loss_rank_overlay(siamese.train_loss, siamese.train_rank, ax1, "Pairwise", siamese.pearson()[0])
+    utils.graphing.loss_rank_overlay(triplet.train_loss, triplet.train_rank, ax2, "Triplet", triplet.pearson()[0])
 
-    loss_rank_overlay(siamese.train_loss, siamese.train_rank, ax1, "Siamese", loss_max, rank_max, siamese.pearson()[0])
-    loss_rank_overlay(triplet.train_loss, triplet.train_rank, ax2, "Triplet", loss_max, rank_max, triplet.pearson()[0])
-
-    fig.suptitle("Loss vs. Rank, Trial #{0}".format(trial_no))
+    # fig.suptitle("Loss vs. Rank, Trial #{0}".format(trial_no), y=1, fontsize=24)
     fig.tight_layout()
-    fig.savefig(os.path.join(directory, "loss_rank_overlay.png"), dpi=180)
+    fig.savefig(os.path.join(directory, "loss_rank_overlay.pdf"), dpi=180)
     plt.close()
 
 
