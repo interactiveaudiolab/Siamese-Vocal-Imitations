@@ -29,13 +29,14 @@ class ConciseScientificNotationFormatter(Formatter):
 
 def loss_rank_overlay(loss, rank, left_ax, title, correlation, font_size=18):
     correlation_message = "correlation = {0}".format(np.round(correlation, 2))
-    color1 = 'blue'
-    color2 = 'orange'
+    color1 = [c / 255 for c in (20, 46, 120)]
+    color2 = [c / 255 for c in (255, 87, 20)]
 
     l1 = left_ax.plot(loss, color=color1, label='loss')
     left_ax.set_title(title, fontsize=font_size)
     left_ax.set_yscale('log', basey=10)
     left_ax.set_ylabel("loss", color=color1, fontsize=font_size)
+    left_ax.set_ylim(top=1)
     left_ax.tick_params('y', colors=color1, which='both', labelsize=font_size)
     left_ax.tick_params('x', labelsize=font_size)
 
@@ -45,14 +46,16 @@ def loss_rank_overlay(loss, rank, left_ax, title, correlation, font_size=18):
     left_ax.minorticks_off()
 
     right_ax = left_ax.twinx()
-    l2 = right_ax.plot(rank, color=color2, label='rank')
+    l2 = right_ax.plot(rank, color=color2, label='rank', linestyle='dashed')
     right_ax.set_yscale('log', basey=10)
     right_ax.set_ylabel("rank", color=color2, fontsize=font_size)
     right_ax.tick_params('y', colors=color2, which='both', labelsize=font_size)
     right_ax.yaxis.set_major_formatter(ConciseScientificNotationFormatter())
-    right_ax.yaxis.set_minor_formatter(ConciseScientificNotationFormatter())
+    # right_ax.yaxis.set_minor_formatter(ConciseScientificNotationFormatter())
+    right_ax.minorticks_off()
+    right_ax.set_ylim(bottom=1)
 
-    left_ax.legend(l1 + l2, [l.get_label() for l in (l1 + l2)], loc=0, fontsize=font_size)
+    left_ax.legend(l1 + l2, [l.get_label() for l in (l1 + l2)], loc=1, fontsize=font_size)
 
 
 def mean_rank_per_epoch(train, val, n_categories, ax, title="Mean Rank vs. Epoch", xlabel='epoch'):
