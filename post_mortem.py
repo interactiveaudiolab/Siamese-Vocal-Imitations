@@ -8,7 +8,7 @@ import utils.post_mortem
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("output_directory", type=str, help="Output directory where the trial output folders can be found")
-    parser.add_argument("representative_trial", type=int, help="Representative trial number, used to generate loss/rank overlay graph.")
+    parser.add_argument('-rt', "--representative_trial", type=int, help="Representative trial number, used to generate loss/rank overlay graph.")
     parser.add_argument("-d", '--download', action="store_const", default=False, const=True,
                         help="Download latest results from Cortex (run ./download_output). Defaults to false.")
     parser.add_argument("-v", '--verbose', action="store_const", default=False, const=True,
@@ -32,7 +32,9 @@ def main():
     print("Average correlation difference of {0} is statistically significant at a p-value = {1}".format(diff, p_value))
     utils.post_mortem.correlation_csv(output_dir, correlations)
     utils.post_mortem.boxplot(output_dir, correlations, p_value)
-    utils.post_mortem.loss_rank_overlay(output_dir, representative_trial)
+    if not representative_trial:
+        representative_trial = utils.post_mortem.get_representative_trial(correlations)
+        utils.post_mortem.loss_rank_overlay(output_dir, representative_trial)
 
 
 if __name__ == "__main__":

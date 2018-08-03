@@ -69,4 +69,18 @@ class TrainingProgress:
 
     def save(self, path):
         with open(path, 'w+b') as f:
-            pickle.dump(self, f, protocol=pickle.HIGHEST_PROTOCOL)
+            pickle.dump(self.train_mrr, f, protocol=pickle.HIGHEST_PROTOCOL)
+            pickle.dump(self.train_rank, f, protocol=pickle.HIGHEST_PROTOCOL)
+            pickle.dump(self.train_loss, f, protocol=pickle.HIGHEST_PROTOCOL)
+            pickle.dump(self.val_mrr, f, protocol=pickle.HIGHEST_PROTOCOL)
+            pickle.dump(self.val_rank, f, protocol=pickle.HIGHEST_PROTOCOL)
+            pickle.dump(self.val_loss, f, protocol=pickle.HIGHEST_PROTOCOL)
+
+    def load(self, path):
+        with open(path, 'rb') as f:
+            self.train_mrr = pickle.load(f)
+            self.train_rank = pickle.load(f)
+            self.train_loss = pickle.load(f)
+            self.val_mrr = pickle.load(f)
+            self.val_rank = pickle.load(f)
+            self.val_loss = pickle.load(f)

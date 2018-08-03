@@ -10,15 +10,13 @@ import numpy as np
 from scipy.stats import wilcoxon
 
 import utils.graphing
+from utils.obj import TrainingProgress
 
 
 def load_training_result(path):
-    try:
-        with open(path, 'rb') as f:
-            result = pickle.load(f)
-            return result
-    except FileNotFoundError:
-        pass
+    progress = TrainingProgress()
+    progress.load(path)
+    return progress
 
 
 def get_correlations(directory):
@@ -115,3 +113,18 @@ def wilcox_test(correlations):
     diff, p = wilcoxon(correlations[:, 1], correlations[:, 3])
     average_diff = diff / len(correlations)
     return average_diff, p
+
+
+def get_representative_trial(correlations):
+    """
+    Find the most representative trial by calculating sum of squared differences between correlation and mean correlation.
+
+    :param correlations:
+    :return:
+    """
+    means = np.mean(correlations, axis=0)
+    deviations = (correlations - means)[:, (1, 3)]
+    ssd = np.sum(deviations ** 2, axis=1)
+    m = np.argmin(ssd)
+
+    return int(correlations[m, 0])
