@@ -25,12 +25,15 @@ def train(use_cuda: bool, n_epochs: int, validate_every: int, use_dropout: bool,
 
     partitions.generate_partitions(PairPartition, no_test=no_test)
     training_data = Balanced(partitions.train)
+
     if validate_every > 0:
+        balanced_validation = Balanced(partitions.val)
         training_pairs = AllPairs(partitions.train)
         search_length = training_pairs.n_references
         validation_pairs = AllPairs(partitions.val)
         testing_pairs = AllPairs(partitions.test) if not no_test else None
     else:
+        balanced_validation = None
         training_pairs = None
         validation_pairs = None
         testing_pairs = None
@@ -55,7 +58,7 @@ def train(use_cuda: bool, n_epochs: int, validate_every: int, use_dropout: bool,
 
             training_loss = training_batch_losses.mean()
             if validate_every != 0 and epoch % validate_every == 0:
-                validation_batch_losses = inference.siamese_loss(model, validation_pairs, criterion, use_cuda)
+                validation_batch_losses = inference.siamese_loss(model, balanced_validation, criterion, use_cuda)
                 validation_loss = validation_batch_losses.mean()
 
                 training_mrr, training_rank = inference.mean_reciprocal_ranks(model, training_pairs, use_cuda)
