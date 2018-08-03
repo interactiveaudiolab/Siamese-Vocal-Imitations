@@ -15,7 +15,10 @@ from utils.obj import TrainingProgress
 
 def load_training_result(path):
     progress = TrainingProgress()
-    progress.load(path)
+    try:
+        progress.load(path)
+    except FileNotFoundError:
+        return None
     return progress
 
 
