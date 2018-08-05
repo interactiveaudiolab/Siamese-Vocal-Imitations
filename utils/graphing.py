@@ -2,7 +2,8 @@ import os
 import re
 
 import numpy as np
-from matplotlib.ticker import Formatter
+from matplotlib import pyplot as plt
+from matplotlib.ticker import Formatter, LogFormatter
 
 import utils.utils as utilities
 
@@ -42,7 +43,8 @@ def loss_rank_overlay(loss, rank, left_ax, title, correlation, font_size=18):
 
     left_ax.text(.5, .85, correlation_message, bbox=dict(facecolor='black', alpha=0.2), horizontalalignment='center',
                  fontsize=font_size, transform=left_ax.transAxes)
-    left_ax.yaxis.set_major_formatter(ConciseScientificNotationFormatter())
+    left_ax.yaxis.set_major_formatter(LogFormatter())
+    left_ax.yaxis.set_minor_formatter(LogFormatter())
     left_ax.minorticks_off()
 
     right_ax = left_ax.twinx()
@@ -50,9 +52,9 @@ def loss_rank_overlay(loss, rank, left_ax, title, correlation, font_size=18):
     right_ax.set_yscale('log', basey=10)
     right_ax.set_ylabel("rank", color=color2, fontsize=font_size)
     right_ax.tick_params('y', colors=color2, which='both', labelsize=font_size)
-    right_ax.yaxis.set_major_formatter(ConciseScientificNotationFormatter())
-    # right_ax.yaxis.set_minor_formatter(ConciseScientificNotationFormatter())
-    right_ax.minorticks_off()
+    right_ax.yaxis.set_major_formatter(LogFormatter())
+    right_ax.yaxis.set_minor_formatter(LogFormatter())
+    # right_ax.minorticks_off()
     right_ax.set_ylim(bottom=1)
 
     left_ax.legend(l1 + l2, [l.get_label() for l in (l1 + l2)], loc=1, fontsize=font_size)
@@ -135,3 +137,26 @@ def title_to_filename(title, suffix):
 
 def mrr_random_chance(n_categories):
     return np.mean([1 / n for n in np.random.randint(low=1, high=n_categories + 1, size=99999)])
+
+
+def boxplot(directory, data, p_value):
+    # Multiple box plots on one Axes
+    fig, ax = plt.subplots()
+    fig.set_size_inches(9.5, 6)
+    d = ax.boxplot(data)
+    n = len(data)
+    ax.set_xticklabels(["Pairwise", "Triplet"], fontsize=18)
+    ax.tick_params('y', labelsize=18)
+    medians = [median.get_xydata() for median in d['medians']]
+    ax.text(.5, .25, "p = {0}".format(np.round(p_value, 6)), horizontalalignment='center', transform=ax.transAxes, fontsize=18)
+    ax.text(.5, .15, "n = {0}".format(n), horizontalalignment='center', transform=ax.transAxes, fontsize=18)
+    for median in medians:
+        x_right = median[1][0]
+        y = median[0][1]
+        ax.text(x_right + .01, y, "{0}".format(np.round(y, 2)), horizontalalignment='left', verticalalignment='center', fontsize=18)
+    ax.set_ylim(-1, 1)
+    ax.set_title("Correlation between loss over time and rank over time", fontsize=18)
+    ax.set_ylabel("Pearson's correlation coefficient", fontsize=18)
+    ax.set_xlabel("Loss", fontsize=18)
+    plt.savefig(os.path.join(directory, "correlation_boxplot.pdf"))
+    plt.close()
