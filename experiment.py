@@ -6,7 +6,7 @@ import traceback
 # MUST COME FIRST
 # noinspection PyUnresolvedReferences
 import utils.matplotlib_backend_hack
-import experiments.siamese
+import experiments.pairwise
 import experiments.triplet
 import utils.network
 import utils.utils as utilities
@@ -51,9 +51,9 @@ def main(cli_args=None):
             experiments.triplet.train(cli_args.cuda, cli_args.epochs, cli_args.validation_frequency, cli_args.dropout, partitions, cli_args.optimizer,
                                       cli_args.learning_rate, cli_args.weight_decay, cli_args.momentum)
 
-        if cli_args.siamese:
-            experiments.siamese.train(cli_args.cuda, cli_args.epochs, cli_args.validation_frequency, cli_args.dropout, partitions, cli_args.optimizer,
-                                      cli_args.learning_rate, cli_args.weight_decay, cli_args.momentum)
+        if cli_args.pairwise:
+            experiments.pairwise.train(cli_args.cuda, cli_args.epochs, cli_args.validation_frequency, cli_args.dropout, partitions, cli_args.optimizer,
+                                       cli_args.learning_rate, cli_args.weight_decay, cli_args.momentum)
 
         cli_args.trials -= 1
         if cli_args.trials > 0:

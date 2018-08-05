@@ -83,10 +83,10 @@ def configure_parser(parser):
     general.add_argument('-e', '--epochs', type=int, default=300, help="Amount of epochs to train for. Defaults to 300")
 
     network = parser.add_argument_group(title="Network options")
-    network.add_argument('-s', '--siamese', action='store_const', const=True, default=False,
-                         help='Use a siamese network.')
+    network.add_argument('-p', '--pairwise', action='store_const', const=True, default=False,
+                         help='Train a model with a pairwise loss function.')
     network.add_argument('-t', '--triplet', action='store_const', const=True, default=False,
-                         help='Use a triplet network.')
+                         help='Train a model with a triplet loss function.')
     network.add_argument('-dr', '--dropout', action='store_const', const=True, default=False,
                          help='Whether to use drop-out in training the network. Defaults to false.')
     network.add_argument('-rw', '--regenerate_weights', action='store_const', const=True, default=False,
@@ -103,7 +103,7 @@ def configure_parser(parser):
                            help='Whether to use momentum. Only applies when using SGD or RMSProp. Defaults to false.')
 
     data = parser.add_argument_group(title="Data options")
-    data.add_argument('-p', '--partitions', nargs=3, type=float, default=[.35, .15, .5],
+    data.add_argument('-pr', '--partitions', nargs=3, type=float, default=[.35, .15, .5],
                       help='Ratios by which to partition the data into training, validation, and testing sets (in that order). Defaults to [.35, .15, .5].')
     data.add_argument('-d', '--dataset', default='vi', type=str, choices=['vs1.0', 'vs2.0', 'vi'],
                       help='Dataset to use for experiments. Defaults to vocal imitation.')

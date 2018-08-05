@@ -53,7 +53,7 @@ def train(use_cuda: bool, n_epochs: int, validate_every: int, use_dropout: bool,
     optimizer = get_optimizer(network, optimizer_name, lr, wd, momentum)
 
     try:
-        logger.info("Training triplet network...")
+        logger.info("Training network with triplet loss...")
         progress = TrainingProgress()
         models = training.train_triplet_network(network, training_data, criterion, optimizer, n_epochs, use_cuda)
         for epoch, (model, training_batch_losses) in enumerate(models):

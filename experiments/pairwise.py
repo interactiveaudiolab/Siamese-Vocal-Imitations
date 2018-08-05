@@ -21,7 +21,7 @@ def train(use_cuda: bool, n_epochs: int, validate_every: int, use_dropout: bool,
     logger = logging.getLogger('logger')
 
     no_test = True
-    model_path = "./model_output/siamese/model_{0}"
+    model_path = "./model_output/pairwise/model_{0}"
 
     partitions.generate_partitions(PairPartition, no_test=no_test)
     training_data = Balanced(partitions.train)
@@ -50,7 +50,7 @@ def train(use_cuda: bool, n_epochs: int, validate_every: int, use_dropout: bool,
     optimizer = get_optimizer(siamese, optimizer_name, lr, wd, momentum)
 
     try:
-        logger.info("Training siamese network...")
+        logger.info("Training network with pairwise loss...")
         progress = TrainingProgress()
         models = training.train_siamese_network(siamese, training_data, criterion, optimizer, n_epochs, use_cuda)
         for epoch, (model, training_batch_losses) in enumerate(models):
@@ -81,7 +81,7 @@ def train(use_cuda: bool, n_epochs: int, validate_every: int, use_dropout: bool,
 
         # otherwise just save most recent model
         utils.network.save_model(siamese, model_path.format('best'))
-        utils.network.save_model(siamese, './output/{0}/siamese'.format(utilities.get_trial_number()))
+        utils.network.save_model(siamese, './output/{0}/pairwise'.format(utilities.get_trial_number()))
 
         if not no_test:
             logger.info("Results from best model generated during training, evaluated on test data:")
@@ -89,7 +89,7 @@ def train(use_cuda: bool, n_epochs: int, validate_every: int, use_dropout: bool,
             utilities.log_final_stats(rrs)
 
         progress.pearson(log=True)
-        progress.save("./output/{0}/siamese.pickle".format(utilities.get_trial_number()))
+        progress.save("./output/{0}/pairwise.pickle".format(utilities.get_trial_number()))
         return siamese
     except Exception as e:
         utils.network.save_model(siamese, model_path.format('crash_backup'))
