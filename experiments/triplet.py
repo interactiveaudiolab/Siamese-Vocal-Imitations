@@ -13,7 +13,7 @@ from data_sets.pair import AllPairs
 from data_sets.triplet import Balanced
 from models.siamese import Siamese
 from models.triplet import Triplet
-from utils import utils as utilities, training as training, inference as experimentation
+from utils import utils as utilities, training, inference
 from utils.obj import TrainingProgress
 from utils.utils import get_optimizer, get_trial_number
 from utils.network import initialize_weights
@@ -61,11 +61,11 @@ def train(use_cuda: bool, n_epochs: int, validate_every: int, use_dropout: bool,
 
             training_loss = training_batch_losses.mean()
             if validate_every != 0 and epoch % validate_every == 0:
-                validation_batch_losses = experimentation.triplet_loss(model, validation_data, criterion, use_cuda, batch_size=64)
+                validation_batch_losses = inference.triplet_loss(model, validation_data, criterion, use_cuda, batch_size=64)
                 validation_loss = validation_batch_losses.mean()
 
-                training_mrr, training_rank = experimentation.mean_reciprocal_ranks(network.siamese, training_pairs, use_cuda)
-                val_mrr, val_rank = experimentation.mean_reciprocal_ranks(network.siamese, validation_pairs, use_cuda)
+                training_mrr, training_rank = inference.mean_reciprocal_ranks(network.siamese, training_pairs, use_cuda)
+                val_mrr, val_rank = inference.mean_reciprocal_ranks(network.siamese, validation_pairs, use_cuda)
 
                 progress.add_mrr(train=training_mrr, val=val_mrr)
                 progress.add_rank(train=training_rank, val=val_rank)
@@ -88,7 +88,7 @@ def train(use_cuda: bool, n_epochs: int, validate_every: int, use_dropout: bool,
 
         if not no_test:
             logger.info("Results from best model generated during training, evaluated on test data:")
-            rrs = experimentation.reciprocal_ranks(network, testing_pairs, use_cuda)
+            rrs = inference.reciprocal_ranks(network, testing_pairs, use_cuda)
             utilities.log_final_stats(rrs)
 
         progress.pearson(log=True)
