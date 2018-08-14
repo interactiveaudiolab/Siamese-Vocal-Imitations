@@ -154,7 +154,7 @@ def boxplot(directory, data, p_value):
         x_right = median[1][0]
         y = median[0][1]
         ax.text(x_right + .01, y, "{0}".format(np.round(y, 2)), horizontalalignment='left', verticalalignment='center', fontsize=18)
-    ax.set_ylim(-1, 1)
+    ax.set_ylim(-.25, 1)
     ax.set_title("Correlation between loss over time and rank over time", fontsize=18)
     ax.set_ylabel("Pearson's correlation coefficient", fontsize=18)
     ax.set_xlabel("Loss", fontsize=18)
