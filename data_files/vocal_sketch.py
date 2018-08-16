@@ -7,20 +7,15 @@ from utils.utils import get_dataset_dir
 
 
 class VocalSketch(Datafiles):
-    def __init__(self, version, recalculate_spectrograms=False):
-        super().__init__(version, recalculate_spectrograms)
-
-    @staticmethod
-    def calculate_spectrograms():
-        raise NotImplementedError
+    def __init__(self, version, augmentations=None, recalculate_spectrograms=False):
+        super().__init__(version, augmentations, recalculate_spectrograms)
 
 
 class VocalSketchV1(VocalSketch):
-    def __init__(self, recalculate_spectrograms=False):
-        super().__init__("vs1.0", recalculate_spectrograms)
+    def __init__(self, augmentations=None, recalculate_spectrograms=False):
+        super().__init__("vs1.0", augmentations, recalculate_spectrograms)
 
-    @staticmethod
-    def calculate_spectrograms():
+    def calculate_spectrograms(self):
         """
         Calculates normalized imitation and reference spectrograms and saves them as .npy files.
         """
@@ -49,16 +44,15 @@ class VocalSketchV1(VocalSketch):
                 path = os.path.join(imitation_path, row['filename'])
                 imitation_labels[path] = row['sound_label']
 
-        preprocessing.calculate_spectrograms(imitation_paths, imitation_labels, 'imitations', 'vs1.0', preprocessing.imitation_spectrogram)
-        preprocessing.calculate_spectrograms(reference_paths, reference_labels, 'references', 'vs1.0', preprocessing.reference_spectrogram)
+        preprocessing.calculate_spectrograms(imitation_paths, imitation_labels, 'imitations', 'vs1.0', preprocessing.imitation_spectrogram, self.augmentations)
+        preprocessing.calculate_spectrograms(reference_paths, reference_labels, 'references', 'vs1.0', preprocessing.reference_spectrogram, self.augmentations)
 
 
 class VocalSketchV2(VocalSketch):
-    def __init__(self, recalculate_spectrograms=False):
-        super().__init__("vs2.0", recalculate_spectrograms)
+    def __init__(self, augmentations=None, recalculate_spectrograms=False):
+        super().__init__("vs2.0", augmentations, recalculate_spectrograms)
 
-    @staticmethod
-    def calculate_spectrograms():
+    def calculate_spectrograms(self):
         """
         Calculates normalized imitation and reference spectrograms and saves them as .npy files.
         """
@@ -95,5 +89,5 @@ class VocalSketchV2(VocalSketch):
                 path = os.path.join(imitation_path_2, row['filename'])
                 imitation_labels[path] = row['sound_label']
 
-        preprocessing.calculate_spectrograms(imitation_paths, imitation_labels, 'imitations', 'vs2.0', preprocessing.imitation_spectrogram)
-        preprocessing.calculate_spectrograms(reference_paths, reference_labels, 'references', 'vs2.0', preprocessing.reference_spectrogram)
+        preprocessing.calculate_spectrograms(imitation_paths, imitation_labels, 'imitations', 'vs2.0', preprocessing.imitation_spectrogram, self.augmentations)
+        preprocessing.calculate_spectrograms(reference_paths, reference_labels, 'references', 'vs2.0', preprocessing.reference_spectrogram, self.augmentations)

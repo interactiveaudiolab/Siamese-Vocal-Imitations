@@ -4,7 +4,8 @@ from utils import utils
 
 
 class Datafiles:
-    def __init__(self, version, recalculate_spectrograms):
+    def __init__(self, version, augmentations=None, recalculate_spectrograms=False):
+        self.augmentations = augmentations
         logger = logging.getLogger('logger')
         logger.info("Using dataset: {0}".format(version))
 
@@ -28,6 +29,5 @@ class Datafiles:
             self.imitations = utils.load_npy("imitations.npy", version)
             self.imitation_labels = utils.load_npy("imitations_labels.npy", version)
 
-    @staticmethod
-    def calculate_spectrograms():
+    def calculate_spectrograms(self):
         raise NotImplementedError

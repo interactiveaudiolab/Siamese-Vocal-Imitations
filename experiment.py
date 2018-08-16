@@ -10,6 +10,9 @@ import experiments.pairwise
 import experiments.triplet
 import utils.network
 import utils.utils as utilities
+from augmentation.background_noise import BackgroundNoiseAugmentation
+from augmentation.time_stretch import TimeStretchAugmentation
+from augmentation.windowing import WindowingAugmentation
 from data_files.vocal_imitation import VocalImitation
 from data_files.vocal_sketch import VocalSketchV2, VocalSketchV1
 from data_partitions.partitions import Partitions
@@ -39,7 +42,8 @@ def main(cli_args=None):
         else:
             raise ValueError("Invalid dataset ({0}) chosen.".format(cli_args.siamese_dataset))
 
-        datafiles = dataset(recalculate_spectrograms=cli_args.recalculate_spectrograms)
+        datafiles = dataset(recalculate_spectrograms=cli_args.recalculate_spectrograms, augmentations=[WindowingAugmentation(4, 2), TimeStretchAugmentation(
+            1.05), TimeStretchAugmentation(.95), BackgroundNoiseAugmentation(.005)])
         data_split = DataSplit(*cli_args.partitions)
         partitions = Partitions(datafiles, data_split, cli_args.num_categories, regenerate_splits=cli_args.regenerate_splits or
                                                                                                   cli_args.recalculate_spectrograms)

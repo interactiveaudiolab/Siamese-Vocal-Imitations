@@ -7,11 +7,10 @@ from utils.utils import get_dataset_dir
 
 
 class VocalImitation(Datafiles):
-    def __init__(self, recalculate_spectrograms=False):
-        super().__init__('vocal_imitation', recalculate_spectrograms)
+    def __init__(self, augmentations=None, recalculate_spectrograms=False):
+        super().__init__('vocal_imitation', augmentations, recalculate_spectrograms)
 
-    @staticmethod
-    def calculate_spectrograms():
+    def calculate_spectrograms(self):
         data_dir = get_dataset_dir()
         imitation_path = os.path.join(data_dir, "vocal_imitation/imitations")
         reference_path = os.path.join(data_dir, "vocal_imitation/references")
@@ -36,9 +35,9 @@ class VocalImitation(Datafiles):
                                       "is_canonical": is_canonical}
 
         preprocessing.calculate_spectrograms(imitation_paths, imitation_labels, 'imitations', 'vocal_imitation',
-                                             preprocessing.imitation_spectrogram)
+                                             preprocessing.imitation_spectrogram, self.augmentations)
         preprocessing.calculate_spectrograms(reference_paths, reference_labels, 'references', 'vocal_imitation',
-                                             preprocessing.reference_spectrogram)
+                                             preprocessing.reference_spectrogram, self.augmentations)
 
     @staticmethod
     def generate_occurrences(imitation_labels, reference_labels):
