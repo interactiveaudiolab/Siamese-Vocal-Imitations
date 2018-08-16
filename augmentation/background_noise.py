@@ -9,4 +9,4 @@ class BackgroundNoiseAugmentation(Augmentation):
         self.amplitude = amplitude
 
     def augment(self, audio, sr):
-        return audio + np.random.normal(0, self.amplitude, len(audio))
+        return [audio + np.random.normal(0, self.amplitude, len(audio))]
