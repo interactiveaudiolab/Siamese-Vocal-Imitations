@@ -27,14 +27,18 @@ class PairPartition(Partition):
         self.positive = []
 
         self.all_pairs = []
-        self.canonical_labels = np.zeros([len(self.imitations), len(self.references)])
+        self.labels = np.zeros([len(self.imitations), len(self.references)])
+        self.canonical_locations = np.zeros([len(self.imitations), len(self.references)])
         n = 0
         update_bar_every = 1000
         for i, (imitation, imitation_label) in enumerate(zip(self.imitations, self.imitation_labels)):
             for j, (reference, reference_label) in enumerate(zip(self.references, self.reference_labels)):
+                if reference_label['is_canonical']:
+                    self.canonical_locations[i, j] = 1
+
                 if reference_label['label'] == imitation_label:
                     if reference_label['is_canonical']:
-                        self.canonical_labels[i, j] = 1
+                        self.labels[i, j] = 1
                         self.positive.append([imitation, reference, True])
                         self.all_pairs.append([imitation, reference, True])
                     else:

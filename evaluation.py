@@ -10,14 +10,14 @@ import numpy as np
 import utils.matplotlib_backend_hack
 import utils.network
 import utils.utils as utilities
-from data_files.vocal_sketch import VocalSketchV2
+from data_files.vocal_imitation import VocalImitation
 from data_partitions.generics import DataSplit
 from data_partitions.pair_partition import PairPartition
 from data_partitions.partitions import Partitions
 from data_sets.pair import AllPairs
 from models.siamese import Siamese
 from models.triplet import Triplet
-from utils.inference import mean_reciprocal_ranks
+from utils.inference import canonical_mean_recall
 
 
 def main(cli_args=None):
@@ -35,24 +35,27 @@ def main(cli_args=None):
     logger.info('Beginning trial #{0}...'.format(utilities.get_trial_number()))
     log_cli_args(cli_args)
     try:
-        dataset = VocalSketchV2
-        datafiles = dataset(recalculate_spectrograms=cli_args.recalculate_spectrograms)
-        data_split = DataSplit(*[0.01, 0.01, .98])
-        partitions = Partitions(datafiles, data_split, cli_args.num_categories, regenerate_splits=cli_args.regenerate_splits or
-                                                                                                  cli_args.recalculate_spectrograms)
-        partitions.generate_partitions(PairPartition)
+        datafiles = VocalImitation(recalculate_spectrograms=cli_args.recalculate_spectrograms)
+        data_split = DataSplit(*cli_args.partitions)
+        partitions = Partitions(datafiles, data_split, cli_args.num_categories, regenerate_splits=False)
+        partitions.generate_partitions(PairPartition, no_test=True)
         partitions.save("./output/{0}/partition.pickle".format(utilities.get_trial_number()))
-        triplet = Triplet(dropout=cli_args.dropout)
-        show_model(triplet)
+
+        if cli_args.triplet:
+            model = Triplet(dropout=cli_args.dropout)
+        elif cli_args.pairwise:
+            model = Siamese(dropout=cli_args.dropout)
+        else:
+            raise ValueError("You must specify the type of the model that is to be evaluated (triplet or pairwise")
+
+        # show_model(model)
+
         if cli_args.cuda:
-            triplet = triplet.cuda()
-        utils.network.load_model(triplet, cli_args.model_path, cli_args.cuda)
-        mrr, rank = mean_reciprocal_ranks(triplet.siamese, AllPairs(partitions.test), cli_args.cuda)
-        logger.info("MRR = {0}".format(mrr))
-        logger.info("rank = {0}".format(rank))
-        cli_args.trials -= 1
-        if cli_args.trials > 0:
-            main(cli_args)
+            model = model.cuda()
+
+        utils.network.load_model(model, cli_args.model_path, cli_args.cuda)
+        recall = canonical_mean_recall(model if cli_args.pairwise else model.siamese, AllPairs(partitions.train), cli_args.cuda, cli_args.num_categories)
+        logger.info("recall = {0}".format(recall))
     except Exception as e:
         logger.critical("Unhandled exception: {0}".format(str(e)))
         logger.critical(traceback.print_exc())

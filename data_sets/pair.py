@@ -52,6 +52,7 @@ class AllPairs(PairedDataset):
 
         self.n_imitations = len(self.imitations)
         self.n_references = len(self.references)
-        self.canonical_labels = data.canonical_labels
+        self.labels = data.labels
+        self.canonical_locations = data.canonical_locations
 
         self.pairs = data.all_pairs
