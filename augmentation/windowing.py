@@ -15,15 +15,18 @@ class WindowingAugmentation(Augmentation):
         hop_samples = self.hop_size * sr
         audio_samples = audio.shape[0]
 
-        if not self.drop_last:  # pad out the last segment
-            pad = np.zeros(window_samples - audio_samples % window_samples)
-            audio = np.append(audio, pad)
-            audio_samples = audio.shape[0]
+        if window_samples >= audio_samples:
+            return [audio]
 
         segments = []
         start = 0
-        while start + window_samples < audio_samples:
+        while start + window_samples <= audio_samples:
             segments.append(audio[start:start + window_samples])
             start += hop_samples
+
+        if start - hop_samples + window_samples < audio_samples and not self.drop_last:
+            pad = np.zeros(window_samples - (audio_samples - start))
+            last_segment = np.append(audio[start:], pad)
+            segments.append(last_segment)
 
         return segments
