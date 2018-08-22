@@ -22,7 +22,7 @@ def save_npy(array, file_name, dataset, ar_type=None):
     try:
         np.save(path, array)
     except FileNotFoundError:  # can occur when the parent directory doesn't exist
-        os.mkdir(os.path.dirname(path))
+        pathlib.Path(path).mkdir(parents=True)
         np.save(path, array)
 
 
@@ -136,7 +136,7 @@ def get_trial_number():
 
 def create_output_directory():
     trial_number = get_trial_number()
-    pathlib.Path('./output/{0}'.format(trial_number)).mkdir(exist_ok=True)
+    pathlib.Path('./output/{0}'.format(trial_number)).mkdir(exist_ok=True, parents=True)
 
 
 def zip_shuffle(a, b):

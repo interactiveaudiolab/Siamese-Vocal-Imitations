@@ -126,7 +126,7 @@ def apply_augmentations(augmentations, y, sr):
         if augmentation.replaces:  # e.g. windowing augmentation, which replaces the original audio with windowed versions
             augmented_audio = augmented_audio_batch
         else:  # e.g. time stretching augmentation
-            augmented_audio.append(augmented_audio_batch)
+            augmented_audio += augmented_audio_batch
     return augmented_audio
 
 
