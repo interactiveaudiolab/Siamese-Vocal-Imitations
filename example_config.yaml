@@ -1,0 +1,8 @@
+# Example config file
+# Fill this in with your desired values and rename it to config.yaml
+
+datasets:
+  vocal_imitation: ./data/vocal_imitation
+  vocal_sketch_1: ./data/vocal_sketch_1
+  vocal_sketch_2: ./data/vocal_sketch_2
+spectrogram_cache_location: ./data
