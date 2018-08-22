@@ -136,7 +136,7 @@ def get_trial_number():
 
 def create_output_directory():
     trial_number = get_trial_number()
-    pathlib.Path('./output/{0}'.format(trial_number)).mkdir(exist_ok=True)
+    pathlib.Path('./output/{0}'.format(trial_number)).mkdir(exist_ok=True, parents=True)
 
 
 def zip_shuffle(a, b):
