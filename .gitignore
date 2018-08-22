@@ -18,3 +18,5 @@ model_output/*
 data/*
 output/*
 config.yaml
+deploy
+download_output

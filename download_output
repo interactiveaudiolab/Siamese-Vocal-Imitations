@@ -1,2 +1,0 @@
-#!/bin/sh
-rsync -r cortex:~/siamese/output ~/Dropbox/NU/IAL/Siamese
