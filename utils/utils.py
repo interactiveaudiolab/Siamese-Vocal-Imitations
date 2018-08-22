@@ -9,16 +9,16 @@ import torch
 import yaml
 
 
-def load_npy(name, prefix):
-    path = os.path.join(get_dataset_dir(), "npy", prefix, name)
+def load_npy(file_name, dataset):
+    path = os.path.join(get_npy_dir(dataset), file_name)
     return np.load(path)
 
 
-def save_npy(array, name, prefix, ar_type=None):
+def save_npy(array, file_name, dataset, ar_type=None):
     array = np.array(array)
     if ar_type:
         array = array.astype(ar_type)
-    path = os.path.join(get_dataset_dir(), "npy", prefix, name)
+    path = os.path.join(get_npy_dir(dataset), file_name)
     try:
         np.save(path, array)
     except FileNotFoundError:  # can occur when the parent directory doesn't exist
@@ -145,15 +145,31 @@ def zip_shuffle(a, b):
     return a[p], b[p]
 
 
-def get_dataset_dir():
+def get_dataset_dir(dataset):
     try:
         with open('config.yaml') as f:
             config = yaml.safe_load(f)
             try:
-                return config['SIAMESE_DATA_DIR']
+                return config['datasets'][dataset]
             except KeyError:
                 logger = logging.getLogger('logger')
-                logger.critical("No entry for SIAMESE_DATA_DIR found in config.yaml.")
+                logger.critical("No location for datasets.{0} specified in config.yaml.".format(dataset))
+                sys.exit()
+    except FileNotFoundError:
+        logger = logging.getLogger('logger')
+        logger.critical("No config.yaml file found. Please generate one in the top level directory.")
+        sys.exit()
+
+
+def get_npy_dir(dataset):
+    try:
+        with open('config.yaml') as f:
+            config = yaml.safe_load(f)
+            try:
+                return os.path.join(config['spectrogram_cache_location'], dataset)
+            except KeyError:
+                logger = logging.getLogger('logger')
+                logger.critical("No location to save spectrograms specified on disk.")
                 sys.exit()
     except FileNotFoundError:
         logger = logging.getLogger('logger')

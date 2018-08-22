@@ -9,12 +9,11 @@ import numpy as np
 from augmentation.generics import Augmentation
 from utils.progress_bar import Bar
 
-from utils.utils import save_npy
+from utils.utils import save_npy, get_npy_dir
 
 
-def calculate_spectrograms(paths, file_labels, save_location, dataset_name, spectrogram_func, augmentations):
-    # calculate spectrograms and save
-    bar = Bar('Calculating spectrograms and saving them at {0}/{1}.npy...'.format(dataset_name, save_location), max=len(paths))
+def calculate_spectrograms(paths, file_labels, file_name, dataset_name, spectrogram_func, augmentations):
+    bar = Bar('Calculating spectrograms and saving them at {0}.npy...'.format(os.path.join(get_npy_dir(dataset_name), file_name)), max=len(paths))
     all_spectrograms = []
     labels = []
     for path in paths:
@@ -27,8 +26,8 @@ def calculate_spectrograms(paths, file_labels, save_location, dataset_name, spec
         bar.next()
 
     all_spectrograms = normalize_spectrograms(np.array(all_spectrograms))
-    save_npy(all_spectrograms, '{0}.npy'.format(save_location), dataset_name, "float32")
-    save_npy(labels, '{0}_labels.npy'.format(save_location), dataset_name)
+    save_npy(all_spectrograms, '{0}.npy'.format(file_name), dataset_name, "float32")
+    save_npy(labels, '{0}_labels.npy'.format(file_name), dataset_name)
     bar.finish()
 
 
