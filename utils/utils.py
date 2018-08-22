@@ -22,7 +22,7 @@ def save_npy(array, file_name, dataset, ar_type=None):
     try:
         np.save(path, array)
     except FileNotFoundError:  # can occur when the parent directory doesn't exist
-        os.mkdir(os.path.dirname(path))
+        pathlib.Path(path).mkdir(parents=True)
         np.save(path, array)
 
 
