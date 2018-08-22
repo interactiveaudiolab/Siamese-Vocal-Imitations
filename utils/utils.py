@@ -105,7 +105,7 @@ def configure_parser(parser):
     data = parser.add_argument_group(title="Data options")
     data.add_argument('-pr', '--partitions', nargs=3, type=float, default=[.35, .15, .5],
                       help='Ratios by which to partition the data into training, validation, and testing sets (in that order). Defaults to [.35, .15, .5].')
-    data.add_argument('-d', '--dataset', default='vi', type=str, choices=['vs1.0', 'vs2.0', 'vi'],
+    data.add_argument('-d', '--dataset', default='vi', type=str, choices=['vs1.0', 'vs1.1', 'vi'],
                       help='Dataset to use for experiments. Defaults to vocal imitation.')
     data.add_argument('-rs', '--regenerate_splits', action='store_const', const=True, default=False,
                       help='Whether to regenerate data splits or not. Defaults to false.')

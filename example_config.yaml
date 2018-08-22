@@ -3,6 +3,6 @@
 
 datasets:
   vocal_imitation: ./data/vocal_imitation
-  vocal_sketch_1: ./data/vocal_sketch_1
-  vocal_sketch_2: ./data/vocal_sketch_2
+  vocal_sketch_1_0: ./data/vocal_sketch_1
+  vocal_sketch_1_1: ./data/vocal_sketch_2
 spectrogram_cache_location: ./data

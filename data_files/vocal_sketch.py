@@ -14,9 +14,9 @@ class VocalSketch(Datafiles):
         raise NotImplementedError
 
 
-class VocalSketchV1(VocalSketch):
+class VocalSketch_1_0(VocalSketch):
     def __init__(self, augmentations=None, recalculate_spectrograms=False):
-        super().__init__("vocal_sketch_1", augmentations, recalculate_spectrograms)
+        super().__init__("vocal_sketch_1_0", augmentations, recalculate_spectrograms)
 
     def calculate_spectrograms(self):
         data_dir = get_dataset_dir(self.name)
@@ -50,9 +50,9 @@ class VocalSketchV1(VocalSketch):
                                              self.augmentations)
 
 
-class VocalSketchV2(VocalSketch):
+class VocalSketch_1_1(VocalSketch):
     def __init__(self, augmentations=None, recalculate_spectrograms=False):
-        super().__init__("vocal_sketch_2", augmentations, recalculate_spectrograms)
+        super().__init__("vocal_sketch_1_1", augmentations, recalculate_spectrograms)
 
     def calculate_spectrograms(self):
         """

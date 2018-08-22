@@ -14,7 +14,7 @@ from augmentation.background_noise import BackgroundNoiseAugmentation
 from augmentation.time_stretch import TimeStretchAugmentation
 from augmentation.windowing import WindowingAugmentation
 from data_files.vocal_imitation import VocalImitation
-from data_files.vocal_sketch import VocalSketchV2, VocalSketchV1
+from data_files.vocal_sketch import VocalSketch_1_1, VocalSketch_1_0
 from data_partitions.partitions import Partitions
 from data_partitions.generics import DataSplit
 
@@ -34,9 +34,9 @@ def main(cli_args=None):
     log_cli_args(cli_args)
     try:
         if cli_args.dataset in ['vs1.0']:
-            dataset = VocalSketchV1
-        elif cli_args.dataset in ['vs2.0']:
-            dataset = VocalSketchV2
+            dataset = VocalSketch_1_0
+        elif cli_args.dataset in ['vs1.1']:
+            dataset = VocalSketch_1_1
         elif cli_args.dataset in ['vi']:
             dataset = VocalImitation
         else:

@@ -3,7 +3,7 @@ import logging
 
 import utils.network
 import utils.utils as utilities
-from data_files.vocal_sketch import VocalSketchV2
+from data_files.vocal_sketch import VocalSketch_1_1
 from data_sets.pair import AllPairs
 from models.siamese import Siamese
 from data_partitions.partitions import Partitions
@@ -28,7 +28,7 @@ def main():
     utils.network.load_model(model, cli_args.model_path, use_cuda=use_cuda)
 
     model = model.eval()
-    data = VocalSketchV2()
+    data = VocalSketch_1_1()
 
     partitions = Partitions(data, DataSplit(.35, .15, .5))
 
