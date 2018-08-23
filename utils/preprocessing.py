@@ -1,14 +1,12 @@
 import audioop
 import logging
 import os
-from typing import List
 
+import audaugio
 import librosa
 import numpy as np
 
-from augmentation.generics import Augmentation
 from utils.progress_bar import Bar
-
 from utils.utils import save_npy, get_npy_dir
 
 
@@ -49,7 +47,7 @@ def recursive_wav_paths(path):
     return absolute_paths
 
 
-def reference_spectrogram(path, augmentations: List[Augmentation]):
+def reference_spectrogram(path, augmentations: audaugio.ChainBase):
     """
     Calculate the spectrogram of a reference recording located at path.
 
@@ -65,7 +63,7 @@ def reference_spectrogram(path, augmentations: List[Augmentation]):
         logger.warning("Could not load {0}\n{1}".format(path, e))
         return None
 
-    augmented_audio = apply_augmentations(augmentations, y, sr)
+    augmented_audio = augmentations(y, sr)
 
     spectrograms = []
     for audio in augmented_audio:
@@ -81,7 +79,7 @@ def reference_spectrogram(path, augmentations: List[Augmentation]):
     return spectrograms
 
 
-def imitation_spectrogram(path, augmentations: List[Augmentation]):
+def imitation_spectrogram(path, augmentations: audaugio.ChainBase):
     """
     Calculate the spectrogram of an imitation located at path.
 
@@ -97,7 +95,8 @@ def imitation_spectrogram(path, augmentations: List[Augmentation]):
         logger.warning("Could not load {0}\n{1}".format(path, e))
         return None
 
-    augmented_audio = apply_augmentations(augmentations, y, sr)
+    augmented_audio = augmentations(y, sr)
+
     spectrograms = []
     for audio in augmented_audio:
         # zero-padding
@@ -113,21 +112,6 @@ def imitation_spectrogram(path, augmentations: List[Augmentation]):
         s = librosa.power_to_db(s, ref=np.max)
         spectrograms.append(s)
     return spectrograms
-
-
-def apply_augmentations(augmentations, y, sr):
-    # start with just the original audio and then apply all augmentations
-    augmented_audio = [y]
-    for augmentation in augmentations:
-        augmented_audio_batch = []
-        for y in augmented_audio:
-            augmented_audio_batch += augmentation.augment(y, sr)
-
-        if augmentation.replaces:  # e.g. windowing augmentation, which replaces the original audio with windowed versions
-            augmented_audio = augmented_audio_batch
-        else:  # e.g. time stretching augmentation
-            augmented_audio += augmented_audio_batch
-    return augmented_audio
 
 
 def normalize_spectrograms(spectrograms):

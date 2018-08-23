@@ -7,16 +7,16 @@ from utils.utils import get_dataset_dir
 
 
 class VocalSketch(Datafiles):
-    def __init__(self, name, augmentations=None, recalculate_spectrograms=False):
-        super().__init__(name, augmentations, recalculate_spectrograms)
+    def __init__(self, name, imitation_augmentations, reference_augmentations, recalculate_spectrograms=False):
+        super().__init__(name, imitation_augmentations, reference_augmentations, recalculate_spectrograms)
 
     def calculate_spectrograms(self):
         raise NotImplementedError
 
 
 class VocalSketch_1_0(VocalSketch):
-    def __init__(self, augmentations=None, recalculate_spectrograms=False):
-        super().__init__("vocal_sketch_1_0", augmentations, recalculate_spectrograms)
+    def __init__(self, imitation_augmentations=None, reference_augmentations=None, recalculate_spectrograms=False):
+        super().__init__("vocal_sketch_1_0", imitation_augmentations, reference_augmentations, recalculate_spectrograms)
 
     def calculate_spectrograms(self):
         data_dir = get_dataset_dir(self.name)
@@ -45,14 +45,14 @@ class VocalSketch_1_0(VocalSketch):
                 imitation_labels[path] = row['sound_label']
 
         preprocessing.calculate_spectrograms(imitation_paths, imitation_labels, 'imitations', self.name, preprocessing.imitation_spectrogram,
-                                             self.augmentations)
+                                             self.imitation_augmentations)
         preprocessing.calculate_spectrograms(reference_paths, reference_labels, 'references', self.name, preprocessing.reference_spectrogram,
-                                             self.augmentations)
+                                             self.imitation_augmentations)
 
 
 class VocalSketch_1_1(VocalSketch):
-    def __init__(self, augmentations=None, recalculate_spectrograms=False):
-        super().__init__("vocal_sketch_1_1", augmentations, recalculate_spectrograms)
+    def __init__(self, imitation_augmentations=None, reference_augmentations=None, recalculate_spectrograms=False):
+        super().__init__("vocal_sketch_1_1", imitation_augmentations, reference_augmentations, recalculate_spectrograms)
 
     def calculate_spectrograms(self):
         """
@@ -92,6 +92,6 @@ class VocalSketch_1_1(VocalSketch):
                 imitation_labels[path] = row['sound_label']
 
         preprocessing.calculate_spectrograms(imitation_paths, imitation_labels, 'imitations', self.name, preprocessing.imitation_spectrogram,
-                                             self.augmentations)
+                                             self.imitation_augmentations)
         preprocessing.calculate_spectrograms(reference_paths, reference_labels, 'references', self.name, preprocessing.reference_spectrogram,
-                                             self.augmentations)
+                                             self.imitation_augmentations)

@@ -1,4 +1,3 @@
-import csv
 import os
 
 from data_files.generics import Datafiles
@@ -7,8 +6,8 @@ from utils.utils import get_dataset_dir
 
 
 class VocalImitation(Datafiles):
-    def __init__(self, augmentations=None, recalculate_spectrograms=False):
-        super().__init__('vocal_imitation', augmentations, recalculate_spectrograms)
+    def __init__(self, imitation_augmentations=None, reference_augmentations=None, recalculate_spectrograms=False):
+        super().__init__('vocal_imitation', imitation_augmentations, reference_augmentations, recalculate_spectrograms)
 
     def calculate_spectrograms(self):
         data_dir = get_dataset_dir(self.name)
@@ -35,10 +34,10 @@ class VocalImitation(Datafiles):
                                       "is_canonical": is_canonical}
 
         preprocessing.calculate_spectrograms(imitation_paths, imitation_labels, 'imitations', self.name,
-                                             preprocessing.imitation_spectrogram, self.augmentations)
+                                             preprocessing.imitation_spectrogram, self.imitation_augmentations)
         preprocessing.calculate_spectrograms(reference_paths, reference_labels, 'references', self.name,
-                                             preprocessing.reference_spectrogram, self.augmentations)
+                                             preprocessing.reference_spectrogram, self.reference_augmentations)
 
-    
+
 if __name__ == "__main__":
     VocalImitation(recalculate_spectrograms=True)

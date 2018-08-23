@@ -4,8 +4,9 @@ from utils import utils
 
 
 class Datafiles:
-    def __init__(self, name, augmentations=None, recalculate_spectrograms=False):
-        self.augmentations = augmentations
+    def __init__(self, name, imitation_augmentations, reference_augmentations, recalculate_spectrograms=False):
+        self.imitation_augmentations = imitation_augmentations
+        self.reference_augmentations = reference_augmentations
         self.name = name
         self.references = None
         self.reference_labels = None
