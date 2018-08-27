@@ -43,10 +43,6 @@ def main(cli_args=None):
 
         imitation_augmentations = audaugio.CombinatoricChain(
             audaugio.BackgroundNoiseAugmentation(.005),
-            # audaugio.TimeStretchAugmentation(1 + .02),
-            # audaugio.TimeStretchAugmentation(1 - .02),
-            # audaugio.PitchShiftAugmentation(1),
-            # audaugio.PitchShiftAugmentation(-1),
             audaugio.LowPassAugmentation(500, 1.5, 1),
             audaugio.HighPassAugmentation(6000, 1.5, 1),
             audaugio.WindowingAugmentation(4, 2)
