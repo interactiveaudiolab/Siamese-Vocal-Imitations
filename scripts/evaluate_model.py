@@ -8,7 +8,7 @@ from data_sets.pair import AllPairs
 from models.siamese import Siamese
 from data_partitions.partitions import Partitions
 from utils.inference import reciprocal_ranks
-from data_partitions.generics import DataSplit
+from data_partitions import PartitionSplit
 
 
 def main():
@@ -30,7 +30,7 @@ def main():
     model = model.eval()
     data = VocalSketch_1_1()
 
-    partitions = Partitions(data, DataSplit(.35, .15, .5))
+    partitions = Partitions(data, PartitionSplit(.35, .15, .5))
 
     dataset = AllPairs(partitions.test)
     rrs = reciprocal_ranks(model, dataset, use_cuda)
