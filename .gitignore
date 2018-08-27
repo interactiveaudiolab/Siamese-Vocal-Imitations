@@ -4,6 +4,7 @@
 *.log
 *.png
 *.pickle
+*.pstat
 
 # Python
 */__pycache__/*
