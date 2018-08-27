@@ -1,6 +1,7 @@
 import logging
+from typing import Tuple, Dict, List
 
-from utils import utils
+from utils import utils, preprocessing as preprocessing
 
 
 class Datafiles:
@@ -33,8 +34,25 @@ class Datafiles:
         self.imitations = utils.load_npy("imitations.npy", self.name)
         self.imitation_labels = utils.load_npy("imitations_labels.npy", self.name)
 
-    def calculate_spectrograms(self):
+    def prepare_spectrogram_calculation(self) -> Tuple[Dict, List, Dict, List]:
         """
-        Calculates normalized imitation and reference spectrograms and saves them as .npy files.
+        Prepare lists of paths to audio files that are to have spectrograms calculated, as well as dictionaries of their labels (indexed by path).
         """
         raise NotImplementedError
+
+    def calculate_spectrograms(self):
+        imitation_labels, imitation_paths, reference_labels, reference_paths = self.prepare_spectrogram_calculation()
+
+        preprocessing.calculate_spectrograms(imitation_paths,
+                                             imitation_labels,
+                                             'imitations',
+                                             self.name,
+                                             preprocessing.imitation_spectrogram,
+                                             self.imitation_augmentations)
+
+        preprocessing.calculate_spectrograms(reference_paths,
+                                             reference_labels,
+                                             'references',
+                                             self.name,
+                                             preprocessing.reference_spectrogram,
+                                             self.imitation_augmentations)
