@@ -11,7 +11,7 @@ import utils.matplotlib_backend_hack
 import utils.network
 import utils.utils as utilities
 from data_files.vocal_imitation import VocalImitation
-from data_partitions.generics import DataSplit
+from data_partitions import PartitionSplit
 from data_partitions.pair_partition import PairPartition
 from data_partitions.partitions import Partitions
 from data_sets.pair import AllPairs
@@ -36,8 +36,8 @@ def main(cli_args=None):
     log_cli_args(cli_args)
     try:
         datafiles = VocalImitation(recalculate_spectrograms=cli_args.recalculate_spectrograms)
-        data_split = DataSplit(*cli_args.partitions)
-        partitions = Partitions(datafiles, data_split, cli_args.num_categories, regenerate_splits=False)
+        data_split = PartitionSplit(*cli_args.partitions)
+        partitions = Partitions(datafiles, data_split, cli_args.num_categories, regenerate=False)
         partitions.generate_partitions(PairPartition, no_test=True)
         partitions.save("./output/{0}/partition.pickle".format(utilities.get_trial_number()))
 

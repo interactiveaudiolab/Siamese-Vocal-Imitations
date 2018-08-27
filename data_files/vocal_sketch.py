@@ -2,7 +2,7 @@ import csv
 import os
 
 import utils.preprocessing as preprocessing
-from data_files.generics import Datafiles
+from data_files import Datafiles
 from utils.utils import get_dataset_dir
 
 

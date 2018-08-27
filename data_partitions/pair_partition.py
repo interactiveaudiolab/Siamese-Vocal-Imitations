@@ -1,12 +1,12 @@
 import numpy as np
 
-from data_partitions.generics import Partition
+from data_partitions import Partition
 from utils.progress_bar import Bar
 
 
 class PairPartition(Partition):
     def __init__(self, references, reference_labels, all_imitations, all_imitation_labels, dataset_type):
-        super().__init__()
+        super().__init__(references, reference_labels, all_imitations, all_imitation_labels)
         self.references = references
         self.reference_labels = reference_labels
 

@@ -15,7 +15,7 @@ import utils.utils as utilities
 from data_files.vocal_imitation import VocalImitation
 from data_files.vocal_sketch import VocalSketch_1_1, VocalSketch_1_0
 from data_partitions.partitions import Partitions
-from data_partitions.generics import DataSplit
+from data_partitions import PartitionSplit
 
 
 def main(cli_args=None):
@@ -43,12 +43,12 @@ def main(cli_args=None):
 
         imitation_augmentations = audaugio.CombinatoricChain(
             audaugio.BackgroundNoiseAugmentation(.005),
-            audaugio.TimeStretchAugmentation(1 + .02),
-            audaugio.TimeStretchAugmentation(1 - .02),
-            audaugio.PitchShiftAugmentation(1),
-            audaugio.PitchShiftAugmentation(-1),
-            audaugio.LowPassAugmentation(50, 1.5, 1),
-            audaugio.HighPassAugmentation(8000, 1.5, 1),
+            # audaugio.TimeStretchAugmentation(1 + .02),
+            # audaugio.TimeStretchAugmentation(1 - .02),
+            # audaugio.PitchShiftAugmentation(1),
+            # audaugio.PitchShiftAugmentation(-1),
+            audaugio.LowPassAugmentation(500, 1.5, 1),
+            audaugio.HighPassAugmentation(6000, 1.5, 1),
             audaugio.WindowingAugmentation(4, 2)
         )
         reference_augmentations = audaugio.LinearChain(audaugio.WindowingAugmentation(4, 2))
@@ -57,9 +57,9 @@ def main(cli_args=None):
                             imitation_augmentations=imitation_augmentations,
                             reference_augmentations=reference_augmentations)
 
-        data_split = DataSplit(*cli_args.partitions)
-        partitions = Partitions(datafiles, data_split, cli_args.num_categories, regenerate_splits=cli_args.regenerate_splits or
-                                                                                                  cli_args.recalculate_spectrograms)
+        data_split = PartitionSplit(*cli_args.partitions)
+        partitions = Partitions(datafiles, data_split, cli_args.num_categories, regenerate=cli_args.regenerate_splits or
+                                                                                           cli_args.recalculate_spectrograms)
         partitions.save("./output/{0}/partition.pickle".format(utilities.get_trial_number()))
 
         utils.network.initialize_siamese_params(cli_args.regenerate_weights, cli_args.dropout)

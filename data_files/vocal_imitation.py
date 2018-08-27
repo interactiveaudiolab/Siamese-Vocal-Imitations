@@ -1,6 +1,6 @@
 import os
 
-from data_files.generics import Datafiles
+from data_files import Datafiles
 from utils import preprocessing
 from utils.utils import get_dataset_dir
 
