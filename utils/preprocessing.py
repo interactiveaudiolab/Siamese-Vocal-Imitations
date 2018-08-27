@@ -1,13 +1,14 @@
 import audioop
 import logging
 import os
+import pathlib
 
 import audaugio
 import librosa
 import numpy as np
 
 from utils.progress_bar import Bar
-from utils.utils import save_npy, get_npy_dir
+from utils.utils import get_npy_dir
 
 
 def calculate_spectrograms(paths, file_labels, file_name, dataset_name, spectrogram_func, augmentations):
@@ -132,3 +133,15 @@ def normalize_spectrograms(spectrograms):
     normed = np.multiply(spectrograms - m_matrix, 1. / std_matrix)
 
     return normed
+
+
+def save_npy(array, file_name, dataset, ar_type=None):
+    array = np.array(array)
+    if ar_type:
+        array = array.astype(ar_type)
+    path = os.path.join(get_npy_dir(dataset), file_name)
+    try:
+        np.save(path, array)
+    except FileNotFoundError:  # can occur when the parent directory doesn't exist
+        pathlib.Path(path).mkdir(parents=True)
+        np.save(path, array)

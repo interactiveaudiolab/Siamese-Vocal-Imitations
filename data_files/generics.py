@@ -1,7 +1,11 @@
 import logging
+import os
 from typing import Tuple, Dict, List
 
-from utils import utils, preprocessing as preprocessing
+import numpy as np
+
+from utils import preprocessing as preprocessing
+from utils.utils import get_npy_dir
 
 
 class Datafiles:
@@ -29,10 +33,10 @@ class Datafiles:
             self.load_from_disk()
 
     def load_from_disk(self):
-        self.references = utils.load_npy("references.npy", self.name)
-        self.reference_labels = utils.load_npy("references_labels.npy", self.name)
-        self.imitations = utils.load_npy("imitations.npy", self.name)
-        self.imitation_labels = utils.load_npy("imitations_labels.npy", self.name)
+        self.references = self.load_npy("references.npy", self.name)
+        self.reference_labels = self.load_npy("references_labels.npy", self.name)
+        self.imitations = self.load_npy("imitations.npy", self.name)
+        self.imitation_labels = self.load_npy("imitations_labels.npy", self.name)
 
     def prepare_spectrogram_calculation(self) -> Tuple[Dict, List, Dict, List]:
         """
@@ -56,3 +60,8 @@ class Datafiles:
                                              self.name,
                                              preprocessing.reference_spectrogram,
                                              self.imitation_augmentations)
+
+    @staticmethod
+    def load_npy(file_name, dataset):
+        path = os.path.join(get_npy_dir(dataset), file_name)
+        return np.load(path)

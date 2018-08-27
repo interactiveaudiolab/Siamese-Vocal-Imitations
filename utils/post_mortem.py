@@ -62,7 +62,7 @@ def correlation_csv(directory, correlations):
 
 def boxplot(directory, correlations, p_value):
     # first and third columns are the training correlations for siamese and triplet nets respectively
-    utils.graphing.boxplot(directory, correlations[:, [1, 3]], p_value)
+    utils.graphing.correlation_boxplot(directory, correlations[:, [1, 3]], p_value)
 
 
 def condense_graphs(directory, verbose=False):
