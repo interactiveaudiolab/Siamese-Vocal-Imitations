@@ -1,19 +1,18 @@
-import csv
 import os
 
-from data_files.generics import Datafiles
+from data_files import Datafiles
 from utils import preprocessing
 from utils.utils import get_dataset_dir
 
 
 class VocalImitation(Datafiles):
-    def __init__(self, augmentations=None, recalculate_spectrograms=False):
-        super().__init__('vocal_imitation', augmentations, recalculate_spectrograms)
+    def __init__(self, imitation_augmentations=None, reference_augmentations=None, recalculate_spectrograms=False):
+        super().__init__('vocal_imitation', imitation_augmentations, reference_augmentations, recalculate_spectrograms)
 
-    def calculate_spectrograms(self):
+    def prepare_spectrogram_calculation(self):
         data_dir = get_dataset_dir(self.name)
-        imitation_path = os.path.join(data_dir, "imitations")
-        reference_path = os.path.join(data_dir, "references")
+        imitation_path = os.path.join(data_dir, "vocal_imitations")
+        reference_path = os.path.join(data_dir, "original_recordings")
 
         imitation_paths = preprocessing.recursive_wav_paths(imitation_path)
         reference_paths = preprocessing.recursive_wav_paths(reference_path)
@@ -34,11 +33,8 @@ class VocalImitation(Datafiles):
             reference_labels[path] = {"label": label,
                                       "is_canonical": is_canonical}
 
-        preprocessing.calculate_spectrograms(imitation_paths, imitation_labels, 'imitations', self.name,
-                                             preprocessing.imitation_spectrogram, self.augmentations)
-        preprocessing.calculate_spectrograms(reference_paths, reference_labels, 'references', self.name,
-                                             preprocessing.reference_spectrogram, self.augmentations)
+        return imitation_labels, imitation_paths, reference_labels, reference_paths
 
-    
+
 if __name__ == "__main__":
     VocalImitation(recalculate_spectrograms=True)

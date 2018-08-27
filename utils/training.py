@@ -1,11 +1,6 @@
-import logging
 import math
-import os
-import pickle
 
 import numpy as np
-from matplotlib import pyplot as plt
-from scipy.stats import pearsonr
 from torch.utils.data import DataLoader
 from torch.utils.data.sampler import BatchSampler
 
@@ -13,9 +8,7 @@ from data_sets.generics import PairedDataset, TripletDataset
 from data_sets.samplers import BalancedPairSampler
 from models.siamese import Siamese
 from models.triplet import Triplet
-from utils.graphing import mean_rank_per_epoch, mrr_per_epoch, loss_per_epoch
 from utils.progress_bar import Bar
-from utils.utils import get_trial_number
 
 
 def train_siamese_network(model: Siamese, data: PairedDataset, objective, optimizer, n_epochs, use_cuda, batch_size=128):

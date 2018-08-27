@@ -3,6 +3,8 @@ import logging
 import sys
 import traceback
 
+import audaugio
+
 # MUST COME FIRST
 # noinspection PyUnresolvedReferences
 import utils.matplotlib_backend_hack
@@ -10,13 +12,10 @@ import experiments.pairwise
 import experiments.triplet
 import utils.network
 import utils.utils as utilities
-from augmentation.background_noise import BackgroundNoiseAugmentation
-from augmentation.time_stretch import TimeStretchAugmentation
-from augmentation.windowing import WindowingAugmentation
 from data_files.vocal_imitation import VocalImitation
 from data_files.vocal_sketch import VocalSketch_1_1, VocalSketch_1_0
 from data_partitions.partitions import Partitions
-from data_partitions.generics import DataSplit
+from data_partitions import PartitionSplit
 
 
 def main(cli_args=None):
@@ -42,11 +41,15 @@ def main(cli_args=None):
         else:
             raise ValueError("Invalid dataset ({0}) chosen.".format(cli_args.siamese_dataset))
 
-        datafiles = dataset(recalculate_spectrograms=cli_args.recalculate_spectrograms, augmentations=[WindowingAugmentation(4, 2), TimeStretchAugmentation(
-            1.05), TimeStretchAugmentation(.95), BackgroundNoiseAugmentation(.005)])
-        data_split = DataSplit(*cli_args.partitions)
-        partitions = Partitions(datafiles, data_split, cli_args.num_categories, regenerate_splits=cli_args.regenerate_splits or
-                                                                                                  cli_args.recalculate_spectrograms)
+        # imitation_augmentations, reference_augmentations = get_augmentation_chains()
+
+        datafiles = dataset(recalculate_spectrograms=cli_args.recalculate_spectrograms,
+                            imitation_augmentations=None,
+                            reference_augmentations=None)
+
+        data_split = PartitionSplit(*cli_args.partitions)
+        partitions = Partitions(datafiles, data_split, cli_args.num_categories, regenerate=cli_args.regenerate_splits or
+                                                                                           cli_args.recalculate_spectrograms)
         partitions.save("./output/{0}/partition.pickle".format(utilities.get_trial_number()))
 
         utils.network.initialize_siamese_params(cli_args.regenerate_weights, cli_args.dropout)
@@ -66,6 +69,18 @@ def main(cli_args=None):
         logger.critical("Unhandled exception: {0}".format(str(e)))
         logger.critical(traceback.print_exc())
         sys.exit()
+
+
+def get_augmentation_chains():
+    windowing_augmentation = audaugio.WindowingAugmentation(4, 2)
+    imitation_augmentations = audaugio.CombinatoricChain(
+        audaugio.BackgroundNoiseAugmentation(.005),
+        audaugio.LowPassAugmentation(500, 1.5, 1),
+        audaugio.HighPassAugmentation(6000, 1.5, 1),
+        windowing_augmentation
+    )
+    reference_augmentations = audaugio.LinearChain(windowing_augmentation)
+    return imitation_augmentations, reference_augmentations
 
 
 def log_cli_args(cli_args):

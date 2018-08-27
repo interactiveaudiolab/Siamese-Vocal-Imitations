@@ -1,5 +1,4 @@
 import os
-import re
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -139,7 +138,7 @@ def mrr_random_chance(n_categories):
     return np.mean([1 / n for n in np.random.randint(low=1, high=n_categories + 1, size=99999)])
 
 
-def boxplot(directory, data, p_value):
+def correlation_boxplot(directory, data, p_value):
     # Multiple box plots on one Axes
     fig, ax = plt.subplots()
     fig.set_size_inches(9.5, 6)

@@ -2,23 +2,20 @@ import csv
 import os
 
 import utils.preprocessing as preprocessing
-from data_files.generics import Datafiles
+from data_files import Datafiles
 from utils.utils import get_dataset_dir
 
 
 class VocalSketch(Datafiles):
-    def __init__(self, name, augmentations=None, recalculate_spectrograms=False):
-        super().__init__(name, augmentations, recalculate_spectrograms)
-
-    def calculate_spectrograms(self):
-        raise NotImplementedError
+    def __init__(self, name, imitation_augmentations, reference_augmentations, recalculate_spectrograms=False):
+        super().__init__(name, imitation_augmentations, reference_augmentations, recalculate_spectrograms)
 
 
 class VocalSketch_1_0(VocalSketch):
-    def __init__(self, augmentations=None, recalculate_spectrograms=False):
-        super().__init__("vocal_sketch_1_0", augmentations, recalculate_spectrograms)
+    def __init__(self, imitation_augmentations=None, reference_augmentations=None, recalculate_spectrograms=False):
+        super().__init__("vocal_sketch_1_0", imitation_augmentations, reference_augmentations, recalculate_spectrograms)
 
-    def calculate_spectrograms(self):
+    def prepare_spectrogram_calculation(self):
         data_dir = get_dataset_dir(self.name)
         imitation_path = os.path.join(data_dir, "vocal_imitations/included")
         reference_path = os.path.join(data_dir, "sound_recordings")
@@ -44,17 +41,14 @@ class VocalSketch_1_0(VocalSketch):
                 path = os.path.join(imitation_path, row['filename'])
                 imitation_labels[path] = row['sound_label']
 
-        preprocessing.calculate_spectrograms(imitation_paths, imitation_labels, 'imitations', self.name, preprocessing.imitation_spectrogram,
-                                             self.augmentations)
-        preprocessing.calculate_spectrograms(reference_paths, reference_labels, 'references', self.name, preprocessing.reference_spectrogram,
-                                             self.augmentations)
+        return imitation_labels, imitation_paths, reference_labels, reference_paths
 
 
 class VocalSketch_1_1(VocalSketch):
-    def __init__(self, augmentations=None, recalculate_spectrograms=False):
-        super().__init__("vocal_sketch_1_1", augmentations, recalculate_spectrograms)
+    def __init__(self, imitation_augmentations=None, reference_augmentations=None, recalculate_spectrograms=False):
+        super().__init__("vocal_sketch_1_1", imitation_augmentations, reference_augmentations, recalculate_spectrograms)
 
-    def calculate_spectrograms(self):
+    def prepare_spectrogram_calculation(self):
         """
         Calculates normalized imitation and reference spectrograms and saves them as .npy files.
         """
@@ -91,7 +85,4 @@ class VocalSketch_1_1(VocalSketch):
                 path = os.path.join(imitation_path_2, row['filename'])
                 imitation_labels[path] = row['sound_label']
 
-        preprocessing.calculate_spectrograms(imitation_paths, imitation_labels, 'imitations', self.name, preprocessing.imitation_spectrogram,
-                                             self.augmentations)
-        preprocessing.calculate_spectrograms(reference_paths, reference_labels, 'references', self.name, preprocessing.reference_spectrogram,
-                                             self.augmentations)
+        return imitation_labels, imitation_paths, reference_labels, reference_paths

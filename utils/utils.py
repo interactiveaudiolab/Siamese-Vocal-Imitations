@@ -9,23 +9,6 @@ import torch
 import yaml
 
 
-def load_npy(file_name, dataset):
-    path = os.path.join(get_npy_dir(dataset), file_name)
-    return np.load(path)
-
-
-def save_npy(array, file_name, dataset, ar_type=None):
-    array = np.array(array)
-    if ar_type:
-        array = array.astype(ar_type)
-    path = os.path.join(get_npy_dir(dataset), file_name)
-    try:
-        np.save(path, array)
-    except FileNotFoundError:  # can occur when the parent directory doesn't exist
-        pathlib.Path(path).mkdir(parents=True)
-        np.save(path, array)
-
-
 def prindent(string, n_indent):
     logger = logging.getLogger('logger')
     p_str = ''.join(['\t' for _ in range(n_indent)]) + string

@@ -5,7 +5,7 @@ A program that trains up a siamese neural network that evaluates the likelihood 
 All the software you need to get started is a python 3 installation and pip. If you want to train on the GPU, you also need to install CUDA.
 
 ## Installation
-Clone the repository and install the dependencies (you should probably do this in a virtual environment):
+Clone the master branch of repository and install the dependencies (you should probably do this in a virtual environment):
 ```
 pip install -r requirements.txt
 ```
@@ -34,6 +34,5 @@ This program can interact with two datasets released by the Interactive Audio La
 ## Citation
 TODO: insert paper citation
 
-
 ## Contact
-Contact Brian Margolis (BrianMargolis2019 [at] u.northwestern.edu) with any questions or issues regarding this work.
+Contact Brian Margolis (BrianMargolis2019 [at] u.northwestern.edu) with any questions regarding this work. 

@@ -112,25 +112,3 @@ class Siamese(nn.Module):
         # Calculate the FCN and flatten it
         output = self.fully_connected(concatenated)
         return output.view(-1)
-
-    # def train(self, mode=True):
-    #     super().train(mode)
-    #
-    #     self.left_branch = self.left_backup
-    #     self.right_branch = self.right_backup
-    #     self.fully_connected = self.fully_connected_backup
-    #
-    #     return self
-    #
-    # def eval(self):
-    #     super().eval()
-    #
-    #     self.left_backup = self.left_branch
-    #     self.right_backup = self.right_branch
-    #     self.fully_connected_backup = self.fully_connected
-    #
-    #     self.left_branch = nn.DataParallel(self.left_branch)
-    #     self.right_branch = nn.DataParallel(self.right_branch)
-    #     self.fully_connected = nn.DataParallel(self.fully_connected)
-    #
-    #     return self
