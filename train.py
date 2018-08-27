@@ -41,13 +41,7 @@ def main(cli_args=None):
         else:
             raise ValueError("Invalid dataset ({0}) chosen.".format(cli_args.siamese_dataset))
 
-        imitation_augmentations = audaugio.CombinatoricChain(
-            audaugio.BackgroundNoiseAugmentation(.005),
-            audaugio.LowPassAugmentation(500, 1.5, 1),
-            audaugio.HighPassAugmentation(6000, 1.5, 1),
-            audaugio.WindowingAugmentation(4, 2)
-        )
-        reference_augmentations = audaugio.LinearChain(audaugio.WindowingAugmentation(4, 2))
+        # imitation_augmentations, reference_augmentations = get_augmentation_chains()
 
         datafiles = dataset(recalculate_spectrograms=cli_args.recalculate_spectrograms,
                             imitation_augmentations=imitation_augmentations,
@@ -75,6 +69,18 @@ def main(cli_args=None):
         logger.critical("Unhandled exception: {0}".format(str(e)))
         logger.critical(traceback.print_exc())
         sys.exit()
+
+
+def get_augmentation_chains():
+    windowing_augmentation = audaugio.WindowingAugmentation(4, 2)
+    imitation_augmentations = audaugio.CombinatoricChain(
+        audaugio.BackgroundNoiseAugmentation(.005),
+        audaugio.LowPassAugmentation(500, 1.5, 1),
+        audaugio.HighPassAugmentation(6000, 1.5, 1),
+        windowing_augmentation
+    )
+    reference_augmentations = audaugio.LinearChain(windowing_augmentation)
+    return imitation_augmentations, reference_augmentations
 
 
 def log_cli_args(cli_args):
