@@ -65,17 +65,12 @@ def main(cli_args=None):
         utils.network.initialize_siamese_params(cli_args.regenerate_weights, cli_args.dropout)
 
         if cli_args.triplet:
-            triplet_experiment = experiments.triplet.TripletExperiment(cli_args.cuda, cli_args.epochs, cli_args.validation_frequency, cli_args.dropout,
-                                                                       partitions,
-                                                                       cli_args.optimizer, cli_args.learning_rate, cli_args.weight_decay,
-                                                                       cli_args.momentum)
-            triplet_experiment()
+            experiments.triplet.train(cli_args.cuda, cli_args.epochs, cli_args.validation_frequency, cli_args.dropout, partitions, cli_args.optimizer,
+                                      cli_args.learning_rate, cli_args.weight_decay, cli_args.momentum)
 
         if cli_args.pairwise:
-            pairwise_experiment = experiments.pairwise.PairwiseExperiment(cli_args.cuda, cli_args.epochs, cli_args.validation_frequency, cli_args.dropout,
-                                                                          partitions,
-                                                                          cli_args.optimizer, cli_args.learning_rate, cli_args.weight_decay, cli_args.momentum)
-            pairwise_experiment()
+            experiments.pairwise.train(cli_args.cuda, cli_args.epochs, cli_args.validation_frequency, cli_args.dropout, partitions, cli_args.optimizer,
+                                       cli_args.learning_rate, cli_args.weight_decay, cli_args.momentum)
 
         cli_args.trials -= 1
         if cli_args.trials > 0:
