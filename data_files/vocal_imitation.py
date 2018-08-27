@@ -11,8 +11,8 @@ class VocalImitation(Datafiles):
 
     def prepare_spectrogram_calculation(self):
         data_dir = get_dataset_dir(self.name)
-        imitation_path = os.path.join(data_dir, "imitations")
-        reference_path = os.path.join(data_dir, "references")
+        imitation_path = os.path.join(data_dir, "vocal_imitations")
+        reference_path = os.path.join(data_dir, "original_recordings")
 
         imitation_paths = preprocessing.recursive_wav_paths(imitation_path)
         reference_paths = preprocessing.recursive_wav_paths(reference_path)
