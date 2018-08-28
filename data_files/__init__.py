@@ -17,6 +17,7 @@ class Datafiles:
         self.reference_labels = None
         self.imitations = None
         self.imitation_labels = None
+        self.n_batches = 50
 
         logger = logging.getLogger('logger')
         logger.info("Using dataset: {0}".format(name))
@@ -33,9 +34,10 @@ class Datafiles:
             self.load_from_disk()
 
     def load_from_disk(self):
-        self.references = self.load_npy("references.npy", self.name)
+        for i in range(self.n_batches):
+            self.references += self.load_npy("references_{0}.npy".format(i), self.name)
+            self.imitations += self.load_npy("imitations_{0}.npy".format(i), self.name)
         self.reference_labels = self.load_npy("references_labels.npy", self.name)
-        self.imitations = self.load_npy("imitations.npy", self.name)
         self.imitation_labels = self.load_npy("imitations_labels.npy", self.name)
 
     def prepare_spectrogram_calculation(self) -> Tuple[Dict, List, Dict, List]:
@@ -47,19 +49,27 @@ class Datafiles:
     def calculate_spectrograms(self):
         imitation_labels, imitation_paths, reference_labels, reference_paths = self.prepare_spectrogram_calculation()
 
-        preprocessing.calculate_spectrograms(imitation_paths,
-                                             imitation_labels,
-                                             'imitations',
-                                             self.name,
-                                             preprocessing.imitation_spectrogram,
-                                             self.imitation_augmentations)
+        logger = logging.getLogger('logger')
+        logger.info("Calculating spectrograms in {0} batches".format(self.n_batches))
 
-        preprocessing.calculate_spectrograms(reference_paths,
-                                             reference_labels,
-                                             'references',
-                                             self.name,
-                                             preprocessing.reference_spectrogram,
-                                             self.imitation_augmentations)
+        batches = np.array_split(imitation_paths, self.n_batches)
+        for i, batch in enumerate(batches):
+            preprocessing.calculate_spectrograms(batch,
+                                                 imitation_labels,
+                                                 'imitations_{0}'.format(i),
+                                                 self.name,
+                                                 preprocessing.imitation_spectrogram,
+                                                 self.imitation_augmentations)
+
+        n_batches = int(len(reference_paths) / self.n_batches)
+        batches = np.array_split(reference_paths, n_batches)
+        for i, batch in enumerate(batches):
+            preprocessing.calculate_spectrograms(batch,
+                                                 reference_labels,
+                                                 'references_{0}'.format(i),
+                                                 self.name,
+                                                 preprocessing.reference_spectrogram,
+                                                 self.imitation_augmentations)
 
     @staticmethod
     def load_npy(file_name, dataset):

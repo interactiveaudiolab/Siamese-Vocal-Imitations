@@ -41,11 +41,11 @@ def main(cli_args=None):
         else:
             raise ValueError("Invalid dataset ({0}) chosen.".format(cli_args.siamese_dataset))
 
-        # imitation_augmentations, reference_augmentations = get_augmentation_chains()
+        imitation_augmentations, reference_augmentations = get_augmentation_chains()
 
         datafiles = dataset(recalculate_spectrograms=cli_args.recalculate_spectrograms,
-                            imitation_augmentations=None,
-                            reference_augmentations=None)
+                            imitation_augmentations=imitation_augmentations,
+                            reference_augmentations=reference_augmentations)
 
         data_split = PartitionSplit(*cli_args.partitions)
         partitions = Partitions(datafiles, data_split, cli_args.num_categories, regenerate=cli_args.regenerate_splits or
