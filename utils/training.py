@@ -4,14 +4,14 @@ import numpy as np
 from torch.utils.data import DataLoader
 from torch.utils.data.sampler import BatchSampler
 
-from data_sets.generics import PairedDataset, TripletDataset
-from data_sets.samplers import BalancedPairSampler
+from data_subsets import PairedDataSubset, TripletDataSubset
+from data_subsets.samplers import BalancedPairSampler
 from models.siamese import Siamese
 from models.triplet import Triplet
 from utils.progress_bar import Bar
 
 
-def train_siamese_network(model: Siamese, data: PairedDataset, objective, optimizer, n_epochs, use_cuda, batch_size=128):
+def train_siamese_network(model: Siamese, data: PairedDataSubset, objective, optimizer, n_epochs, use_cuda, batch_size=128):
     for epoch in range(n_epochs):
         # because the model is passed by reference and this is a generator, ensure that we're back in training mode
         model = model.train()
@@ -56,7 +56,7 @@ def train_siamese_network(model: Siamese, data: PairedDataset, objective, optimi
         yield model, batch_losses
 
 
-def train_triplet_network(model: Triplet, data: TripletDataset, objective, optimizer, n_epochs, use_cuda, batch_size=128):
+def train_triplet_network(model: Triplet, data: TripletDataSubset, objective, optimizer, n_epochs, use_cuda, batch_size=128):
     for epoch in range(n_epochs):
         # because the model is passed by reference and this is a generator, ensure that we're back in training mode
         model = model.train()

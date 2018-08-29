@@ -2,11 +2,11 @@ import math
 
 from torch.utils.data.sampler import Sampler
 
-from data_sets.generics import PairedDataset, TripletDataset
+from data_subsets import PairedDataSubset, TripletDataSubset
 
 
 class BalancedPairSampler(Sampler):
-    def __init__(self, data: PairedDataset, batch_size, drop_last=False):
+    def __init__(self, data: PairedDataSubset, batch_size, drop_last=False):
         super().__init__(data)
         self.data = data
         self.batch_size = batch_size
@@ -44,7 +44,7 @@ class BalancedPairSampler(Sampler):
 
 
 class BalancedTripletSampler(Sampler):
-    def __init__(self, data: TripletDataset, batch_size, drop_last=False):
+    def __init__(self, data: TripletDataSubset, batch_size, drop_last=False):
         super().__init__(data)
         self.data = data
         self.batch_size = batch_size

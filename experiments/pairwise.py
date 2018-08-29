@@ -8,7 +8,7 @@ from torch.nn import BCELoss
 import utils.network
 from data_partitions.partitions import Partitions
 from data_partitions.pair_partition import PairPartition
-from data_sets.pair import Balanced, AllPairs
+from data_subsets.pair import Balanced, AllPairs
 from models.siamese import Siamese
 from utils import utils as utilities, training, inference
 from utils.obj import TrainingProgress

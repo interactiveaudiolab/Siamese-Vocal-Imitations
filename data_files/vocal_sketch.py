@@ -1,27 +1,27 @@
 import csv
 import os
 
-import utils.preprocessing as preprocessing
+import data_files.utils
 from data_files import Datafiles
 from utils.utils import get_dataset_dir
 
 
 class VocalSketch(Datafiles):
-    def __init__(self, name, imitation_augmentations, reference_augmentations, recalculate_spectrograms=False):
-        super().__init__(name, imitation_augmentations, reference_augmentations, recalculate_spectrograms)
+    def __init__(self, name):
+        super().__init__(name)
 
 
 class VocalSketch_1_0(VocalSketch):
-    def __init__(self, imitation_augmentations=None, reference_augmentations=None, recalculate_spectrograms=False):
-        super().__init__("vocal_sketch_1_0", imitation_augmentations, reference_augmentations, recalculate_spectrograms)
+    def __init__(self):
+        super().__init__("vocal_sketch_1_0")
 
     def prepare_spectrogram_calculation(self):
         data_dir = get_dataset_dir(self.name)
         imitation_path = os.path.join(data_dir, "vocal_imitations/included")
         reference_path = os.path.join(data_dir, "sound_recordings")
 
-        imitation_paths = preprocessing.recursive_wav_paths(imitation_path)
-        reference_paths = preprocessing.recursive_wav_paths(reference_path)
+        imitation_paths = data_files.utils.recursive_wav_paths(imitation_path)
+        reference_paths = data_files.utils.recursive_wav_paths(reference_path)
 
         reference_csv = os.path.join(data_dir, "sound_recordings.csv")
         imitation_csv = os.path.join(data_dir, "vocal_imitations.csv")
@@ -45,8 +45,8 @@ class VocalSketch_1_0(VocalSketch):
 
 
 class VocalSketch_1_1(VocalSketch):
-    def __init__(self, imitation_augmentations=None, reference_augmentations=None, recalculate_spectrograms=False):
-        super().__init__("vocal_sketch_1_1", imitation_augmentations, reference_augmentations, recalculate_spectrograms)
+    def __init__(self):
+        super().__init__("vocal_sketch_1_1")
 
     def prepare_spectrogram_calculation(self):
         """
@@ -57,8 +57,8 @@ class VocalSketch_1_1(VocalSketch):
         imitation_path_2 = os.path.join(data_dir, "vocal_imitations_set2/included")
         reference_path = os.path.join(data_dir, "sound_recordings")
 
-        imitation_paths = preprocessing.recursive_wav_paths(imitation_path_1) + preprocessing.recursive_wav_paths(imitation_path_2)
-        reference_paths = preprocessing.recursive_wav_paths(reference_path)
+        imitation_paths = data_files.utils.recursive_wav_paths(imitation_path_1) + data_files.utils.recursive_wav_paths(imitation_path_2)
+        reference_paths = data_files.utils.recursive_wav_paths(reference_path)
 
         imitation_csv_1 = os.path.join(data_dir, "vocal_imitations.csv")
         imitation_csv_2 = os.path.join(data_dir, "vocal_imitaitons_set2.csv")  # not a typo, the CSV's name is misspelled

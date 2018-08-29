@@ -3,7 +3,7 @@ import logging
 import numpy as np
 from torch.utils.data import dataloader, DataLoader
 
-from data_sets.pair import AllPairs
+from data_subsets.pair import AllPairs
 from models.triplet import Triplet
 from models.siamese import Siamese
 from utils import utils

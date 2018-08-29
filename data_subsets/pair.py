@@ -1,10 +1,10 @@
 import numpy as np
 
 from data_partitions.pair_partition import PairPartition
-from data_sets.generics import PairedDataset
+from data_subsets import PairedDataSubset
 
 
-class Balanced(PairedDataset):
+class Balanced(PairedDataSubset):
     def __init__(self, data: PairPartition):
         """
         Create a dataset that has an equal number of positive and negative examples and an equal number of negative fine grain examples and negative coarse
@@ -44,7 +44,7 @@ class Balanced(PairedDataset):
         np.random.shuffle(self.pairs)
 
 
-class AllPairs(PairedDataset):
+class AllPairs(PairedDataSubset):
     def __init__(self, data: PairPartition):
         super().__init__(data)
         self.imitations = data.imitations

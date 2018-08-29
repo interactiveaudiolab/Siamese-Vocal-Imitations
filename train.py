@@ -16,6 +16,8 @@ from data_files.vocal_imitation import VocalImitation
 from data_files.vocal_sketch import VocalSketch_1_1, VocalSketch_1_0
 from data_partitions.partitions import Partitions
 from data_partitions import PartitionSplit
+from data_sets import Dataset
+from preprocessing import Preprocessor
 
 
 def main(cli_args=None):
@@ -32,24 +34,20 @@ def main(cli_args=None):
     logger.info('Beginning trial #{0}...'.format(utilities.get_trial_number()))
     log_cli_args(cli_args)
     try:
-        if cli_args.dataset in ['vs1.0']:
-            dataset = VocalSketch_1_0
-        elif cli_args.dataset in ['vs1.1']:
-            dataset = VocalSketch_1_1
-        elif cli_args.dataset in ['vi']:
-            dataset = VocalImitation
-        else:
-            raise ValueError("Invalid dataset ({0}) chosen.".format(cli_args.siamese_dataset))
+        # un-processed audio files on disk
+        datafiles = get_datafiles(cli_args.dataset)
 
-        imitation_augmentations, reference_augmentations = get_augmentation_chains()
+        # spectrogram recalculation is manually specified with a CLI arg
+        if cli_args.recalculate_spectrograms:
+            imitation_augmentations, reference_augmentations = get_augmentation_chains()
+            preprocessor = Preprocessor(imitation_augmentations, reference_augmentations)
+            preprocessor(datafiles)
 
-        datafiles = dataset(recalculate_spectrograms=cli_args.recalculate_spectrograms,
-                            imitation_augmentations=imitation_augmentations,
-                            reference_augmentations=reference_augmentations)
-
+        # processed spectrograms
+        dataset = Dataset(datafiles.name)
         data_split = PartitionSplit(*cli_args.partitions)
-        partitions = Partitions(datafiles, data_split, cli_args.num_categories, regenerate=cli_args.regenerate_splits or
-                                                                                           cli_args.recalculate_spectrograms)
+        partitions = Partitions(dataset, data_split, cli_args.num_categories, regenerate=cli_args.regenerate_splits or
+                                                                                         cli_args.recalculate_spectrograms)
         partitions.save("./output/{0}/partition.pickle".format(utilities.get_trial_number()))
 
         utils.network.initialize_siamese_params(cli_args.regenerate_weights, cli_args.dropout)
@@ -69,6 +67,18 @@ def main(cli_args=None):
         logger.critical("Unhandled exception: {0}".format(str(e)))
         logger.critical(traceback.print_exc())
         sys.exit()
+
+
+def get_datafiles(dataset_name):
+    if dataset_name in ['vs1.0']:
+        datafiles = VocalSketch_1_0()
+    elif dataset_name in ['vs1.1']:
+        datafiles = VocalSketch_1_1()
+    elif dataset_name in ['vi']:
+        datafiles = VocalImitation()
+    else:
+        raise ValueError("Invalid datafiles ({0}) chosen.".format(dataset_name))
+    return datafiles
 
 
 def get_augmentation_chains():

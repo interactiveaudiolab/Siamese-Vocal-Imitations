@@ -5,6 +5,7 @@ import sys
 
 
 class Partition:
+    # noinspection PyUnusedLocal
     def __init__(self, references, reference_labels, all_imitations, all_imitation_labels):
         pass
 
@@ -41,10 +42,10 @@ class SaveablePartitionState:
 
         try:
             logger.debug("Loading partitions from {0}...".format(location))
+
             with open(location, 'rb') as f:
                 self.shuffled_imitation_indices = pickle.load(f)
                 self.shuffled_category_indices = pickle.load(f)
-
         except FileNotFoundError:
             with open(location, 'w+b'):
                 logger.critical("No pickled partition at {0}".format(location))

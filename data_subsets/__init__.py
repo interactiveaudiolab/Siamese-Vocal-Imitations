@@ -1,7 +1,7 @@
 from torch.utils.data import dataset
 
 
-class Dataset(dataset.Dataset):
+class DataSubset(dataset.Dataset):
     def __getitem__(self, index):
         raise NotImplementedError
 
@@ -12,7 +12,7 @@ class Dataset(dataset.Dataset):
         pass
 
 
-class PairedDataset(Dataset):
+class PairedDataSubset(DataSubset):
     def __init__(self, data):
         self.pairs = []
 
@@ -26,7 +26,7 @@ class PairedDataset(Dataset):
         pass
 
 
-class TripletDataset(Dataset):
+class TripletDataSubset(DataSubset):
     def __init__(self, data):
         self.triplets = []
 

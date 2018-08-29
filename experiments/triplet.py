@@ -9,8 +9,8 @@ import utils.network
 from data_partitions.partitions import Partitions
 from data_partitions.pair_partition import PairPartition
 from data_partitions.triplet_partition import TripletPartition
-from data_sets.pair import AllPairs
-from data_sets.triplet import Balanced
+from data_subsets.pair import AllPairs
+from data_subsets.triplet import Balanced
 from models.siamese import Siamese
 from models.triplet import Triplet
 from utils import utils as utilities, training, inference

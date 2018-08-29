@@ -2,13 +2,13 @@ from typing import Type
 
 import numpy as np
 
-from data_files import Datafiles
 from data_partitions import PartitionArguments, SaveablePartitionState, Partition, PartitionSplit
+from data_sets import Dataset
 from utils.progress_bar import Bar
 
 
 class Partitions:
-    def __init__(self, dataset: Datafiles, split: PartitionSplit, n_train_val_categories=None, regenerate=False):
+    def __init__(self, dataset: Dataset, split: PartitionSplit, n_train_val_categories=None, regenerate=False):
         dataset_name = dataset.name
         pickle_name = "./partition_pickles/{0}.pickle".format(dataset_name)
 

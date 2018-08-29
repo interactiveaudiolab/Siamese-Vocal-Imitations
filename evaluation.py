@@ -14,7 +14,8 @@ from data_files.vocal_imitation import VocalImitation
 from data_partitions import PartitionSplit
 from data_partitions.pair_partition import PairPartition
 from data_partitions.partitions import Partitions
-from data_sets.pair import AllPairs
+from data_sets import Dataset
+from data_subsets.pair import AllPairs
 from models.siamese import Siamese
 from models.triplet import Triplet
 from utils.graphing import num_canonical_memorized
@@ -35,9 +36,10 @@ def main(cli_args=None):
     logger.info('Beginning trial #{0}...'.format(utilities.get_trial_number()))
     log_cli_args(cli_args)
     try:
-        datafiles = VocalImitation(recalculate_spectrograms=cli_args.recalculate_spectrograms)
+        datafiles = VocalImitation()
+        dataset = Dataset(datafiles.name)
         data_split = PartitionSplit(*cli_args.partitions)
-        partitions = Partitions(datafiles, data_split, cli_args.num_categories, regenerate=False)
+        partitions = Partitions(dataset, data_split, cli_args.num_categories, regenerate=False)
         partitions.generate_partitions(PairPartition, no_test=True)
         partitions.save("./output/{0}/partition.pickle".format(utilities.get_trial_number()))
 
