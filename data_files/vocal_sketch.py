@@ -20,28 +20,24 @@ class VocalSketch_1_0(VocalSketch):
         imitation_path = os.path.join(data_dir, "vocal_imitations/included")
         reference_path = os.path.join(data_dir, "sound_recordings")
 
-        imitation_paths = data_files.utils.recursive_wav_paths(imitation_path)
-        reference_paths = data_files.utils.recursive_wav_paths(reference_path)
-
         reference_csv = os.path.join(data_dir, "sound_recordings.csv")
         imitation_csv = os.path.join(data_dir, "vocal_imitations.csv")
 
-        reference_labels = {}
         with open(reference_csv) as f:
             reader = csv.DictReader(f)
             for row in reader:
                 path = os.path.join(reference_path, row['filename'])
-                reference_labels[path] = {'label': row['sound_label'],
-                                          'is_canonical': True}
+                self.reference_path_labels[path] = {'label': row['sound_label'],
+                                                    'is_canonical': True}
 
-        imitation_labels = {}
         with open(imitation_csv) as f:
             reader = csv.DictReader(f)
             for row in reader:
                 path = os.path.join(imitation_path, row['filename'])
-                imitation_labels[path] = row['sound_label']
+                self.imitation_path_labels[path] = row['sound_label']
 
-        return imitation_labels, imitation_paths, reference_labels, reference_paths
+        self.imitation_paths = data_files.utils.recursive_wav_paths(imitation_path)
+        self.reference_paths = data_files.utils.recursive_wav_paths(reference_path)
 
 
 class VocalSketch_1_1(VocalSketch):
@@ -57,32 +53,28 @@ class VocalSketch_1_1(VocalSketch):
         imitation_path_2 = os.path.join(data_dir, "vocal_imitations_set2/included")
         reference_path = os.path.join(data_dir, "sound_recordings")
 
-        imitation_paths = data_files.utils.recursive_wav_paths(imitation_path_1) + data_files.utils.recursive_wav_paths(imitation_path_2)
-        reference_paths = data_files.utils.recursive_wav_paths(reference_path)
-
         imitation_csv_1 = os.path.join(data_dir, "vocal_imitations.csv")
         imitation_csv_2 = os.path.join(data_dir, "vocal_imitaitons_set2.csv")  # not a typo, the CSV's name is misspelled
         reference_csv = os.path.join(data_dir, "sound_recordings.csv")
 
-        reference_labels = {}
         with open(reference_csv) as f:
             reader = csv.DictReader(f)
             for row in reader:
                 path = os.path.join(reference_path, row['filename'])
-                reference_labels[path] = {'label': row['sound_label'],
-                                          'is_canonical': True}
+                self.reference_path_labels[path] = {'label': row['sound_label'],
+                                                    'is_canonical': True}
 
-        imitation_labels = {}
         with open(imitation_csv_1) as f:
             reader = csv.DictReader(f)
             for row in reader:
                 path = os.path.join(imitation_path_1, row['filename'])
-                imitation_labels[path] = row['sound_label']
+                self.imitation_path_labels[path] = row['sound_label']
 
         with open(imitation_csv_2) as f:
             reader = csv.DictReader(f)
             for row in reader:
                 path = os.path.join(imitation_path_2, row['filename'])
-                imitation_labels[path] = row['sound_label']
+                self.imitation_path_labels[path] = row['sound_label']
 
-        return imitation_labels, imitation_paths, reference_labels, reference_paths
+        self.imitation_paths = data_files.utils.recursive_wav_paths(imitation_path_1) + data_files.utils.recursive_wav_paths(imitation_path_2)
+        self.reference_paths = data_files.utils.recursive_wav_paths(reference_path)

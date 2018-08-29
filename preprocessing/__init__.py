@@ -5,7 +5,6 @@ import pathlib
 
 import audaugio
 import librosa
-
 import numpy as np
 
 from data_files import Datafiles
@@ -18,114 +17,40 @@ class Preprocessor:
         self.imitation_augmentations = imitation_augmentations
         self.reference_augmentations = reference_augmentations
 
-        self.n_batches = 500
-
     def __call__(self, datafiles: Datafiles):
-        imitation_labels, imitation_paths, reference_labels, reference_paths = datafiles.prepare_spectrogram_calculation()
+        datafiles.prepare_spectrogram_calculation()
 
-        logger = logging.getLogger('logger')
-        logger.info("Calculating spectrograms in {0} batches".format(self.n_batches))
-
-        batches = np.array_split(imitation_paths, self.n_batches)
-        for i, batch in enumerate(batches):
-            self.calculate_spectrograms(batch,
-                                        imitation_labels,
-                                        'imitations_{0}'.format(i),
-                                        datafiles.name,
-                                        self.imitation_spectrogram,
-                                        self.imitation_augmentations)
-
-        batches = np.array_split(reference_paths, self.n_batches)
-        for i, batch in enumerate(batches):
-            self.calculate_spectrograms(batch,
-                                        reference_labels,
-                                        'references_{0}'.format(i),
-                                        datafiles.name,
-                                        self.reference_spectrogram,
-                                        self.reference_augmentations)
-
-    def calculate_spectrograms(self, paths, file_labels, file_name, dataset_name, spectrogram_func, augmentations):
-        bar = Bar('Calculating spectrograms and saving them at {0}.npy...'.format(os.path.join(get_npy_dir(dataset_name), file_name)), max=len(paths))
-        all_spectrograms = []
-        labels = []
-        for path in paths:
-            spectrograms = spectrogram_func(path, augmentations)
-            for spectrogram in spectrograms:
-                all_spectrograms.append(spectrogram)
-                label = file_labels[path]
-                labels.append(label)
-
+        bar = Bar("Calculating imitation spectrograms...", max=len(datafiles.imitation_paths))
+        for path in datafiles.imitation_paths:
+            self.calculate_imitation_spectrograms(path, datafiles.imitation_path_labels, datafiles.name, self.imitation_augmentations)
             bar.next()
-
-        all_spectrograms = self.normalize_spectrograms(np.array(all_spectrograms))
-        self.save_npy(all_spectrograms, '{0}.npy'.format(file_name), dataset_name, "float32")
-        self.save_npy(labels, '{0}_labels.npy'.format(file_name), dataset_name)
         bar.finish()
 
-    @staticmethod
-    def reference_spectrogram(path, augmentations: audaugio.ChainBase):
-        """
-        Calculate the spectrogram of a reference recording located at path.
+        bar = Bar("Calculating reference spectrograms...", max=len(datafiles.reference_paths))
+        for path in datafiles.reference_paths:
+            self.calculate_reference_spectrograms(path, datafiles.reference_path_labels, datafiles.name, self.reference_augmentations)
+            bar.next()
+        bar.finish()
 
-        Code written by Bongjun Kim.
-        :param path: absolute path to the audio file
-        :param augmentations:
-        :return: power log spectrogram
-        """
-        try:
-            y, sr = librosa.load(path, sr=44100)
-        except audioop.error as e:
-            logger = logging.getLogger('logger')
-            logger.warning("Could not load {0}\n{1}".format(path, e))
-            return None
-
-        augmented_audio = augmentations(y, sr)
-
-        spectrograms = []
-        for audio in augmented_audio:
-            if audio.shape[0] < 4 * sr:
-                pad = np.zeros((4 * sr - audio.shape[0]))
-                y_fix = np.append(audio, pad)
+    def calculate_reference_spectrograms(self, path, file_labels, dataset_name, augmentations):
+        label = file_labels[path]
+        spectrograms = reference_spectrogram(path, augmentations)
+        spectrograms = self.normalize_spectrograms(np.array(spectrograms))
+        i = 0
+        for spectrogram in spectrograms:
+            if label['is_canonical']:
+                file_name = 'canonical_reference.npy'
             else:
-                y_fix = audio[0:int(4 * sr)]
-            s = librosa.feature.melspectrogram(y=y_fix, sr=sr, n_fft=1024, hop_length=1024, power=2)
-            s = librosa.power_to_db(s, ref=np.max)
-            s = s[:, 0:128]
-            spectrograms.append(s)
-        return spectrograms
+                file_name = 'noncanonical_reference_{0}.npy'.format(i)
+                i += 1
+            self.save_npy(spectrogram, os.path.join('references', label['label'], file_name), dataset_name, "float32")
 
-    @staticmethod
-    def imitation_spectrogram(path, augmentations: audaugio.ChainBase):
-        """
-        Calculate the spectrogram of an imitation located at path.
-
-        Code written by Bongjun Kim.
-        :param path: absolute path to the audio file
-        :param augmentations:
-        :return: power log spectrogram
-        """
-        try:
-            y, sr = librosa.load(path, sr=16000)
-        except audioop.error as e:
-            logger = logging.getLogger('logger')
-            logger.warning("Could not load {0}\n{1}".format(path, e))
-            return None
-
-        augmented_audio = augmentations(y, sr)
-
-        spectrograms = []
-        for audio in augmented_audio:
-            # zero-padding
-            if audio.shape[0] < 4 * sr:
-                pad = np.zeros((4 * sr - audio.shape[0]))
-                y_fix = np.append(audio, pad)
-            else:
-                y_fix = audio[0:int(4 * sr)]
-            s = librosa.feature.melspectrogram(y=y_fix, sr=sr, n_fft=133, hop_length=133, power=2, n_mels=39, fmin=0.0, fmax=5000)
-            s = s[:, :482]
-            s = librosa.power_to_db(s, ref=np.max)
-            spectrograms.append(s)
-        return spectrograms
+    def calculate_imitation_spectrograms(self, path, file_labels, dataset_name, augmentations):
+        label = file_labels[path]
+        spectrograms = imitation_spectrogram(path, augmentations)
+        spectrograms = self.normalize_spectrograms(np.array(spectrograms))
+        for i, spectrogram in enumerate(spectrograms):
+            self.save_npy(spectrogram, os.path.join('imitations', label, 'imitation_{0}.npy'.format(i)), dataset_name, "float32")
 
     @staticmethod
     def normalize_spectrograms(spectrograms):
@@ -135,6 +60,9 @@ class Preprocessor:
         if len(spectrograms) == 0:
             return []
 
+        # filter out any all-0 spectrograms, TODO remove this one audaugio is modified to handle bypasses
+        spectrograms = np.array([s for s in spectrograms if not s.min == s.max == 0])
+
         m = np.mean(spectrograms, axis=(1, 2))
         m = m.reshape(m.shape[0], 1, 1)
         std = np.std(spectrograms, axis=(1, 2))
@@ -142,7 +70,6 @@ class Preprocessor:
 
         m_matrix = np.repeat(np.repeat(m, spectrograms.shape[1], axis=1), spectrograms.shape[2], axis=2)
         std_matrix = np.repeat(np.repeat(std, spectrograms.shape[1], axis=1), spectrograms.shape[2], axis=2)
-
         normed = np.multiply(spectrograms - m_matrix, 1. / std_matrix)
 
         return normed
@@ -158,3 +85,68 @@ class Preprocessor:
         except FileNotFoundError:  # can occur when the parent directory doesn't exist
             pathlib.Path(path).parent.mkdir(parents=True)
             np.save(path, array)
+
+
+def imitation_spectrogram(path, augmentations: audaugio.ChainBase):
+    """
+    Calculate the spectrogram of an imitation located at path.
+
+    Code written by Bongjun Kim.
+    :param path: absolute path to the audio file
+    :param augmentations:
+    :return: power log spectrogram
+    """
+    try:
+        y, sr = librosa.load(path, sr=16000)
+    except audioop.error as e:
+        logger = logging.getLogger('logger')
+        logger.warning("Could not load {0}\n{1}".format(path, e))
+        return None
+
+    augmented_audio = augmentations(y, sr)
+
+    spectrograms = []
+    for audio in augmented_audio:
+        # zero-padding
+        if audio.shape[0] < 4 * sr:
+            pad = np.zeros((4 * sr - audio.shape[0]))
+            y_fix = np.append(audio, pad)
+        else:
+            y_fix = audio[0:int(4 * sr)]
+        s = librosa.feature.melspectrogram(y=y_fix, sr=sr, n_fft=133, hop_length=133, power=2, n_mels=39, fmin=0.0, fmax=5000)
+        s = s[:, :482]
+        s = librosa.power_to_db(s, ref=np.max)
+        spectrograms.append(s)
+    return spectrograms
+
+
+def reference_spectrogram(path, augmentations: audaugio.ChainBase):
+    """
+    Calculate the spectrogram of a reference recording located at path.
+
+    Code written by Bongjun Kim.
+    :param path: absolute path to the audio file
+    :param augmentations:
+    :return: power log spectrogram
+    """
+    try:
+        y, sr = librosa.load(path, sr=44100)
+    except audioop.error as e:
+        logger = logging.getLogger('logger')
+        logger.warning("Could not load {0}\n{1}".format(path, e))
+        return None
+
+    augmented_audio = augmentations(y, sr)
+
+    spectrograms = []
+    for audio in augmented_audio:
+        if audio.shape[0] < 4 * sr:
+            pad = np.zeros((4 * sr - audio.shape[0]))
+            y_fix = np.append(audio, pad)
+        else:
+            y_fix = audio[0:int(4 * sr)]
+        s = librosa.feature.melspectrogram(y=y_fix, sr=sr, n_fft=1024, hop_length=1024, power=2)
+        s = librosa.power_to_db(s, ref=np.max)
+        s = s[:, 0:128]
+        spectrograms.append(s)
+    return spectrograms

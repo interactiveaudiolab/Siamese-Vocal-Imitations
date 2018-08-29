@@ -14,23 +14,18 @@ class VocalImitation(Datafiles):
         imitation_path = os.path.join(data_dir, "vocal_imitations")
         reference_path = os.path.join(data_dir, "original_recordings")
 
-        imitation_paths = data_files.utils.recursive_wav_paths(imitation_path)
-        reference_paths = data_files.utils.recursive_wav_paths(reference_path)
-
-        imitation_labels = {}
-        for imitation in imitation_paths:
+        self.imitation_paths = data_files.utils.recursive_wav_paths(imitation_path)
+        for imitation in self.imitation_paths:
             file_name = os.path.basename(imitation)
             label = file_name[:3]
-            imitation_labels[imitation] = label
+            self.imitation_path_labels[imitation] = label
 
-        reference_labels = {}
-        for path in reference_paths:
+        self.reference_paths = data_files.utils.recursive_wav_paths(reference_path)
+        for path in self.reference_paths:
             category_name = os.path.basename(os.path.dirname(path))
             file_name = os.path.basename(path)
             label = category_name[:3]
 
             is_canonical = 'perfect' in file_name.lower()
-            reference_labels[path] = {"label": label,
-                                      "is_canonical": is_canonical}
-
-        return imitation_labels, imitation_paths, reference_labels, reference_paths
+            self.reference_path_labels[path] = {"label": label,
+                                                "is_canonical": is_canonical}

@@ -9,10 +9,10 @@ class Datafiles:
 
         self.name = name
 
-        self.imitation_path_labels = None
-        self.imitation_paths = None
-        self.reference_path_labels = None
-        self.reference_paths = None
+        self.imitation_path_labels = {}
+        self.imitation_paths = []
+        self.reference_path_labels = {}
+        self.reference_paths = []
 
     def prepare_spectrogram_calculation(self) -> Tuple[Dict, List, Dict, List]:
         """
