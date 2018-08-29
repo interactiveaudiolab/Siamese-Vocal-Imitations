@@ -25,9 +25,11 @@ def main(cli_args=None):
     utilities.create_output_directory()
 
     logger = logging.getLogger('logger')
+    file_only_logger = logging.getLogger('file.logger')
     parser = argparse.ArgumentParser()
     utilities.configure_parser(parser)
     utilities.configure_logger(logger)
+    utilities.configure_logger(file_only_logger, console=False)
     if cli_args is None:
         cli_args = parser.parse_args()
 

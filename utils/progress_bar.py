@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timedelta
 
 from progress.bar import Bar as BarInterface
@@ -11,6 +12,9 @@ class Bar(BarInterface):
 
     def __init__(self, message, **kwargs):
         super().__init__(message, **kwargs)
+        logger = logging.getLogger('file.logger')
+        logger.info(message)
+
         self.start_time = datetime.now()
         self.long_term_avg_eta = None
 
