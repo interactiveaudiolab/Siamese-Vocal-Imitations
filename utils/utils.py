@@ -47,7 +47,7 @@ def configure_logger(logger, console=True, file=True):
     formatter = logging.Formatter('%(asctime)s - %(levelname)s \t %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 
     if file:
-        file_handler = logging.FileHandler(os.path.join())
+        file_handler = logging.FileHandler(get_trial_directory("siamese.log"))
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
 
