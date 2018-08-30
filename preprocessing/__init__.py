@@ -21,39 +21,49 @@ class Preprocessor:
         datafiles.prepare_spectrogram_calculation()
 
         bar = Bar("Calculating imitation spectrograms...", max=len(datafiles.imitation_paths))
+        imitation_categories = set(datafiles.imitation_path_labels.values())
+        self.imitation_file_indices = {label: 0 for label in imitation_categories}
         for path in datafiles.imitation_paths:
-            self.calculate_imitation_spectrograms(path, datafiles.imitation_path_labels, datafiles.name, self.imitation_augmentations)
+            self._calculate_imitation_spectrograms(path, datafiles.imitation_path_labels, datafiles.name, self.imitation_augmentations)
             bar.next()
         bar.finish()
 
         bar = Bar("Calculating reference spectrograms...", max=len(datafiles.reference_paths))
+        reference_categories = set(l['label'] for l in datafiles.reference_path_labels.values())
+        self.reference_file_indices = {label: 0 for label in reference_categories}
         for path in datafiles.reference_paths:
-            self.calculate_reference_spectrograms(path, datafiles.reference_path_labels, datafiles.name, self.reference_augmentations)
+            self._calculate_reference_spectrograms(path, datafiles.reference_path_labels, datafiles.name, self.reference_augmentations)
             bar.next()
         bar.finish()
 
-    def calculate_reference_spectrograms(self, path, file_labels, dataset_name, augmentations):
+    def _calculate_reference_spectrograms(self, path, file_labels, dataset_name, augmentations):
         label = file_labels[path]
         spectrograms = reference_spectrogram(path, augmentations)
-        spectrograms = self.normalize_spectrograms(np.array(spectrograms))
-        i = 0
+        spectrograms = self._normalize_spectrograms(np.array(spectrograms))
+        j = 0
+        i = self.reference_file_indices[label['label']]
         for spectrogram in spectrograms:
             if label['is_canonical']:
                 file_name = 'canonical_reference.npy'
             else:
-                file_name = 'noncanonical_reference_{0}.npy'.format(i)
-                i += 1
-            self.save_npy(spectrogram, os.path.join('references', label['label'], file_name), dataset_name, "float32")
+                i = self.reference_file_indices[label['label']]
+                file_name = 'noncanonical_reference_{0}_{1}.npy'.format(i, j)
+                j += 1
+            self._save_npy(spectrogram, os.path.join('references', label['label'], file_name), dataset_name, "float32")
 
-    def calculate_imitation_spectrograms(self, path, file_labels, dataset_name, augmentations):
+        self.reference_file_indices[label['label']] += 1
+
+    def _calculate_imitation_spectrograms(self, path, file_labels, dataset_name, augmentations):
         label = file_labels[path]
         spectrograms = imitation_spectrogram(path, augmentations)
-        spectrograms = self.normalize_spectrograms(np.array(spectrograms))
-        for i, spectrogram in enumerate(spectrograms):
-            self.save_npy(spectrogram, os.path.join('imitations', label, 'imitation_{0}.npy'.format(i)), dataset_name, "float32")
+        spectrograms = self._normalize_spectrograms(np.array(spectrograms))
+        i = self.imitation_file_indices[label]
+        for j, spectrogram in enumerate(spectrograms):
+            self._save_npy(spectrogram, os.path.join('imitations', label, 'imitation_{0}_{1}.npy'.format(i, j)), dataset_name, "float32")
+        self.imitation_file_indices[label] += 1
 
     @staticmethod
-    def normalize_spectrograms(spectrograms):
+    def _normalize_spectrograms(spectrograms):
         """
         data: (num_examples, num_freq_bins, num_time_frames)
         """
@@ -75,7 +85,7 @@ class Preprocessor:
         return normed
 
     @staticmethod
-    def save_npy(array, file_name, dataset, ar_type=None):
+    def _save_npy(array, file_name, dataset, ar_type=None):
         array = np.array(array)
         if ar_type:
             array = array.astype(ar_type)
