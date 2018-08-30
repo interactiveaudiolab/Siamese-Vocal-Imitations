@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from scipy.stats import pearsonr
 
 from utils.graphing import loss_per_epoch, mrr_per_epoch, mean_rank_per_epoch
-from utils.utils import get_trial_number
+from utils.utils import get_trial_number, get_trial_directory
 
 
 class TrainingProgress:
@@ -65,7 +65,7 @@ class TrainingProgress:
         file = title.replace(' ', '_').replace('.', '').replace(',', '')
         file += '.png'
         file = file.lower()
-        return os.path.join('./output', str(get_trial_number()), file)
+        return os.path.join(get_trial_directory(file))
 
     def save(self, path):
         with open(path, 'w+b') as f:

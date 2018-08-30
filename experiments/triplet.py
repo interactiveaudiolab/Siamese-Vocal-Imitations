@@ -23,7 +23,7 @@ def train(use_cuda: bool, n_epochs: int, validate_every: int, use_dropout: bool,
           momentum: bool):
     logger = logging.getLogger('logger')
 
-    model_path = "./model_output/triplet/model_{0}"
+    model_path = "./output/models/triplet/model_{0}"
     no_test = True
 
     partitions.generate_partitions(TripletPartition, no_test=True)
@@ -84,7 +84,7 @@ def train(use_cuda: bool, n_epochs: int, validate_every: int, use_dropout: bool,
 
         # otherwise just save most recent model
         utils.network.save_model(network, model_path.format('best'))
-        utils.network.save_model(network, './output/{0}/triplet'.format(utilities.get_trial_number()))
+        utils.network.save_model(network, utilities.get_trial_directory('triplet'))
 
         if not no_test:
             logger.info("Results from best model generated during training, evaluated on test data:")
@@ -92,7 +92,7 @@ def train(use_cuda: bool, n_epochs: int, validate_every: int, use_dropout: bool,
             utilities.log_final_stats(rrs)
 
         progress.pearson(log=True)
-        progress.save("./output/{0}/triplet.pickle".format(get_trial_number()))
+        progress.save(utilities.get_trial_directory('triplet_progress.pickle'))
         return network
     except Exception as e:
         utils.network.save_model(network, model_path.format('crash_backup'))

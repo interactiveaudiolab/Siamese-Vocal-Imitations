@@ -123,17 +123,6 @@ def accuracy_per_epoch(train, val, ax, title="Accuracy vs. Epoch"):
     ax.legend()
 
 
-def title_to_filename(title, suffix):
-    if suffix:
-        file = suffix + '_' + title
-    else:
-        file = title
-    file = file.replace(' ', '_').replace('.', '').replace(',', '')
-    file += '.png'
-    file = file.lower()
-    return os.path.join('./output', str(utilities.get_trial_number()), file)
-
-
 def mrr_random_chance(n_categories):
     return np.mean([1 / n for n in np.random.randint(low=1, high=n_categories + 1, size=99999)])
 

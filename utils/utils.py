@@ -47,7 +47,7 @@ def configure_logger(logger, console=True, file=True):
     formatter = logging.Formatter('%(asctime)s - %(levelname)s \t %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 
     if file:
-        file_handler = logging.FileHandler('./output/{0}/siamese.log'.format(get_trial_number()))
+        file_handler = logging.FileHandler(os.path.join())
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
 
@@ -101,18 +101,22 @@ def configure_parser(parser):
                            'be determined based on the partitions.')
 
 
+def get_trial_directory(suffix=''):
+    return os.path.join("./output/trials/{0}".format(get_trial_number()), suffix)
+
+
 def update_trial_number():
     trial_number = get_trial_number()
-    with open('state.pickle', 'wb') as handle:
+    with open('./output/state/state.pickle', 'wb') as handle:
         pickle.dump(trial_number + 1, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 def get_trial_number():
     try:
-        with open('state.pickle', 'rb') as handle:
+        with open('./output/state/state.pickle', 'rb') as handle:
             trial_number = pickle.load(handle)
     except FileNotFoundError:
-        with open('state.pickle', 'w+b') as handle:
+        with open('./output/state/state.pickle', 'w+b') as handle:
             trial_number = 0
             pickle.dump(trial_number + 1, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
@@ -121,7 +125,7 @@ def get_trial_number():
 
 def create_output_directory():
     trial_number = get_trial_number()
-    pathlib.Path('./output/{0}'.format(trial_number)).mkdir(exist_ok=True, parents=True)
+    pathlib.Path('./output/trials/{0}'.format(trial_number)).mkdir(exist_ok=True, parents=True)
 
 
 def zip_shuffle(a, b):

@@ -1,5 +1,6 @@
 import argparse
 import logging
+import os
 import sys
 import traceback
 
@@ -50,7 +51,7 @@ def main(cli_args=None):
         data_split = PartitionSplit(*cli_args.partitions)
         partitions = Partitions(dataset, data_split, cli_args.num_categories, regenerate=cli_args.regenerate_splits or
                                                                                          cli_args.recalculate_spectrograms)
-        partitions.save("./output/{0}/partition.pickle".format(utilities.get_trial_number()))
+        partitions.save(utilities.get_trial_directory("partition.pickle"))
 
         utils.network.initialize_siamese_params(cli_args.regenerate_weights, cli_args.dropout)
 

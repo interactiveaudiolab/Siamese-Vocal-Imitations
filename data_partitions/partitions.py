@@ -10,7 +10,7 @@ from utils.progress_bar import Bar
 class Partitions:
     def __init__(self, dataset: Dataset, split: PartitionSplit, n_train_val_categories=None, regenerate=False):
         dataset_name = dataset.name
-        pickle_name = "./partition_pickles/{0}.pickle".format(dataset_name)
+        pickle_name = "./output/partition_pickles/{0}.pickle".format(dataset_name)
 
         self.train_args = None
         self.val_args = None

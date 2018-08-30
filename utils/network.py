@@ -3,7 +3,7 @@ import logging
 import torch
 
 from models.siamese import Siamese
-from utils.utils import get_trial_number
+from utils.utils import get_trial_directory
 
 
 def load_model(model, path, use_cuda=True):
@@ -19,7 +19,7 @@ def save_model(model, path):
 
 def initialize_siamese_params(regenerate, dropout):
     logger = logging.getLogger('logger')
-    starting_weights_path = "./model_output/siamese_init/starting_weights"
+    starting_weights_path = "./output/models/siamese_init/starting_weights"
 
     model = Siamese(dropout=dropout)
     if not regenerate:
@@ -28,7 +28,7 @@ def initialize_siamese_params(regenerate, dropout):
     logger.debug("Saving initial weights/biases at {0}...".format(starting_weights_path))
     save_model(model, starting_weights_path)
 
-    trial_path = "./output/{0}/init_weights".format(get_trial_number())
+    trial_path = get_trial_directory('init_weights')
     logger.debug("Saving initial weights/biases at {0}...".format(trial_path))
     save_model(model, trial_path)
 
@@ -36,7 +36,7 @@ def initialize_siamese_params(regenerate, dropout):
 def initialize_weights(siamese, use_cuda):
     logger = logging.getLogger('logger')
 
-    starting_weights_path = "./model_output/siamese_init/{0}".format("starting_weights")
+    starting_weights_path = "./output/models/siamese_init/{0}".format("starting_weights")
 
     try:
         logger.debug("Loading initial weights/biases from {0}...".format(starting_weights_path))

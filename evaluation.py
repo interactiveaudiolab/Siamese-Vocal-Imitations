@@ -1,5 +1,6 @@
 import argparse
 import logging
+import os
 import sys
 import traceback
 
@@ -41,7 +42,7 @@ def main(cli_args=None):
         data_split = PartitionSplit(*cli_args.partitions)
         partitions = Partitions(dataset, data_split, cli_args.num_categories, regenerate=False)
         partitions.generate_partitions(PairPartition, no_test=True)
-        partitions.save("./output/{0}/partition.pickle".format(utilities.get_trial_number()))
+        partitions.save(utilities.get_trial_directory("partition.pickle"))
 
         if cli_args.triplet:
             model = Triplet(dropout=cli_args.dropout)
@@ -54,7 +55,7 @@ def main(cli_args=None):
             model = model.cuda()
 
         evaluated_epochs = np.arange(0, 300, step=5)
-        model_directory = './model_output/{0}'.format('pairwise' if cli_args.pairwise else 'triplet') + '/model_{0}'
+        model_directory = './output/models//{0}'.format('pairwise' if cli_args.pairwise else 'triplet') + '/model_{0}'
         model_paths = [model_directory.format(n) for n in evaluated_epochs]
         n_memorized = []
         memorized_var = []
