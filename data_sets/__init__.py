@@ -32,7 +32,7 @@ class Dataset:
         except FileNotFoundError:
             # noinspection PyUnboundLocalVariable
             if i == 0:  # nothing found
-                raise NoSpectrogramOnDiskError
+                raise NoSpectrogramOnDiskError(self.name)
             else:
                 logger.info("Found {0} batches of .npy arrays".format(i))
 
