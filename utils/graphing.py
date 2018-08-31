@@ -4,8 +4,6 @@ import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.ticker import Formatter, LogFormatter
 
-import utils.utils as utilities
-
 
 class ConciseScientificNotationFormatter(Formatter):
     def __call__(self, x, pos=None):

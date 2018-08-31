@@ -1,7 +1,7 @@
 import numpy as np
 
-from data_partitions.pair_partition import PairPartition
 from data_subsets import PairedDataSubset
+from data_partitions import PairPartition
 
 
 class Balanced(PairedDataSubset):
@@ -13,11 +13,9 @@ class Balanced(PairedDataSubset):
         :param data:
         """
         super().__init__(data)
-        self.positives = data.positive
-        self.negative_fine = data.negative_fine
+        self.positive = data.positive
         self.negative_coarse = data.negative_coarse
-
-        self.pairs = []
+        self.negative_fine = data.negative_fine
         self.reselect_negatives()
 
     def epoch_handler(self):
@@ -27,19 +25,12 @@ class Balanced(PairedDataSubset):
         # clear out selected negatives
         self.pairs = []
 
-        negative_size = int(len(self.positives) / 2)
-        fine_indices = np.random.choice(np.arange(len(self.negative_fine)), negative_size)
-        for i in fine_indices:
-            imitation, reference, label = self.negative_fine[i]
-            self.pairs.append([imitation, reference, label])
-
-        coarse_indices = np.random.choice(np.arange(len(self.negative_coarse)), negative_size)
-        for i in coarse_indices:
-            imitation, reference, label = self.negative_coarse[i]
-            self.pairs.append([imitation, reference, label])
-
-        for imitation, reference, label in self.positives:
-            self.pairs.append([imitation, reference, label])
+        negative_size = int(len(self.positive) / 2)
+        pairs = np.concatenate(self.positive,
+                               np.random.choice(self.negative_fine, negative_size),
+                               np.random.choice(self.negative_coarse, negative_size))
+        for i, r, l in pairs:
+            self.pairs.append([i.load(), r.load(), l])
 
         np.random.shuffle(self.pairs)
 
@@ -53,6 +44,6 @@ class AllPairs(PairedDataSubset):
         self.n_imitations = len(self.imitations)
         self.n_references = len(self.references)
         self.labels = data.labels
-        self.canonical_locations = data.canonical_locations
+        # self.canonical_locations = data.canonical_locations
 
         self.pairs = data.all_pairs

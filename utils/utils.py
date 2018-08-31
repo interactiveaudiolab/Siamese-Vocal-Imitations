@@ -112,11 +112,13 @@ def update_trial_number():
 
 
 def get_trial_number():
+    path = './output/state/state.pickle'
     try:
-        with open('./output/state/state.pickle', 'rb') as handle:
+        with open(path, 'rb') as handle:
             trial_number = pickle.load(handle)
     except FileNotFoundError:
-        with open('./output/state/state.pickle', 'w+b') as handle:
+        pathlib.Path(path).parent.mkdir(exist_ok=True, parents=True)
+        with open(path, 'w+b') as handle:
             trial_number = 0
             pickle.dump(trial_number + 1, handle, protocol=pickle.HIGHEST_PROTOCOL)
 

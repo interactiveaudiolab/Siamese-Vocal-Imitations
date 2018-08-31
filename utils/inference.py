@@ -10,37 +10,6 @@ from utils import utils
 from utils.progress_bar import Bar
 
 
-def num_memorized_canonicals(model: Siamese, pairs: AllPairs, use_cuda: bool):
-    pairwise = pairwise_inference_matrix(model, pairs, use_cuda)
-    canonical_locs = np.where(pairs.canonical_locations[0, :] == 1)[0]
-    canonical_values = pairwise[:, canonical_locs].mean(axis=0)
-    n = np.sum(canonical_values > .5)
-    var = pairwise[:, canonical_locs].var(axis=0).mean()
-    return n, var
-
-
-def canonical_mean_recall(model: Siamese, pairs: AllPairs, use_cuda: bool, k: int):
-    pairwise = pairwise_inference_matrix(model, pairs, use_cuda)
-    recalls = np.zeros([pairs.n_imitations])
-    for i, imitation in enumerate(pairs.imitations):
-        # get the column of the pairwise matrix corresponding to this imitation
-        pairwise_col = pairwise[i, :]
-        # get the locations and similarities of the canonical files
-        canonical_locs = np.where(pairs.canonical_locations[i, :] == 1)[0]
-        canonical_similarities = pairwise_col[canonical_locs]
-        pairwise_col[::-1].sort()
-        try:
-            top_k = pairwise_col[:k]
-        except IndexError:
-            raise ValueError("Attempted to calculate mean recall @ {0} in a search that is only {1} deep".format(k, len(pairwise_col)))
-
-        # get all the canonical files that are in the top k results
-        matches = np.intersect1d(canonical_similarities, top_k)
-        recalls[i] = len(matches) / k
-
-    return recalls.mean()
-
-
 def mean_reciprocal_ranks(model: Siamese, pairs: AllPairs, use_cuda):
     """
     Return the mean reciprocal rank across a given set of pairs and a given model.

@@ -1,6 +1,5 @@
 import argparse
 import logging
-import os
 import sys
 import traceback
 
@@ -15,9 +14,8 @@ import utils.network
 import utils.utils as utilities
 from data_files.vocal_imitation import VocalImitation
 from data_files.vocal_sketch import VocalSketch_1_1, VocalSketch_1_0
-from data_partitions.partitions import Partitions
-from data_partitions import PartitionSplit
 from data_sets import Dataset
+from data_partitions import PartitionSplit, Partitions
 from preprocessing import Preprocessor
 
 
@@ -48,9 +46,8 @@ def main(cli_args=None):
 
         # processed spectrograms
         dataset = Dataset(datafiles.name)
-        data_split = PartitionSplit(*cli_args.partitions)
-        partitions = Partitions(dataset, data_split, cli_args.num_categories, regenerate=cli_args.regenerate_splits or
-                                                                                         cli_args.recalculate_spectrograms)
+        data_split = PartitionSplit(*cli_args.partitions, cli_args.num_categories)
+        partitions = Partitions(dataset, data_split)
         partitions.save(utilities.get_trial_directory("partition.pickle"))
 
         utils.network.initialize_siamese_params(cli_args.regenerate_weights, cli_args.dropout)

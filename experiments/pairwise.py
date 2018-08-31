@@ -6,8 +6,7 @@ import numpy as np
 from torch.nn import BCELoss
 
 import utils.network
-from data_partitions.partitions import Partitions
-from data_partitions.pair_partition import PairPartition
+from data_partitions import Partitions, PairPartition
 from data_subsets.pair import Balanced, AllPairs
 from models.siamese import Siamese
 from utils import utils as utilities, training, inference
@@ -23,7 +22,7 @@ def train(use_cuda: bool, n_epochs: int, validate_every: int, use_dropout: bool,
     no_test = True
     model_path = "./output/models/pairwise/model_{0}"
 
-    partitions.generate_partitions(PairPartition, no_test=no_test)
+    partitions.generate_partitions(PairPartition)
     training_data = Balanced(partitions.train)
 
     if validate_every > 0:

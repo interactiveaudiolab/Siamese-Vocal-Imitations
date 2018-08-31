@@ -6,16 +6,14 @@ import numpy as np
 from torch.nn import BCELoss
 
 import utils.network
-from data_partitions.partitions import Partitions
-from data_partitions.pair_partition import PairPartition
-from data_partitions.triplet_partition import TripletPartition
+from data_partitions import Partitions, PairPartition, TripletPartition
 from data_subsets.pair import AllPairs
 from data_subsets.triplet import Balanced
 from models.siamese import Siamese
 from models.triplet import Triplet
 from utils import utils as utilities, training, inference
 from utils.obj import TrainingProgress
-from utils.utils import get_optimizer, get_trial_number
+from utils.utils import get_optimizer
 from utils.network import initialize_weights
 
 
@@ -26,12 +24,12 @@ def train(use_cuda: bool, n_epochs: int, validate_every: int, use_dropout: bool,
     model_path = "./output/models/triplet/model_{0}"
     no_test = True
 
-    partitions.generate_partitions(TripletPartition, no_test=True)
+    partitions.generate_partitions(TripletPartition)
     training_data = Balanced(partitions.train)
     validation_data = Balanced(partitions.val)
 
     if validate_every > 0:
-        partitions.generate_partitions(PairPartition, no_test=no_test)
+        partitions.generate_partitions(PairPartition)
         training_pairs = AllPairs(partitions.train)
         search_length = training_pairs.n_references
         validation_pairs = AllPairs(partitions.val)
