@@ -6,7 +6,8 @@ import numpy as np
 from torch.nn import BCELoss
 
 import utils.network
-from data_partitions import Partitions, PairPartition
+from data_partitions import Partitions
+from data_partitions.pair import PairPartition
 from data_subsets.pair import Balanced, AllPairs
 from models.siamese import Siamese
 from utils import utils as utilities, training, inference

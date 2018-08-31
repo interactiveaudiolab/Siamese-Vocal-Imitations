@@ -6,7 +6,9 @@ import numpy as np
 from torch.nn import BCELoss
 
 import utils.network
-from data_partitions import Partitions, PairPartition, TripletPartition
+from data_partitions import Partitions
+from data_partitions.pair import PairPartition
+from data_partitions.triplet import TripletPartition
 from data_subsets.pair import AllPairs
 from data_subsets.triplet import Balanced
 from models.siamese import Siamese

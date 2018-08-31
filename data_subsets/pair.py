@@ -1,7 +1,7 @@
 import numpy as np
 
 from data_subsets import PairedDataSubset
-from data_partitions import PairPartition
+from data_partitions.pair import PairPartition
 
 
 class Balanced(PairedDataSubset):

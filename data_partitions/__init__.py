@@ -1,99 +1,14 @@
 import logging
 import os
 import pickle
-from typing import List
 
 import numpy as np
 
+from data_partitions import Imitation, Reference
+from data_partitions.spectrogram import Imitation, Reference
+
 from data_partitions.split import PartitionSplit
 from utils.utils import get_npy_dir
-
-
-class Spectrogram:
-    def __init__(self, path):
-        self.path = path
-
-    def load(self):
-        return np.load(self.path)
-
-
-class Imitation(Spectrogram):
-    def __init__(self, path: str, label: str, index: int):
-        super().__init__(path)
-        self.label = label
-        self.index = index
-
-
-class Reference(Spectrogram):
-    def __init__(self, path: str, label: str, is_canonical: bool, index: int):
-        super().__init__(path)
-        self.label = label
-        self.is_canonical = is_canonical
-        self.index = index
-
-
-class PairPartition:
-    def __init__(self, imitations: List[Imitation], references: List[Reference]):
-        self.imitations = imitations
-        self.references = references
-
-        self.positive = []
-        self.negative_coarse = []
-        self.negative_fine = []
-        self.all_pairs = []
-        self.labels = np.zeros(shape=[len(imitations), len(references)])
-
-        for i, imitation in enumerate(self.imitations):
-            for j, reference in enumerate(self.references):
-                label = self._classify_pair(imitation, reference)
-                self.all_pairs.append([imitation, reference, label])
-                self.labels[i, j] = label
-
-    def _classify_pair(self, imitation, reference):
-        if reference.label == imitation.label:
-            if reference.is_canonical:
-                label = True
-                self.positive.append([imitation, reference, label])
-            else:
-                label = False
-                self.negative_fine.append([imitation, reference, label])
-        else:
-            label = False
-            self.negative_coarse.append([imitation, reference, label])
-        return label
-
-
-class TripletPartition:
-    def __init__(self, imitations: List[Imitation], references: List[Reference]):
-        self.imitations = imitations
-        self.references = references
-
-        self.positive_fine = []
-        self.positive_coarse = []
-        self.negative_fine = []
-        self.negative_coarse = []
-
-        for i, imitation in enumerate(self.imitations):
-            for j, near in enumerate(self.references):
-                for k, far in enumerate(self.references):
-                    self._classify_triplet(imitation, far, near)
-
-    def _classify_triplet(self, imitation, far, near):
-        if near.label == imitation.label and near.is_canonical:
-            label = True
-            if far.label == imitation.label:
-                self.positive_fine.append([imitation, near, far, label])
-            else:
-                self.positive_coarse.append([imitation, near, far, label])
-        elif far.label == imitation.label and far.is_canonical:
-            label = False
-            if near.label == imitation.label:
-                self.negative_fine.append([imitation, near, far, label])
-            else:
-                self.negative_coarse.append([imitation, near, far, label])
-        else:
-            label = None
-        return label
 
 
 class Partitions:
@@ -200,8 +115,3 @@ class Partitions:
                 index = -1 if is_canonical else int(os.path.basename(reference_path).split('_')[2])
                 references.append(Reference(reference_path, category, is_canonical, index))
         return references
-
-
-if __name__ == '__main__':
-    _split = PartitionSplit(.3, .2, .5)
-    Partitions('vocal_imitation', _split)

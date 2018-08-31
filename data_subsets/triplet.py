@@ -1,7 +1,7 @@
 import numpy as np
 
 from data_subsets import TripletDataSubset
-from data_partitions import TripletPartition
+from data_partitions.triplet import TripletPartition
 
 
 class Balanced(TripletDataSubset):
