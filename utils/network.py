@@ -1,4 +1,5 @@
 import logging
+import pathlib
 
 import torch
 
@@ -14,7 +15,11 @@ def load_model(model, path, use_cuda=True):
 
 
 def save_model(model, path):
-    torch.save(model.state_dict(), path)
+    try:
+        torch.save(model.state_dict(), path)
+    except FileNotFoundError:
+        pathlib.Path(path).parent.mkdir(exist_ok=True, parents=True)
+        save_model(model, path)
 
 
 def initialize_siamese_params(regenerate, dropout):
