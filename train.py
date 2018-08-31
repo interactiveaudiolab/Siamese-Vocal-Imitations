@@ -14,7 +14,6 @@ import utils.network
 import utils.utils as utilities
 from data_files.vocal_imitation import VocalImitation
 from data_files.vocal_sketch import VocalSketch_1_1, VocalSketch_1_0
-from data_sets import Dataset
 from data_partitions import PartitionSplit, Partitions
 from preprocessing import Preprocessor
 
@@ -45,9 +44,8 @@ def main(cli_args=None):
             preprocessor(datafiles)
 
         # processed spectrograms
-        dataset = Dataset(datafiles.name)
         data_split = PartitionSplit(*cli_args.partitions, cli_args.num_categories)
-        partitions = Partitions(dataset, data_split)
+        partitions = Partitions(datafiles.name, data_split)
         partitions.save(utilities.get_trial_directory("partition.pickle"))
 
         utils.network.initialize_siamese_params(cli_args.regenerate_weights, cli_args.dropout)
